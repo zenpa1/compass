@@ -46,6 +46,7 @@ model task {
   task_title String    @db.VarChar(100)
   task_desc  String?   @db.VarChar(255)
   due_date   DateTime?
+  is_completed Boolean  @default(false)
   user       user      @relation(fields: [user_id], references: [user_id], map: "Task_user_id_fkey")
   tasktag    tasktag[]
 
