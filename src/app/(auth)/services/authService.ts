@@ -1,11 +1,9 @@
 import { OAuth2Client } from 'google-auth-library';
-import { PrismaClient } from '../../../generated/prisma';
-import type { 
-  userprofile_primary_role, 
-  userprofile_secondary_role 
-} from '../../../generated/prisma';
+// Import the singleton instance
+import { prisma } from '../../../lib/prisma'; 
+// Import the types/enums you need
+import { RoleCategory, UserType, PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 interface AuthResult {
@@ -24,7 +22,7 @@ interface AuthResult {
 export class AuthService {
   async verifyAndAuthenticateUser(idToken: string): Promise<AuthResult> {
     try {
-      //verify the token with Google
+      // 1. Verify token with Google
       const ticket = await client.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_ID,
@@ -33,23 +31,21 @@ export class AuthService {
       const payload = ticket.getPayload();
       
       if (!payload || !payload.email) {
-        return {
-          success: false,
-          message: 'Invalid token payload'
-        };
+        return { success: false, message: 'Invalid token payload' };
       }
 
       const { email, sub: googleId, name, picture } = payload;
 
-      //check if user exists(whitelisted if exists)
+      // 2. Check if user exists
+      // Note: We use include: { profile: true } because your schema says 'profile UserProfile?'
       let user = await prisma.user.findUnique({
         where: { email },
         include: {
-          userprofile: true
+          profile: true 
         }
       });
 
-      //if user doesn't exist they're not whitelisted, deny access
+      // 3. Deny if not whitelisted (User must exist in DB first)
       if (!user) {
         return {
           success: false,
@@ -57,7 +53,7 @@ export class AuthService {
         };
       }
 
-      //update Google info if it changed
+      // 4. Update Google info if it changed
       if (user.google_id !== googleId || user.avatar_url !== picture || user.full_name !== name) {
         user = await prisma.user.update({
           where: { user_id: user.user_id },
@@ -67,12 +63,12 @@ export class AuthService {
             full_name: name || user.full_name
           },
           include: {
-            userprofile: true
+            profile: true
           }
         });
       }
 
-      //return success with user data and profile status
+      // 5. Return success
       return {
         success: true,
         user: {
@@ -81,65 +77,57 @@ export class AuthService {
           fullName: user.full_name,
           avatarUrl: user.avatar_url,
           userType: user.user_type,
-          hasProfile: !!user.userprofile
+          // Check 'user.profile', not 'user.userprofile'
+          hasProfile: !!user.profile 
         }
       };
 
     } catch (error) {
       console.error('Authentication error:', error);
-      return {
-        success: false,
-        message: 'Authentication failed'
-      };
+      return { success: false, message: 'Authentication failed' };
     }
   }
 
   async createUserProfile(
     userId: number,
-    primaryRole: userprofile_primary_role,
-    secondaryRole: userprofile_secondary_role
+    primaryRole: RoleCategory,        // UPDATED: Use the Enum
+    secondaryRole: RoleCategory | null // UPDATED: Can be null
   ): Promise<{ success: boolean; message?: string }> {
     try {
-      //validate that primary and secondary roles are different
-      if (primaryRole === secondaryRole) {
+      // Validate: Roles must be different (if secondary exists)
+      if (secondaryRole && primaryRole === secondaryRole) {
         return {
           success: false,
           message: 'Primary and secondary roles must be different'
         };
       }
 
-      //validate secondary role constraints
-      //ASSISTANT and ANY can only be secondary, never primary
-      if (primaryRole === 'ASSISTANT' || primaryRole === 'ANY') {
+      // Validate: ASSISTANT/ANY cannot be primary
+      // We use the Enum values for safer checking
+      if (primaryRole === RoleCategory.ASSISTANT || primaryRole === RoleCategory.ANY) {
         return {
           success: false,
           message: 'ASSISTANT and ANY can only be selected as secondary roles'
         };
       }
 
-      //check if user exists
+      // Check if user exists
       const user = await prisma.user.findUnique({
         where: { user_id: userId },
-        include: { userprofile: true }
+        include: { profile: true }
       });
 
       if (!user) {
-        return {
-          success: false,
-          message: 'User not found'
-        };
+        return { success: false, message: 'User not found' };
       }
 
-      //check if profile already exists
-      if (user.userprofile) {
-        return {
-          success: false,
-          message: 'User profile already exists'
-        };
+      if (user.profile) {
+        return { success: false, message: 'User profile already exists' };
       }
 
-      //create the profile
-      await prisma.userprofile.create({
+      // Create the profile
+      // Note: prisma.userProfile (camelCase) matches model UserProfile
+      await prisma.userProfile.create({
         data: {
           user_id: userId,
           primary_role: primaryRole,
@@ -152,46 +140,42 @@ export class AuthService {
 
     } catch (error) {
       console.error('Profile creation error:', error);
-      return {
-        success: false,
-        message: 'Failed to create user profile'
-      };
+      return { success: false, message: 'Failed to create user profile' };
     }
   }
 
-  //get user info
+  // Get user info
   async getUserWithProfile(userId: number) {
     return await prisma.user.findUnique({
       where: { user_id: userId },
       include: {
-        userprofile: true
+        profile: true
       }
     });
   }
 
-  //update user profile
+  // Update user profile
   async updateUserProfile(
     userId: number,
-    primaryRole: userprofile_primary_role,
-    secondaryRole: userprofile_secondary_role
+    primaryRole: RoleCategory,
+    secondaryRole: RoleCategory | null
   ): Promise<{ success: boolean; message?: string }> {
     try {
-      //same validation as creation
-      if (primaryRole === secondaryRole) {
+      if (secondaryRole && primaryRole === secondaryRole) {
         return {
           success: false,
           message: 'Primary and secondary roles must be different'
         };
       }
 
-      if (primaryRole === 'ASSISTANT' || primaryRole === 'ANY') {
+      if (primaryRole === RoleCategory.ASSISTANT || primaryRole === RoleCategory.ANY) {
         return {
           success: false,
           message: 'ASSISTANT and ANY can only be selected as secondary roles'
         };
       }
 
-      await prisma.userprofile.update({
+      await prisma.userProfile.update({
         where: { user_id: userId },
         data: {
           primary_role: primaryRole,
@@ -203,10 +187,7 @@ export class AuthService {
 
     } catch (error) {
       console.error('Profile update error:', error);
-      return {
-        success: false,
-        message: 'Failed to update user profile'
-      };
+      return { success: false, message: 'Failed to update user profile' };
     }
   }
 }
