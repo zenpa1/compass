@@ -57,3 +57,11 @@ next-env.d.ts
 # windows
 Thumbs.db
 ehthumbs.db
+<<<<<<< Updated upstream
+=======
+
+# architecture
+ARCHITECTURE.md
+
+echo "src/generated/"
+>>>>>>> Stashed changes
