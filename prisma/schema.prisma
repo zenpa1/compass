@@ -1,165 +1,173 @@
-// 1. Connection Configuration
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
 datasource db {
   provider = "mysql"
 }
 
-generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/client"
+model assignment {
+  assignment_id     Int                          @id @default(autoincrement())
+  work_id           Int
+  user_id           Int?
+  outsider_name     String?                      @db.VarChar(100)
+  assignment_status assignment_assignment_status @default(PENDING)
+  withdrawal_reason String?                      @db.Text
+  user              user?                        @relation(fields: [user_id], references: [user_id], map: "Assignment_user_id_fkey")
+  work              work                         @relation(fields: [work_id], references: [work_id], map: "Assignment_work_id_fkey")
+
+  @@index([user_id], map: "Assignment_user_id_fkey")
+  @@index([work_id], map: "Assignment_work_id_fkey")
 }
 
-// 2. Enums (Fixed values from SDD)
-enum UserType {
-  OWNER
-  EMPLOYEE
+model project {
+  project_id          Int                    @id @default(autoincrement())
+  project_name        String                 @db.VarChar(50)
+  client_name         String                 @db.VarChar(50)
+  project_location    String                 @db.Text
+  project_description String                 @db.VarChar(500)
+  project_start_date  DateTime
+  project_end_date    DateTime
+  project_status      project_project_status @default(ACTIVE)
+  work                work[]
 }
 
-enum RoleCategory {
+model tag {
+  tag_id    Int       @id @default(autoincrement())
+  tag_name  String    @unique(map: "Tag_tag_name_key") @db.VarChar(50)
+  color_hex String    @default("#808080") @db.VarChar(7)
+  tasktag   tasktag[]
+}
+
+model task {
+  task_id    Int       @id @default(autoincrement())
+  user_id    Int
+  task_title String    @db.VarChar(100)
+  task_desc  String?   @db.VarChar(255)
+  due_date   DateTime?
+  is_completed Boolean  @default(false)
+  user       user      @relation(fields: [user_id], references: [user_id], map: "Task_user_id_fkey")
+  tasktag    tasktag[]
+
+  @@index([user_id], map: "Task_user_id_fkey")
+}
+
+model tasktag {
+  task_tag_id Int  @id @default(autoincrement())
+  task_id     Int
+  tag_id      Int
+  tag         tag  @relation(fields: [tag_id], references: [tag_id], map: "TaskTag_tag_id_fkey")
+  task        task @relation(fields: [task_id], references: [task_id], map: "TaskTag_task_id_fkey")
+
+  @@index([tag_id], map: "TaskTag_tag_id_fkey")
+  @@index([task_id], map: "TaskTag_task_id_fkey")
+}
+
+model user {
+  user_id         Int               @id @default(autoincrement())
+  email           String            @unique(map: "User_email_key") @db.VarChar(50)
+  google_id       String?           @unique(map: "User_google_id_key") @db.VarChar(21)
+  full_name       String?           @db.VarChar(50)
+  avatar_url      String?           @db.Text
+  user_type       user_user_type    @default(EMPLOYEE)
+  created_at      DateTime          @default(now())
+  assignment      assignment[]
+  task            task[]
+  userprofile     userprofile?
+  workapplication workapplication[]
+}
+
+model userprofile {
+  profile_id        Int                         @id @default(autoincrement())
+  user_id           Int                         @unique(map: "UserProfile_user_id_key")
+  primary_role      userprofile_primary_role    @default(PHOTO)
+  secondary_role    userprofile_secondary_role?
+  reliability_score Decimal                     @default(100.00) @db.Decimal(5, 2)
+  is_setup_complete Boolean @default(false)
+  user              user                        @relation(fields: [user_id], references: [user_id], map: "UserProfile_user_id_fkey")
+}
+
+model work {
+  work_id          Int                @id @default(autoincrement())
+  project_id       Int
+  project_role     String             @db.VarChar(50)
+  role_category    work_role_category
+  expected_salary  Decimal            @default(0.00) @db.Decimal(10, 2)
+  is_open_pool     Boolean            @default(false)
+  work_description String             @db.VarChar(255)
+  work_start_date  DateTime
+  work_start_time  DateTime?
+  work_end_time    DateTime?
+  work_status      work_work_status   @default(OPEN)
+  assignment       assignment[]
+  project          project            @relation(fields: [project_id], references: [project_id], map: "Work_project_id_fkey")
+  workapplication  workapplication[]
+
+  @@index([project_id], map: "Work_project_id_fkey")
+}
+
+model workapplication {
+  application_id     Int                                @id @default(autoincrement())
+  work_id            Int
+  user_id            Int
+  application_status workapplication_application_status @default(PENDING)
+  user               user                               @relation(fields: [user_id], references: [user_id], map: "WorkApplication_user_id_fkey")
+  work               work                               @relation(fields: [work_id], references: [work_id], map: "WorkApplication_work_id_fkey")
+
+  @@index([user_id], map: "WorkApplication_user_id_fkey")
+  @@index([work_id], map: "WorkApplication_work_id_fkey")
+}
+
+enum userprofile_primary_role {
   PHOTO
   VIDEO
   EDITOR
-  ASSISTANT // Added based on SDD Table 3.2
-  ANY // Added based on SDD Table 3.4 Description
+  ASSISTANT
+  ANY
 }
 
-enum ProjectStatus {
-  ACTIVE
-  ARCHIVED
+enum userprofile_secondary_role {
+  PHOTO
+  VIDEO
+  EDITOR
+  ASSISTANT
+  ANY
 }
 
-enum WorkStatus {
-  PENDING
-  OPEN
-  ASSIGNED
-  REVIEW
-  COMPLETED
+enum work_role_category {
+  PHOTO
+  VIDEO
+  EDITOR
+  ASSISTANT
+  ANY
 }
 
-enum AssignmentStatus {
-  PENDING
-  CONFIRMED
-}
-
-enum ApplicationStatus {
+enum workapplication_application_status {
   PENDING
   APPROVED
   REJECTED
 }
 
-// 3. Models (Tables from SDD)
-
-// Based on SDD Table 3.1: Users
-model User {
-  user_id    Int      @id @default(autoincrement())
-  email      String   @unique @db.VarChar(50)
-  google_id  String?  @unique @db.VarChar(21)
-  full_name  String?  @db.VarChar(50)
-  avatar_url String?  @db.Text
-  user_type  UserType @default(EMPLOYEE)
-  created_at DateTime @default(now())
-
-  // Relations
-  profile      UserProfile?
-  assignments  Assignment[]
-  applications WorkApplication[]
-  tasks        Task[]
+enum assignment_assignment_status {
+  PENDING
+  CONFIRMED
 }
 
-// Based on SDD Table 3.2: User Profiles
-model UserProfile {
-  profile_id        Int           @id @default(autoincrement())
-  user_id           Int           @unique
-  user              User          @relation(fields: [user_id], references: [user_id])
-  primary_role      RoleCategory
-  secondary_role    RoleCategory?
-  reliability_score Decimal       @default(100.00) @db.Decimal(5, 2)
+enum user_user_type {
+  OWNER
+  EMPLOYEE
 }
 
-// Based on SDD Table 3.3: Projects
-model Project {
-  project_id          Int           @id @default(autoincrement())
-  project_name        String        @db.VarChar(50) // Logic check: Duplicate Name Prevention
-  client_name         String        @db.VarChar(50)
-  project_location    String        @db.Text
-  project_description String        @db.VarChar(500)
-  project_start_date  DateTime
-  project_end_date    DateTime
-  project_status      ProjectStatus @default(ACTIVE)
-
-  works Work[]
+enum project_project_status {
+  ACTIVE
+  ARCHIVED
 }
 
-// Based on SDD Table 3.4: Works
-model Work {
-  work_id    Int     @id @default(autoincrement())
-  project_id Int
-  project    Project @relation(fields: [project_id], references: [project_id])
-
-  // Note: Using String for flexibility, though SDD says Enum. 
-  // This allows "Drone Pilot" or new roles without DB migration.
-  project_role String @db.VarChar(50)
-
-  role_category    RoleCategory
-  expected_salary  Decimal      @default(0.00) @db.Decimal(10, 2)
-  is_open_pool     Boolean      @default(false) // SDD TinyInt(1) maps to Boolean
-  work_description String       @db.VarChar(255)
-  work_start_date  DateTime
-  work_start_time  DateTime?
-  work_end_time    DateTime?
-  work_status      WorkStatus   @default(OPEN)
-
-  assignments  Assignment[]
-  applications WorkApplication[]
-}
-
-// Based on SDD Table 3.5: Assignments
-model Assignment {
-  assignment_id     Int              @id @default(autoincrement())
-  work_id           Int
-  work              Work             @relation(fields: [work_id], references: [work_id])
-  user_id           Int? // Nullable for "Outsider"
-  user              User?            @relation(fields: [user_id], references: [user_id])
-  outsider_name     String?          @db.VarChar(100)
-  assignment_status AssignmentStatus @default(PENDING)
-  withdrawal_reason String?          @db.Text
-}
-
-// Based on SDD Table 3.6: Work Applications
-model WorkApplication {
-  application_id     Int               @id @default(autoincrement())
-  work_id            Int
-  work               Work              @relation(fields: [work_id], references: [work_id])
-  user_id            Int
-  user               User              @relation(fields: [user_id], references: [user_id])
-  application_status ApplicationStatus @default(PENDING)
-}
-
-// Based on SDD Table 3.7: Tasks
-model Task {
-  task_id    Int       @id @default(autoincrement())
-  user_id    Int
-  user       User      @relation(fields: [user_id], references: [user_id])
-  task_title String    @db.VarChar(100)
-  task_desc  String?   @db.VarChar(255)
-  due_date   DateTime?
-
-  tags TaskTag[]
-}
-
-// Based on SDD Table 3.8: Tags
-model Tag {
-  tag_id    Int    @id @default(autoincrement())
-  tag_name  String @unique @db.VarChar(50)
-  color_hex String @default("#808080") @db.VarChar(7)
-
-  tasks TaskTag[]
-}
-
-// Based on SDD Table 3.9: Task Tags (Many-to-Many Link)
-model TaskTag {
-  task_tag_id Int  @id @default(autoincrement())
-  task_id     Int
-  task        Task @relation(fields: [task_id], references: [task_id])
-  tag_id      Int
-  tag         Tag  @relation(fields: [tag_id], references: [tag_id])
+enum work_work_status {
+  PENDING
+  OPEN
+  ASSIGNED
+  REVIEW
+  COMPLETED
 }

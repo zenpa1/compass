@@ -429,8 +429,8 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 7.3.0
-   * Query Engine version: 9d6ad21cbbceab97458517b147a6a09ff43aa735
+   * Prisma Client JS version: 7.4.0
+   * Query Engine version: ab56fe763f921d033a6c195e7ddeb3e255bdbb57
    */
   export type PrismaVersion = {
     client: string
@@ -7888,6 +7888,7 @@ export namespace Prisma {
     primary_role: $Enums.userprofile_primary_role | null
     secondary_role: $Enums.userprofile_secondary_role | null
     reliability_score: Decimal | null
+    is_setup_complete: boolean | null
   }
 
   export type UserprofileMaxAggregateOutputType = {
@@ -7896,6 +7897,7 @@ export namespace Prisma {
     primary_role: $Enums.userprofile_primary_role | null
     secondary_role: $Enums.userprofile_secondary_role | null
     reliability_score: Decimal | null
+    is_setup_complete: boolean | null
   }
 
   export type UserprofileCountAggregateOutputType = {
@@ -7904,6 +7906,7 @@ export namespace Prisma {
     primary_role: number
     secondary_role: number
     reliability_score: number
+    is_setup_complete: number
     _all: number
   }
 
@@ -7926,6 +7929,7 @@ export namespace Prisma {
     primary_role?: true
     secondary_role?: true
     reliability_score?: true
+    is_setup_complete?: true
   }
 
   export type UserprofileMaxAggregateInputType = {
@@ -7934,6 +7938,7 @@ export namespace Prisma {
     primary_role?: true
     secondary_role?: true
     reliability_score?: true
+    is_setup_complete?: true
   }
 
   export type UserprofileCountAggregateInputType = {
@@ -7942,6 +7947,7 @@ export namespace Prisma {
     primary_role?: true
     secondary_role?: true
     reliability_score?: true
+    is_setup_complete?: true
     _all?: true
   }
 
@@ -8037,6 +8043,7 @@ export namespace Prisma {
     primary_role: $Enums.userprofile_primary_role
     secondary_role: $Enums.userprofile_secondary_role | null
     reliability_score: Decimal
+    is_setup_complete: boolean
     _count: UserprofileCountAggregateOutputType | null
     _avg: UserprofileAvgAggregateOutputType | null
     _sum: UserprofileSumAggregateOutputType | null
@@ -8064,6 +8071,7 @@ export namespace Prisma {
     primary_role?: boolean
     secondary_role?: boolean
     reliability_score?: boolean
+    is_setup_complete?: boolean
     user?: boolean | userDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["userprofile"]>
 
@@ -8075,9 +8083,10 @@ export namespace Prisma {
     primary_role?: boolean
     secondary_role?: boolean
     reliability_score?: boolean
+    is_setup_complete?: boolean
   }
 
-  export type userprofileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"profile_id" | "user_id" | "primary_role" | "secondary_role" | "reliability_score", ExtArgs["result"]["userprofile"]>
+  export type userprofileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"profile_id" | "user_id" | "primary_role" | "secondary_role" | "reliability_score" | "is_setup_complete", ExtArgs["result"]["userprofile"]>
   export type userprofileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | userDefaultArgs<ExtArgs>
   }
@@ -8093,6 +8102,7 @@ export namespace Prisma {
       primary_role: $Enums.userprofile_primary_role
       secondary_role: $Enums.userprofile_secondary_role | null
       reliability_score: Prisma.Decimal
+      is_setup_complete: boolean
     }, ExtArgs["result"]["userprofile"]>
     composites: {}
   }
@@ -8468,6 +8478,7 @@ export namespace Prisma {
     readonly primary_role: FieldRef<"userprofile", 'userprofile_primary_role'>
     readonly secondary_role: FieldRef<"userprofile", 'userprofile_secondary_role'>
     readonly reliability_score: FieldRef<"userprofile", 'Decimal'>
+    readonly is_setup_complete: FieldRef<"userprofile", 'Boolean'>
   }
     
 
@@ -10976,7 +10987,8 @@ export namespace Prisma {
     user_id: 'user_id',
     primary_role: 'primary_role',
     secondary_role: 'secondary_role',
-    reliability_score: 'reliability_score'
+    reliability_score: 'reliability_score',
+    is_setup_complete: 'is_setup_complete'
   };
 
   export type UserprofileScalarFieldEnum = (typeof UserprofileScalarFieldEnum)[keyof typeof UserprofileScalarFieldEnum]
@@ -11572,6 +11584,7 @@ export namespace Prisma {
     primary_role?: Enumuserprofile_primary_roleFilter<"userprofile"> | $Enums.userprofile_primary_role
     secondary_role?: Enumuserprofile_secondary_roleNullableFilter<"userprofile"> | $Enums.userprofile_secondary_role | null
     reliability_score?: DecimalFilter<"userprofile"> | Decimal | DecimalJsLike | number | string
+    is_setup_complete?: BoolFilter<"userprofile"> | boolean
     user?: XOR<UserScalarRelationFilter, userWhereInput>
   }
 
@@ -11581,6 +11594,7 @@ export namespace Prisma {
     primary_role?: SortOrder
     secondary_role?: SortOrderInput | SortOrder
     reliability_score?: SortOrder
+    is_setup_complete?: SortOrder
     user?: userOrderByWithRelationInput
   }
 
@@ -11593,6 +11607,7 @@ export namespace Prisma {
     primary_role?: Enumuserprofile_primary_roleFilter<"userprofile"> | $Enums.userprofile_primary_role
     secondary_role?: Enumuserprofile_secondary_roleNullableFilter<"userprofile"> | $Enums.userprofile_secondary_role | null
     reliability_score?: DecimalFilter<"userprofile"> | Decimal | DecimalJsLike | number | string
+    is_setup_complete?: BoolFilter<"userprofile"> | boolean
     user?: XOR<UserScalarRelationFilter, userWhereInput>
   }, "profile_id" | "user_id">
 
@@ -11602,6 +11617,7 @@ export namespace Prisma {
     primary_role?: SortOrder
     secondary_role?: SortOrderInput | SortOrder
     reliability_score?: SortOrder
+    is_setup_complete?: SortOrder
     _count?: userprofileCountOrderByAggregateInput
     _avg?: userprofileAvgOrderByAggregateInput
     _max?: userprofileMaxOrderByAggregateInput
@@ -11618,6 +11634,7 @@ export namespace Prisma {
     primary_role?: Enumuserprofile_primary_roleWithAggregatesFilter<"userprofile"> | $Enums.userprofile_primary_role
     secondary_role?: Enumuserprofile_secondary_roleNullableWithAggregatesFilter<"userprofile"> | $Enums.userprofile_secondary_role | null
     reliability_score?: DecimalWithAggregatesFilter<"userprofile"> | Decimal | DecimalJsLike | number | string
+    is_setup_complete?: BoolWithAggregatesFilter<"userprofile"> | boolean
   }
 
   export type workWhereInput = {
@@ -12133,24 +12150,27 @@ export namespace Prisma {
   }
 
   export type userprofileCreateInput = {
-    primary_role: $Enums.userprofile_primary_role
+    primary_role?: $Enums.userprofile_primary_role
     secondary_role?: $Enums.userprofile_secondary_role | null
     reliability_score?: Decimal | DecimalJsLike | number | string
+    is_setup_complete?: boolean
     user: userCreateNestedOneWithoutUserprofileInput
   }
 
   export type userprofileUncheckedCreateInput = {
     profile_id?: number
     user_id: number
-    primary_role: $Enums.userprofile_primary_role
+    primary_role?: $Enums.userprofile_primary_role
     secondary_role?: $Enums.userprofile_secondary_role | null
     reliability_score?: Decimal | DecimalJsLike | number | string
+    is_setup_complete?: boolean
   }
 
   export type userprofileUpdateInput = {
     primary_role?: Enumuserprofile_primary_roleFieldUpdateOperationsInput | $Enums.userprofile_primary_role
     secondary_role?: NullableEnumuserprofile_secondary_roleFieldUpdateOperationsInput | $Enums.userprofile_secondary_role | null
     reliability_score?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    is_setup_complete?: BoolFieldUpdateOperationsInput | boolean
     user?: userUpdateOneRequiredWithoutUserprofileNestedInput
   }
 
@@ -12160,20 +12180,23 @@ export namespace Prisma {
     primary_role?: Enumuserprofile_primary_roleFieldUpdateOperationsInput | $Enums.userprofile_primary_role
     secondary_role?: NullableEnumuserprofile_secondary_roleFieldUpdateOperationsInput | $Enums.userprofile_secondary_role | null
     reliability_score?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    is_setup_complete?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type userprofileCreateManyInput = {
     profile_id?: number
     user_id: number
-    primary_role: $Enums.userprofile_primary_role
+    primary_role?: $Enums.userprofile_primary_role
     secondary_role?: $Enums.userprofile_secondary_role | null
     reliability_score?: Decimal | DecimalJsLike | number | string
+    is_setup_complete?: boolean
   }
 
   export type userprofileUpdateManyMutationInput = {
     primary_role?: Enumuserprofile_primary_roleFieldUpdateOperationsInput | $Enums.userprofile_primary_role
     secondary_role?: NullableEnumuserprofile_secondary_roleFieldUpdateOperationsInput | $Enums.userprofile_secondary_role | null
     reliability_score?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    is_setup_complete?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type userprofileUncheckedUpdateManyInput = {
@@ -12182,6 +12205,7 @@ export namespace Prisma {
     primary_role?: Enumuserprofile_primary_roleFieldUpdateOperationsInput | $Enums.userprofile_primary_role
     secondary_role?: NullableEnumuserprofile_secondary_roleFieldUpdateOperationsInput | $Enums.userprofile_secondary_role | null
     reliability_score?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    is_setup_complete?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type workCreateInput = {
@@ -12921,6 +12945,7 @@ export namespace Prisma {
     primary_role?: SortOrder
     secondary_role?: SortOrder
     reliability_score?: SortOrder
+    is_setup_complete?: SortOrder
   }
 
   export type userprofileAvgOrderByAggregateInput = {
@@ -12935,6 +12960,7 @@ export namespace Prisma {
     primary_role?: SortOrder
     secondary_role?: SortOrder
     reliability_score?: SortOrder
+    is_setup_complete?: SortOrder
   }
 
   export type userprofileMinOrderByAggregateInput = {
@@ -12943,6 +12969,7 @@ export namespace Prisma {
     primary_role?: SortOrder
     secondary_role?: SortOrder
     reliability_score?: SortOrder
+    is_setup_complete?: SortOrder
   }
 
   export type userprofileSumOrderByAggregateInput = {
@@ -14574,16 +14601,18 @@ export namespace Prisma {
   }
 
   export type userprofileCreateWithoutUserInput = {
-    primary_role: $Enums.userprofile_primary_role
+    primary_role?: $Enums.userprofile_primary_role
     secondary_role?: $Enums.userprofile_secondary_role | null
     reliability_score?: Decimal | DecimalJsLike | number | string
+    is_setup_complete?: boolean
   }
 
   export type userprofileUncheckedCreateWithoutUserInput = {
     profile_id?: number
-    primary_role: $Enums.userprofile_primary_role
+    primary_role?: $Enums.userprofile_primary_role
     secondary_role?: $Enums.userprofile_secondary_role | null
     reliability_score?: Decimal | DecimalJsLike | number | string
+    is_setup_complete?: boolean
   }
 
   export type userprofileCreateOrConnectWithoutUserInput = {
@@ -14683,6 +14712,7 @@ export namespace Prisma {
     primary_role?: Enumuserprofile_primary_roleFieldUpdateOperationsInput | $Enums.userprofile_primary_role
     secondary_role?: NullableEnumuserprofile_secondary_roleFieldUpdateOperationsInput | $Enums.userprofile_secondary_role | null
     reliability_score?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    is_setup_complete?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type userprofileUncheckedUpdateWithoutUserInput = {
@@ -14690,6 +14720,7 @@ export namespace Prisma {
     primary_role?: Enumuserprofile_primary_roleFieldUpdateOperationsInput | $Enums.userprofile_primary_role
     secondary_role?: NullableEnumuserprofile_secondary_roleFieldUpdateOperationsInput | $Enums.userprofile_secondary_role | null
     reliability_score?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    is_setup_complete?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type workapplicationUpsertWithWhereUniqueWithoutUserInput = {
