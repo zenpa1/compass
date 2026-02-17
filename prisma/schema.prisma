@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/client"
+  engineType = "library"
 }
 
 datasource db {
@@ -81,9 +81,10 @@ model user {
 model userprofile {
   profile_id        Int                         @id @default(autoincrement())
   user_id           Int                         @unique(map: "UserProfile_user_id_key")
-  primary_role      userprofile_primary_role
+  primary_role      userprofile_primary_role    @default(PHOTO)
   secondary_role    userprofile_secondary_role?
   reliability_score Decimal                     @default(100.00) @db.Decimal(5, 2)
+  is_setup_complete Boolean @default(false)
   user              user                        @relation(fields: [user_id], references: [user_id], map: "UserProfile_user_id_fkey")
 }
 
