@@ -1,58 +1,53 @@
-import { db } from "@/lib/prisma"; // Your real DB connection
-import { ProjectCard } from "@/components/features/ProjectCard"; // Your restored component
-import { OrganizeButton } from "@/components/features/OrganizeButton";
+// Assemble pages by combining the layout, component, and database in one file
+import { db } from "@/lib/prisma"; // Ensure this matches your actual db path (e.g. @/lib/db or @/lib/prisma)
+import { ProjectCard } from "@/components/features/ProjectCard";
 import { Button } from "@/components/ui/button";
-import { AddProjectButton } from "@/components/features/AddProjectButton";
+import LogoutButton from "@/components/LogoutButton"; // <--- 1. Import the new button
 
+// async as it must wait for the database to reply
 export default async function ProjectsPage() {
-  // 1. FETCH REAL DATA
+  // FETCH DATA (Server-Side)
+  // This runs on the server before the HTML is sent to the browser
   const projects = await db.project.findMany({
-    orderBy: { project_end_date: "asc" }, // Sort by deadline
+    orderBy: { project_end_date: "asc" },
+    take: 10, // Limit for now
   });
-
-  const hasProjects = projects.length > 0;
 
   return (
     <div className="space-y-6">
+      {/* HEADER SECTION */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+          <h2 className="text-3xl font-bold tracking-tight">
             Project Dashboard
           </h2>
         </div>
-        <OrganizeButton />
+        
+        {/* 2. Group the buttons together on the right side */}
+        <div className="flex items-center gap-4">
+            <LogoutButton />
+            <Button>+</Button>
+        </div>
       </div>
 
-      {hasProjects ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {projects.map((proj) => (
+      {/* GRID FOR CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {projects.length === 0 ? (
+          <p className="text-slate-500 col-span-full">
+            No projects found. Create one!
+          </p>
+        ) : (
+          projects.map((proj) => (
             <ProjectCard
               key={proj.project_id}
-              projectId={proj.project_id}
-              // --- MAPPING HAPPENS HERE ---
-              // Left side = Component Prop | Right side = Database Column
               name={proj.project_name}
               client={proj.client_name}
-              // Convert Date Object to readable string (e.g., "3/15/2026")
-              deadline={
-                proj.project_end_date
-                  ? proj.project_end_date.toLocaleDateString()
-                  : "No Date"
-              }
-              // Ensure the string matches the exact "ACTIVE" | "ARCHIVED" type
-              status={proj.project_status as "ACTIVE" | "ARCHIVED"}
+              deadline={proj.project_end_date.toLocaleDateString()}
+              status={proj.project_status}
             />
-          ))}
-        </div>
-      ) : (
-        <div className="flex min-h-[65vh] flex-col items-center justify-center text-center">
-          <p className="text-lg font-semibold text-slate-900">No Projects</p>
-          <AddProjectButton variant="empty" />
-          <p className="mt-3 text-sm text-slate-500">Click to add</p>
-        </div>
-      )}
-
-      {hasProjects ? <AddProjectButton /> : null}
+          ))
+        )}
+      </div>
     </div>
   );
 }
