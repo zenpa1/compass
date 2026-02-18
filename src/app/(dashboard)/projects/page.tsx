@@ -1,7 +1,8 @@
 // Assemble pages by combining the layout, component, and database in one file
-import { db } from "@/lib/prisma"; // Direct DB access
+import { db } from "@/lib/prisma"; // Ensure this matches your actual db path (e.g. @/lib/db or @/lib/prisma)
 import { ProjectCard } from "@/components/features/ProjectCard";
 import { Button } from "@/components/ui/button";
+import LogoutButton from "@/components/LogoutButton"; // <--- 1. Import the new button
 
 // async as it must wait for the database to reply
 export default async function ProjectsPage() {
@@ -21,7 +22,12 @@ export default async function ProjectsPage() {
             Project Dashboard
           </h2>
         </div>
-        <Button>+</Button>
+        
+        {/* 2. Group the buttons together on the right side */}
+        <div className="flex items-center gap-4">
+            <LogoutButton />
+            <Button>+</Button>
+        </div>
       </div>
 
       {/* GRID FOR CARDS */}

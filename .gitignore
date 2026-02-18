@@ -58,5 +58,11 @@ next-env.d.ts
 Thumbs.db
 ehthumbs.db
 
+# Prisma build
+src/generated/
+
 # architecture
 ARCHITECTURE.md
+
+# generated
+src/generated/client
