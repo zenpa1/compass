@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params; // unwrap the Promise
+  const params = await context.params; 
   console.log("Params object:", params);
   console.log("Request URL:", req.url);
 
@@ -25,8 +25,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       data: {
         work_id: workId,
         user_id: userId,
-        application_status: "APPROVAL", // <-- new type
-      },
+        application_status: "APPROVAL", 
+      },  
     });
 
     console.log("Created application:", application);

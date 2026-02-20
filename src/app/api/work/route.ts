@@ -1,5 +1,7 @@
 import { db } from "@/lib/prisma";
+import { workapplication_application_status } from "@/generated/client";
 
+console.log(workapplication_application_status);
 type TabType = "OPEN" | "PENDING" | "ACTIVE";
 const allowedTabs: TabType[] = ["OPEN", "PENDING", "ACTIVE"];
 
@@ -32,47 +34,63 @@ export async function GET(req: Request) {
     works = await db.work.findMany({
       where: {
         is_open_pool: true,
-        work_status: "OPEN"
+        work_status: "OPEN",
+        // Logic: Exclude works where the current user already has an active application
+        workapplication: {
+          none: {
+            user_id: user.user_id,
+            application_status: {
+              in: ["PENDING", "APPROVAL", "APPROVED"] // Omit if already applied/waiting/active
+            }
+          }
+        }
       },
-      include: { project: true }
+      include: { 
+        project: true 
+      }
     });
   }
 
   else if (tab === "PENDING") {
-    const applications = await db.workapplication.findMany({
+    works = await db.work.findMany({
       where: {
-        user_id: user.user_id,
-        application_status: "PENDING"
-      },
-      include: {
-        work: {
-          include: { project: true }
+        workapplication: {
+          some: {
+            user_id: user.user_id,
+            application_status: {
+              in: ["PENDING", "APPROVAL"] // Filter for the specific statuses you want to see
+            }
+          }
         }
+      },
+      include: { 
+        project: true,
       }
     });
-
-    works = applications.map(app => app.work);
   }
-
 
   else if (tab === "ACTIVE") {
     works = await db.work.findMany({
       where: {
+        is_open_pool: false,
         work_status: {
           in: ["ASSIGNED", "REVIEW", "COMPLETED"]
         },
         workapplication: {
           some: {
             user_id: user.user_id,
-            application_status: "APPROVED" 
-          }
+            application_status: {
+              in: ["APPROVED"]
+            }
+          } 
         }
       },
-      include: {
-        project: true
+      include: { 
+        project: true,
       }
     });
   }
+
 
 
   else {

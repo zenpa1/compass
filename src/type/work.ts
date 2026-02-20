@@ -16,4 +16,10 @@ export type Work = {
     project_status: "ACTIVE" | "ARCHIVED";
     project_location: string;
   };
+  workapplication: {
+    application_id: number;
+    application_status: "PENDING" | "APPROVAL" | "APPROVED" | "REJECTED";
+    user_id: number;
+    work_id: number;
+  }[];
 };

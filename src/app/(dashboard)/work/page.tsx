@@ -20,7 +20,7 @@ export default function WorksPage() {
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("API Error:", errorText);
+        console.error("API Error: uhhh", errorText);
         throw new Error("Failed to fetch works");
       }
 
@@ -35,18 +35,19 @@ export default function WorksPage() {
   };
 
   const handleApply = async (workId: number) => {
-    console.log("Applying workId:", workId); // should log 6
+    console.log("Applying workId:", workId); 
     try {
       const res = await fetch(`/api/work/${workId}/apply`, {
         method: "POST",
       });
-      console.log("Fetch response status:", res.status); // log HTTP code
+      console.log("Fetch response status:", res.status); 
       const text = await res.text();
-      console.log("Fetch response body:", text); // log body
+      console.log("Fetch response body:", text); 
       if (!res.ok) throw new Error("Failed to apply");
     } catch (err) {
       console.error(err);
     }
+    fetchWorks();
   };
 
   const handleAccept = async (workId: number) => {

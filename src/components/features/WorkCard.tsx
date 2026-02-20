@@ -1,5 +1,6 @@
 "use client";
 
+import { workapplication_application_status } from "@prisma/client";
 import { WorkStatus } from "./WorkTabs";
 import type { Work } from "@/type/work";
 
@@ -44,14 +45,30 @@ export function WorkCard({
       </div>
       <div className="mt-2">
         {status === "OPEN" && (
-          <button onClick={() => onApply?.(work.work_id)} className="rounded-xl p-2 border-2 border-green-500 bg-green-500 text-white font-semibold w-1/2">Apply {work.work_id}</button>
+          <button onClick={() => onApply?.(work.work_id)} className="rounded-xl p-2 border-2 border-green-500 bg-green-500 text-white font-semibold w-1/2">Apply</button>
         )}
 
-        {status === "PENDING" && (
+        {status === "PENDING" && work.workapplication?.[0]?.application_status === "PENDING" && (
           <div className="flex gap-2">
-            <button onClick={() => onAccept?.(work.work_id)} className="border-2 flex-1 border-green-500 rounded-xl p-2 text-green-500 font-semibold">Accept</button>
-            <button onClick={() => onDecline?.(work.work_id)} className="border-2 flex-1 border-red-500 rounded-xl p-2 text-red-500 font-semibold">Decline</button>
+            <button 
+              onClick={() => onAccept?.(work.work_id)} 
+              className="border-2 flex-1 border-green-500 rounded-xl p-2 text-green-500 font-semibold"
+            >
+              Accept
+            </button>
+            <button 
+              onClick={() => onDecline?.(work.work_id)} 
+              className="border-2 flex-1 border-red-500 rounded-xl p-2 text-red-500 font-semibold"
+            >
+              Decline
+            </button>
           </div>
+        )}
+
+        {status === "PENDING" && work.workapplication?.[0]?.application_status === "APPROVAL" && (
+          <p className="border-2 border-gray-400 text-gray-400 rounded-xl p-2 w-1/2 text-center">
+            Awaiting Approval
+          </p>
         )}
 
         {status === "ACTIVE" && work.work_status === "ASSIGNED" && (
