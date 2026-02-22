@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/client"
   engineType = "library"
 }
 
@@ -145,6 +146,7 @@ enum work_role_category {
 
 enum workapplication_application_status {
   PENDING
+  APPROVAL
   APPROVED
   REJECTED
 }
