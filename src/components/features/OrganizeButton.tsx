@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -14,22 +14,34 @@ const progressOptions = [
   { id: "not-completed", label: "Not completed" },
 ];
 
-const tagOptions = ["Weddings", "Corporate", "Birthday", "Festivals"];
-
-export function OrganizeButton() {
+export function OrganizeButton(
+  props: {
+    refresh: (value: string[]) => Promise<void> | void;
+  }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedSort, setSelectedSort] = useState<string[]>([]);
   const [selectedProgress, setSelectedProgress] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const { refresh } = props;
 
   const toggleItem = (
     id: string,
     setFn: React.Dispatch<React.SetStateAction<string[]>>,
-  ) => {
-    setFn((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
-  };
+  ) => (
+    setFn((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+  ))
+
+  const handleFilter = () => {
+    //Buffer to make sure variables are up to date
+    setSelectedSort((prev) => prev);
+    setSelectedProgress((prev) => prev);
+
+    const filters = [...selectedSort, ...selectedProgress];
+
+    //Uses the refresh method passed down from the parent
+    //(with the optional filters parameter)
+    refresh(filters);
+    setShowModal(false);
+  }
 
   return (
     <>
@@ -123,34 +135,6 @@ export function OrganizeButton() {
                     );
                   })}
                 </div>
-
-                <p className="mt-3 text-xs font-semibold text-slate-500">
-                  Tags
-                </p>
-                <div className="mt-2 space-y-2">
-                  {tagOptions.map((tag) => {
-                    const isActive = selectedTags.includes(tag);
-
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        className="flex w-full items-center gap-2 text-left text-slate-700"
-                        onClick={() => toggleItem(tag, setSelectedTags)}
-                      >
-                        <span
-                          className={cn(
-                            "h-4 w-4 rounded-sm border",
-                            isActive
-                              ? "border-amber-500 bg-amber-500"
-                              : "border-slate-300 bg-slate-200",
-                          )}
-                        />
-                        {tag}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
             </div>
 
@@ -167,7 +151,7 @@ export function OrganizeButton() {
               <Button
                 type="button"
                 size="sm"
-                onClick={() => setShowModal(false)}
+                onClick={handleFilter}
               >
                 Confirm
               </Button>

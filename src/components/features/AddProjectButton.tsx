@@ -4,44 +4,125 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ProjectOverrideWindow } from "@/components/features/ProjectAlerts";
+import checkCreateProjectConflict, { createProject, checkProjectWorks, getProjectId,
+  deleteProject } from "@/app/(dashboard)/projects/projectDataOps";
+import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
 import { cn } from "@/lib/utils";
 
 interface AddProjectButtonProps {
   variant?: "floating" | "empty";
+  refresh: () => void;
+  openNullWindow: () => void;
+  openWorkConflictWindow: () => void;
 }
 
 export function AddProjectButton({
   variant = "floating",
+  refresh,
+  openNullWindow,
+  openWorkConflictWindow
 }: AddProjectButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [projectName, setProjectName] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const tagOptions = useMemo(
-    () => [
-      "Weddings",
-      "Corporate",
-      "Birthdays",
-      "Concerts",
-      "Christenings",
-      "Anniversary",
-      "Sports",
-      "Festivals",
-    ],
-    [],
-  );
+  const [overrideWindow, setOverrideWindow] = useState(false);
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag],
-    );
+  const resetValues = () => {
+    setProjectName("");
+    setCustomerName("");
+    setStartDate(new Date());
+    setEndDate(new Date());
+    setLocation("");
+    setDescription("");
+  }
+
+  //Occurs when the user confirms their inputs
+  const handleConfirm = async () => {
+    if(
+      projectName == "" ||
+      customerName == "" ||
+      startDate == null ||
+      endDate == null ||
+      location == ""
+    ) {
+      // Notifies the user of unfilled form values via a new window
+      openNullWindow();
+    }
+    else {
+      const name_conflict = await checkCreateProjectConflict(projectName);
+
+      //Checks if the name the user inputted is already in the database
+      if(name_conflict != null) {
+        //If the name exists, it opens a window that asks the user if they want to
+        //override the project with the new one
+        setOverrideWindow(true);
+      }
+      else {
+        createProject(
+          projectName,
+          customerName,
+          startDate,
+          endDate,
+          location,
+          description
+        );
+
+        //Resets the values in the form so that they are empty when the user
+        //opens it again
+        resetValues();
+        
+        refresh();
+        setShowModal(false);
+      }    
+    }
   };
 
-  const handleConfirm = () => {
-    setShowModal(false);
+  //Occurs when the user chooses to override their old project with the new one because of
+  //a conflict in project name
+  async function overrideProject() {
+    const existingWorks = await checkProjectWorks(projectName);
+
+    //Will not allow the old project to be overrided if it still has active works
+    if(existingWorks != null) {
+      openWorkConflictWindow;
+    }
+    else {
+      //Overrides the project by deleting the old one and creating the new project with
+      //the user's inputs
+      const projectId = await getProjectId(projectName);
+      deleteProject(projectId!);
+
+      createProject(
+          projectName,
+          customerName,
+          startDate,
+          endDate,
+          location,
+          description
+        );
+      
+      resetValues();
+      refresh();
+      setOverrideWindow(false);
+      setShowModal(false);
+    }
+  }
+
+  //Handles the date changes because they are of a different input type
+  const handleStartDateChange = (event: any) => {
+    const dateString = event.target.value;
+    if (dateString) {setStartDate(new Date(dateString));}
+  };
+
+  const handleEndDateChange = (event: any) => {
+    const dateString = event.target.value;
+    if (dateString) {setEndDate(new Date(dateString));}
   };
 
   const buttonClasses = cn(
@@ -88,20 +169,40 @@ export function AddProjectButton({
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="create-customer-name">Customer Name</Label>
+                <Input
+                  id="create-customer-name"
+                  placeholder="Enter Customer Name ..."
+                  value={customerName}
+                  onChange={(event) => setCustomerName(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>Duration</Label>
                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
                   <Input
                     placeholder="Start"
-                    value={startDate}
-                    onChange={(event) => setStartDate(event.target.value)}
+                    type="Date"
+                    value={toISODate(startDate)}
+                    onChange={handleStartDateChange}
                   />
                   <span className="text-xs text-slate-500">to</span>
                   <Input
                     placeholder="End"
-                    value={endDate}
-                    onChange={(event) => setEndDate(event.target.value)}
+                    type="Date"
+                    value={toISODate(endDate)}
+                    onChange={handleEndDateChange}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-location-name">Location</Label>
+                <Input
+                  id="create-location-name"
+                  placeholder="Enter Location ..."
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="create-project-description">Description</Label>
@@ -112,30 +213,6 @@ export function AddProjectButton({
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>Tags</Label>
-                <div className="flex flex-wrap gap-2">
-                  {tagOptions.map((tag) => {
-                    const isActive = selectedTags.includes(tag);
-
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => toggleTag(tag)}
-                        className={cn(
-                          "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                          isActive
-                            ? "bg-rose-300 text-rose-900"
-                            : "bg-slate-200 text-slate-600",
-                        )}
-                      >
-                        {tag}
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
@@ -152,6 +229,14 @@ export function AddProjectButton({
               </Button>
             </div>
           </div>
+
+          {/* Override window that shows up when the inputted project name already
+          exists the database */}
+          <ProjectOverrideWindow
+            onClose = {() => setOverrideWindow(false)}
+            open = {overrideWindow}
+            override = {overrideProject}
+          />
         </div>
       ) : null}
     </>
