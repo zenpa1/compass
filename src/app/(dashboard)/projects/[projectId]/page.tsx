@@ -1,5 +1,8 @@
 import { db } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
+import { AddWorkButton } from "@/components/features/AddWorkButton";
+import { WorkRowActions } from "@/components/features/WorkRowActions";
+import { ProjectHeaderActions } from "@/components/features/ProjectHeaderActions";
 
 interface ProjectDetailPageProps {
   params: { projectId: string };
@@ -126,17 +129,7 @@ export default async function ProjectDetailPage({
             {title}
           </h2>
           <div className="h-px flex-1 bg-slate-300" />
-          <button
-            type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
-            aria-label="Project actions"
-          >
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-              <circle cx="12" cy="5" r="1.8" />
-              <circle cx="12" cy="12" r="1.8" />
-              <circle cx="12" cy="19" r="1.8" />
-            </svg>
-          </button>
+          <ProjectHeaderActions projectName={title} />
         </div>
 
         <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-4">
@@ -319,21 +312,7 @@ export default async function ProjectDetailPage({
                       >
                         {row.action}
                       </button>
-                      <button
-                        type="button"
-                        className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
-                        aria-label="Work actions"
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="h-4 w-4"
-                          fill="currentColor"
-                        >
-                          <circle cx="12" cy="5" r="1.8" />
-                          <circle cx="12" cy="12" r="1.8" />
-                          <circle cx="12" cy="19" r="1.8" />
-                        </svg>
-                      </button>
+                      <WorkRowActions />
                     </div>
                   </td>
                 </tr>
@@ -342,9 +321,7 @@ export default async function ProjectDetailPage({
           </table>
         </div>
 
-        <Button className="h-9 w-full rounded-md bg-slate-900 text-sm font-semibold uppercase tracking-wide text-white hover:bg-slate-800">
-          + Add Work
-        </Button>
+        <AddWorkButton />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { SimpleDialogProps } from "@/app/(dashboard)/projects/projectDataOps";
-import { Dialog, DialogTitle, DialogContent } from '@mui/material/';
+import { Dialog, DialogTitle, DialogContent } from "@mui/material";
 import { Button } from "@/components/ui/button";
 
 //================================================
@@ -22,7 +22,7 @@ export default function ProjectNullValuesWindow(props: SimpleDialogProps) {
 }
 
 //================================================
-// Window for informing the user of a conflicting 
+// Window for informing the user of a conflicting
 // project name (and if they want to override it)
 export function ProjectOverrideWindow(props: {
   open: boolean;
