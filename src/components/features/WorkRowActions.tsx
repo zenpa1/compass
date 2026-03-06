@@ -16,7 +16,10 @@ export function WorkRowActions() {
   const [setToTba, setSetToTba] = useState(false);
   const [publishToOpenPool, setPublishToOpenPool] = useState(false);
 
-  const openEditModal = () => {
+  const openEditModal = (event?: React.MouseEvent<HTMLButtonElement>) => {
+    (
+      event?.currentTarget?.closest("details") as HTMLDetailsElement | null
+    )?.removeAttribute("open");
     detailsRef.current?.removeAttribute("open");
     setShowEditModal(true);
   };
@@ -56,7 +59,7 @@ export function WorkRowActions() {
           <button
             type="button"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
-            onClick={openEditModal}
+            onClick={(event) => openEditModal(event)}
           >
             <svg
               viewBox="0 0 24 24"
