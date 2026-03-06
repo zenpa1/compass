@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { SidebarLogoutButton } from "@/components/features/SidebarLogoutButton";
 
@@ -7,6 +10,10 @@ export default function EmployeeLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isOpenWork = pathname === "/employee/open-work";
+  const isPersonalTasks = pathname === "/employee/personal-tasks";
+
   return (
     <div className="flex h-screen bg-slate-50">
       <aside className="w-20 bg-slate-900 text-slate-300">
@@ -18,7 +25,11 @@ export default function EmployeeLayout({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-12 w-full text-amber-400 hover:bg-slate-800 hover:text-amber-300"
+                className={`h-12 w-full hover:bg-slate-800 ${
+                  isOpenWork
+                    ? "text-amber-400 hover:text-amber-300"
+                    : "hover:text-white"
+                }`}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -37,25 +48,31 @@ export default function EmployeeLayout({
               </Button>
             </Link>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-12 w-full hover:bg-slate-800 hover:text-white"
-              aria-label="Completed Work"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="size-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <Link href="/employee/personal-tasks" aria-label="Personal Tasks">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-12 w-full hover:bg-slate-800 ${
+                  isPersonalTasks
+                    ? "text-amber-400 hover:text-amber-300"
+                    : "hover:text-white"
+                }`}
+                aria-label="Personal Tasks"
               >
-                <circle cx="12" cy="12" r="9" />
-                <path d="m8 12 2.5 2.5L16 9" />
-              </svg>
-            </Button>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="m8 12 2.5 2.5L16 9" />
+                </svg>
+              </Button>
+            </Link>
 
             <Button
               variant="ghost"
