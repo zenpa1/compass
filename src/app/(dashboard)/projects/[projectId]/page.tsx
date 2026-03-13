@@ -3,6 +3,10 @@ import { Button } from "@/components/ui/button";
 import { AddWorkButton } from "@/components/features/AddWorkButton";
 import { WorkRowActions } from "@/components/features/WorkRowActions";
 import { ProjectHeaderActions } from "@/components/features/ProjectHeaderActions";
+import { ViewApplicationsButton } from "@/components/features/ViewApplicationsButton";
+import { AssignPersonButton } from "@/components/features/AssignPersonButton";
+import { MarkCompleteWorkButton } from "@/components/features/MarkCompleteWorkButton";
+import { CancelRequestButton } from "@/components/features/CancelRequestButton";
 
 interface ProjectDetailPageProps {
   params: { projectId: string };
@@ -304,14 +308,32 @@ export default async function ProjectDetailPage({
                   </td>
                   <td className="px-3 py-1">
                     <div className="flex items-center justify-between gap-2">
-                      <button
-                        type="button"
-                        className={`h-7 rounded px-2 text-xs font-semibold ${actionButtonClass(
-                          row.actionTone,
-                        )}`}
-                      >
-                        {row.action}
-                      </button>
+                      {row.action.startsWith("View Application") ? (
+                        <ViewApplicationsButton label={row.action} />
+                      ) : row.action.startsWith("Cancel Request") ? (
+                        <CancelRequestButton initialLabel={row.action} />
+                      ) : row.action.startsWith("View and Assign") ||
+                        row.action.startsWith("Change Assignee") ||
+                        row.action.startsWith("Assign Employee") ? (
+                        <AssignPersonButton
+                          label={row.action}
+                          tone={row.actionTone}
+                        />
+                      ) : row.action.startsWith("Mark Complete") ? (
+                        <MarkCompleteWorkButton
+                          label={row.action}
+                          tone={row.actionTone}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          className={`h-7 rounded px-2 text-xs font-semibold ${actionButtonClass(
+                            row.actionTone,
+                          )}`}
+                        >
+                          {row.action}
+                        </button>
+                      )}
                       <WorkRowActions />
                     </div>
                   </td>
