@@ -2,14 +2,23 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Project, deleteProject, getProjectWorks } 
+  from "@/app/(dashboard)/projects/projectDataOps";
+import { useRouter } from "next/navigation";
 
 interface ProjectHeaderActionsProps {
-  projectName: string;
+  project: Project;
+  refresh: () => void;
+  openWorkConflictWindow: () => void;
 }
 
 export function ProjectHeaderActions({
-  projectName,
+  project,
+  refresh,
+  openWorkConflictWindow
 }: ProjectHeaderActionsProps) {
+  const router = useRouter();
+
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
   const [showMarkCompleteConfirm, setShowMarkCompleteConfirm] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
@@ -40,9 +49,19 @@ export function ProjectHeaderActions({
     setShowArchiveConfirm(false);
   };
 
-  const handleDeleteConfirm = () => {
-    // Frontend-only interaction for now; backend delete will be added later.
-    setShowDeleteConfirm(false);
+  const handleDeleteConfirm = async () => {
+    const works = await getProjectWorks(project.project_name);
+    
+    //Cannot delete project if it has active works
+    if (works != null) {
+      openWorkConflictWindow();
+    } else {
+      deleteProject(project.project_id);
+      setShowDeleteConfirm(false);
+      router.push(`/projects`);
+      setTimeout(() => {}, 1000);
+      router.refresh();
+    }
   };
 
   return (
@@ -139,7 +158,7 @@ export function ProjectHeaderActions({
               Mark Complete
             </h3>
             <p className="mt-2 text-sm text-slate-600">
-              Do you want to mark "{projectName}" as complete?
+              Do you want to mark "{project.project_name}" as complete?
             </p>
             <div className="mt-5 flex justify-center gap-3">
               <Button
@@ -175,7 +194,7 @@ export function ProjectHeaderActions({
               Archive Project
             </h3>
             <p className="mt-2 text-sm text-slate-600">
-              Do you want to archive "{projectName}"?
+              Do you want to archive "{project.project_name}"?
             </p>
             <div className="mt-5 flex justify-center gap-3">
               <Button

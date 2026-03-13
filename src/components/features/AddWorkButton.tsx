@@ -3,6 +3,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { createWork } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
+import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
+import DatePicker from "react-datepicker";
+
+interface AddWorkButtonProps {
+  projectId: number
+  refresh: () => void;
+  openNullWindow: () => void;
+}
 
 const roleOptions = [
   "Main Photographer",
@@ -14,23 +23,76 @@ const roleOptions = [
   "Photoman",
 ];
 
-export function AddWorkButton() {
+export function AddWorkButton(
+  {projectId, refresh, openNullWindow}: AddWorkButtonProps
+) {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState(roleOptions[0]);
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
-  const [salary, setSalary] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [date, setDate] = useState(new Date());
+  const [salary, setSalary] = useState(0.0);
+  const [startTime, setStartTime] = useState(new Date());
+  const [endTime, setEndTime] = useState(new Date());
   const [setToTba, setSetToTba] = useState(false);
   const [publishToOpenPool, setPublishToOpenPool] = useState(false);
 
-  const closeModal = () => setOpen(false);
+  const closeModal = () => {resetValues(); setOpen(false);}
+
+  const resetValues = () => {
+    setRole("");
+    setDescription(roleOptions[0]);
+    setDate(new Date());
+    setSalary(0.0);
+    setStartTime(new Date());
+    setEndTime(new Date());
+    setPublishToOpenPool(true);
+    setSetToTba(false);
+  }
 
   const handleConfirm = () => {
-    // Frontend-only interaction for now; backend wiring will be added later.
-    closeModal();
+    if(
+      description == "" ||
+      date == null 
+    ) {
+      // Notifies the user of unfilled form values via a new window
+      openNullWindow();
+    }
+    else {
+      createWork(
+        projectId,
+        role,
+        getCategory(),
+        salary,
+        publishToOpenPool,
+        description,
+        date,
+        startTime,
+        endTime,
+        (publishToOpenPool ? "OPEN" : "PENDING")
+      );
+
+      //Resets the values in the form so that they are empty when the user
+      //opens it again
+      resetValues();
+        
+      refresh();
+      closeModal();   
+    }
   };
+
+  const handleStartDateChange = (event: any) => {
+    const dateString = event.target.value;
+    if (dateString) {setDate(new Date(dateString));}
+  };
+
+  const getCategory = () => {
+    if(role == roleOptions[0] || role == roleOptions[6]) return "PHOTO"
+    else if(role == roleOptions[1]) return "VIDEO"
+    else if(role == roleOptions[2] || role == roleOptions[3] || role == roleOptions[4]) 
+      return "ASSISTANT"
+    else if(role == roleOptions[5]) return "EDITOR"
+    return "ANY"
+  }
 
   return (
     <>
@@ -100,8 +162,9 @@ export function AddWorkButton() {
                     Date:
                   </span>
                   <Input
-                    value={date}
-                    onChange={(event) => setDate(event.target.value)}
+                    type="date"
+                    value={toISODate(date)}
+                    onChange={handleStartDateChange}
                     placeholder="dd/mm/yy"
                     className="h-9 border-slate-300 px-3 text-sm"
                   />
@@ -111,8 +174,9 @@ export function AddWorkButton() {
                     Salary:
                   </span>
                   <Input
+                    type="number" min="0" step=".01"
                     value={salary}
-                    onChange={(event) => setSalary(event.target.value)}
+                    onChange={(event) => setSalary(parseFloat(event.target.value))}
                     placeholder="Enter salary in pesos"
                     className="h-9 border-slate-300 px-3 text-sm"
                   />
@@ -124,22 +188,28 @@ export function AddWorkButton() {
                   <span className="text-sm font-semibold text-slate-900">
                     Start Time:
                   </span>
-                  <Input
-                    value={startTime}
-                    onChange={(event) => setStartTime(event.target.value)}
-                    placeholder="00:00 AM/PM"
-                    className="h-9 border-slate-300 px-3 text-sm"
+                  <DatePicker
+                    selected={startTime}
+                    onChange={(e: Date | null) => setStartTime(e!)}
+                    showTimeSelectOnly
+                    showPopperArrow={false}
+                    showTimeCaption={false}
+                    dateFormat="h:mm aa" // This enforces the "00:00 AM/PM" format
+                    className="border p-2 rounded-md"
                   />
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-slate-900">
                     End Time:
                   </span>
-                  <Input
-                    value={endTime}
-                    onChange={(event) => setEndTime(event.target.value)}
-                    placeholder="00:00 AM/PM"
-                    className="h-9 border-slate-300 px-3 text-sm"
+                  <DatePicker
+                    selected={endTime}
+                    onChange={(e: Date | null) => setEndTime(e!)}
+                    showTimeSelectOnly
+                    showPopperArrow={false}
+                    showTimeCaption={false}
+                    dateFormat="h:mm aa" // This enforces the "00:00 AM/PM" format
+                    className="border p-2 rounded-md"
                   />
                 </div>
               </div>

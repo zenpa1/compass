@@ -48,7 +48,8 @@ export function ProjectOverrideWindow(props: {
 }
 
 //================================================
-//Window for informing the user of blank fields
+//Window for informing the user if there are active
+//works in the project
 export function ProjectWorksExistWindow(props: SimpleDialogProps) {
   const { onClose, open } = props;
 
@@ -61,6 +62,26 @@ export function ProjectWorksExistWindow(props: SimpleDialogProps) {
       <DialogTitle>Cannot delete project.</DialogTitle>
       <DialogContent>
         <p>There are still active works assigned to the project.</p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+//================================================
+//Window for informing the user if the work is
+//active
+export function IsActiveWorkWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Cannot delete work.</DialogTitle>
+      <DialogContent>
+        <p>The work is still active or being reviewed.</p>
       </DialogContent>
     </Dialog>
   );

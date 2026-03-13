@@ -3,18 +3,50 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
+import DatePicker from "react-datepicker";
+import { editWork, isWorkActive, deleteWork } 
+  from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 
-export function WorkRowActions() {
+interface WorkRowActionsProps {
+  projectId: number;
+  workId: number;
+  oldDescription: string;
+  oldDate: Date;
+  oldSalary: number;
+  oldStartTime: Date | null;
+  oldEndTime: Date | null;
+  oldSetToTba: boolean;
+  oldPublishToOpenPool: boolean,
+  openNullWindow: () => void;
+  openActiveWindow: () => void;
+  refresh: () => void;
+}
+
+export function WorkRowActions({
+  projectId,
+  workId,
+  oldDescription,
+  oldDate,
+  oldSalary,
+  oldStartTime,
+  oldEndTime,
+  oldSetToTba,
+  oldPublishToOpenPool,
+  openNullWindow,
+  openActiveWindow,
+  refresh
+}: WorkRowActionsProps) {
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
-  const [salary, setSalary] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [setToTba, setSetToTba] = useState(false);
-  const [publishToOpenPool, setPublishToOpenPool] = useState(false);
+  const [description, setDescription] = useState(oldDescription);
+  const [date, setDate] = useState(oldDate);
+  const [salary, setSalary] = useState(oldSalary);
+  const [startTime, setStartTime] = useState(oldStartTime);
+  const [endTime, setEndTime] = useState(oldEndTime);
+  const [setToTba, setSetToTba] = useState(oldSetToTba);
+  const [publishToOpenPool, setPublishToOpenPool] = useState(oldPublishToOpenPool);
 
   const openEditModal = (event?: React.MouseEvent<HTMLButtonElement>) => {
     (
@@ -23,6 +55,31 @@ export function WorkRowActions() {
     detailsRef.current?.removeAttribute("open");
     setShowEditModal(true);
   };
+
+  const handleEdit = () => {
+    if(
+      description == "" ||
+      date == null 
+    ) {
+      // Notifies the user of unfilled form values via a new window
+      openNullWindow();
+    }
+    else {
+      editWork(
+        workId,
+        projectId,
+        salary,
+        publishToOpenPool,
+        description,
+        date,
+        startTime,
+        endTime
+      );
+            
+      refresh();
+      closeEditModal();   
+    }
+  }
 
   const closeEditModal = () => {
     setShowEditModal(false);
@@ -37,9 +94,22 @@ export function WorkRowActions() {
     setShowDeleteConfirm(false);
   };
 
-  const handleDeleteConfirm = () => {
-    // Frontend-only interaction for now; backend delete wiring will be added later.
-    setShowDeleteConfirm(false);
+  const handleDeleteConfirm = async () => {
+    const isActive = await isWorkActive(workId)
+    if(isActive) {
+      openActiveWindow();
+    }
+    else {
+      deleteWork(workId);
+
+      refresh();
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleStartDateChange = (event: any) => {
+    const dateString = event.target.value;
+    if (dateString) {setDate(new Date(dateString));}
   };
 
   return (
@@ -142,8 +212,9 @@ export function WorkRowActions() {
                     Date:
                   </span>
                   <Input
-                    value={date}
-                    onChange={(event) => setDate(event.target.value)}
+                    type="date"
+                    value={toISODate(date)}
+                    onChange={handleStartDateChange}
                     placeholder="dd/mm/yy"
                     className="h-8 border-slate-300 px-2 text-xs"
                   />
@@ -153,8 +224,9 @@ export function WorkRowActions() {
                     Salary:
                   </span>
                   <Input
+                    type="number" min="0" step=".01"
                     value={salary}
-                    onChange={(event) => setSalary(event.target.value)}
+                    onChange={(event) => setSalary(parseFloat(event.target.value))}
                     placeholder="Enter salary in pesos"
                     className="h-8 border-slate-300 px-2 text-xs"
                   />
@@ -166,22 +238,28 @@ export function WorkRowActions() {
                   <span className="text-sm font-semibold text-slate-900">
                     Start Time:
                   </span>
-                  <Input
-                    value={startTime}
-                    onChange={(event) => setStartTime(event.target.value)}
-                    placeholder="00:00 AM/PM"
-                    className="h-8 border-slate-300 px-2 text-xs"
+                  <DatePicker
+                    selected={startTime}
+                    onChange={(e: Date | null) => setStartTime(e!)}
+                    showTimeSelectOnly
+                    showPopperArrow={false}
+                    showTimeCaption={false}
+                    dateFormat="h:mm aa" // This enforces the "00:00 AM/PM" format
+                    className="border p-2 rounded-md w-full"
                   />
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-slate-900">
                     End Time:
                   </span>
-                  <Input
-                    value={endTime}
-                    onChange={(event) => setEndTime(event.target.value)}
-                    placeholder="00:00 AM/PM"
-                    className="h-8 border-slate-300 px-2 text-xs"
+                  <DatePicker
+                    selected={endTime}
+                    onChange={(e: Date | null) => setEndTime(e!)}
+                    showTimeSelectOnly
+                    showPopperArrow={false}
+                    showTimeCaption={false}
+                    dateFormat="h:mm aa" // This enforces the "00:00 AM/PM" format
+                    className="border p-2 rounded-md w-full"
                   />
                 </div>
               </div>
@@ -213,7 +291,7 @@ export function WorkRowActions() {
                 <Button
                   type="button"
                   size="sm"
-                  onClick={closeEditModal}
+                  onClick={handleEdit}
                   className="min-w-28 bg-slate-800 text-sm font-semibold text-white hover:bg-slate-700"
                 >
                   CONTINUE
