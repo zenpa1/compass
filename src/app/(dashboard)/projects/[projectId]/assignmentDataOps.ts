@@ -36,6 +36,26 @@ export interface Assignment {
 
 function getRole(description: string) {
   const roles = [] as category[];
+  
+  const cleanDesc = description.trim().toLowerCase();
+
+  if (cleanDesc.includes("2nd photographer") || cleanDesc.includes("2nd videographer")) {
+    roles.push("ASSISTANT");
+  } 
+  else if (cleanDesc.includes("photo")) {
+    roles.push("PHOTO");
+  } 
+  else if (cleanDesc.includes("video") && !cleanDesc.includes("editor")) {
+    roles.push("VIDEO");
+  } 
+  else if (cleanDesc.includes("editor")) {
+    roles.push("EDITOR");
+  }
+
+  roles.push("ANY");
+  
+  return roles;
+  /*const roles = [] as category[];
 
   switch(description) {
     case "2nd Photographer":
@@ -56,7 +76,7 @@ function getRole(description: string) {
   }
 
   roles.push("ANY")
-  return roles;
+  return roles;*/
 }
 
 export async function getAssignment(work_id: number) {
@@ -97,32 +117,63 @@ export async function getAvailableAssignees(work: Work) {
 export async function getRecommendedAssignees(work: Work, role: string) {
   const label = getRole(role);
 
+  //scheduling conflict checks
+  const conflictConditions: any[] = [
+    { work_id: work.work_id }
+  ];
+
+  if (work.work_start_date) {
+    conflictConditions.push({
+      work: { work_start_date: work.work_start_date }
+    });
+  }
+
   const recommended = await db.userprofile.findMany({
     where: {
       user: {
-        assignment: {
-          none: { 
-            work_id: work.work_id
-          }
-        }
-      }
+        assignment: { none: { OR: conflictConditions } }
+      },
+      OR: [
+        { primary_role: { in: label } },
+        { secondary_role: { in: label } }
+      ]
     },
     orderBy: { reliability_score: "desc" },
     include: { user: true },
-    take: 3
   });
 
-  const assignees = recommended.map((recommended) => ({
-    ...recommended,
-    reliability_score: Number(recommended.reliability_score),
-  }));
+  //WEIGHTED SCORING ENGINE
+  const gradedAssignees = recommended.map((profile) => {
+    const baseScore = profile.reliability_score.toNumber();
+    let matchBonus = 0;
 
-  const assigneesFinal = assignees.map((assignee) => {
-    return {
-      userProfile: assignee,
-      user: assignee.user
+    //if primary role is in the required skills array, give them +10
+    if (label.includes(profile.primary_role)) {
+      matchBonus = 10;
     }
-  })
+
+    return {
+      userProfile: {
+        ...profile,
+        reliability_score: baseScore 
+      },
+      user: profile.user,
+      finalMatchScore: baseScore + matchBonus //calculate the final score
+    };
+  });
+
+  //sort by the new Final Match Score 
+  const sortedAssignees = gradedAssignees.sort((a, b) => b.finalMatchScore - a.finalMatchScore);
+
+  //slice the array to only keep the top 3, clean up object for the frontend
+  const assigneesFinal = sortedAssignees.slice(0, 3).map((assignee) => {
+    return {
+      userProfile: assignee.userProfile,
+      user: assignee.user,
+      //pass the match score to the frontend(optional)
+      matchScore: assignee.finalMatchScore 
+    }
+  });
 
   return assigneesFinal;
 }
