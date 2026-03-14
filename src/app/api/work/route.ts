@@ -46,7 +46,8 @@ export async function GET(req: Request) {
         }
       },
       include: { 
-        project: true 
+        project: true,
+        workapplication: true
       }
     });
   }
@@ -65,6 +66,7 @@ export async function GET(req: Request) {
       },
       include: { 
         project: true,
+        workapplication: true
       }
     });
   }
@@ -87,11 +89,10 @@ export async function GET(req: Request) {
       },
       include: { 
         project: true,
+        workapplication: true
       }
     });
   }
-
-
 
   else {
     return new Response(JSON.stringify({ error: "Invalid tab" }), { status: 400 });

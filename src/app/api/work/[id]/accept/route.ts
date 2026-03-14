@@ -9,11 +9,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   if (!workId) return new NextResponse("Invalid work ID", { status: 400 });
 
   try {
-    // 1. We use a transaction to ensure both updates happen, or neither happens
     await db.$transaction(async (tx) => {
       
-      // 2. Update the Application status for this specific user/work combo
-      // We use updateMany because we don't have the unique 'application_id' handy
       await tx.workapplication.updateMany({
         where: {
           work_id: workId,
