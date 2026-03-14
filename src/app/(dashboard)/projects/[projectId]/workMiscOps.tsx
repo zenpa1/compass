@@ -19,12 +19,14 @@ export function toISOTime(date: Date) {
     return `${hours}:${minutes}`;
 }
 
+ //Returns the assignee to be shown in the work table
  export async function printAssignee(work: Work) {
     const assignee =  await getAssignee(work.work_id);
     if(assignee == null) { return "NONE" }
     else { return assignee?.full_name };
   }
 
+ //Returns the status to be shown in the work table
  export async function printStatus(work: Work) {
     switch(work.work_status) {
       case "PENDING":
@@ -53,6 +55,7 @@ export function toISOTime(date: Date) {
     }
   }
 
+ //Returns the color of the action button for the corresponding work in the work table
  export function printActionTone(status: string) {
     switch(status) {
       case "⚠ UNASSIGNED":
@@ -71,6 +74,7 @@ export function toISOTime(date: Date) {
     }
   }
 
+ //Returns the text of the action  for the corresponding work in the work table
  export function printAction(status: string) {
     switch(status) {
       case "⚠ UNASSIGNED":

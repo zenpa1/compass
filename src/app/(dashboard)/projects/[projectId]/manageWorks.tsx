@@ -1,27 +1,22 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import { AddWorkButton } from "@/components/features/AddWorkButton";
 import { ProjectHeaderActions } from "@/components/features/ProjectHeaderActions";
+import { ViewApplicationsButton } from "@/components/features/ViewApplicationsButton";
+import { AssignPersonButton } from "@/components/features/AssignPersonButton";
+import { MarkCompleteWorkButton } from "@/components/features/MarkCompleteWorkButton";
+import { CancelRequestButton } from "@/components/features/CancelRequestButton";
 import { Project } from "@/app/(dashboard)/projects/projectDataOps";
-import { Work, getEnrichedWorks, cancelRequest, markWorkAsComplete } 
+import { Work, getEnrichedWorks } 
   from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import toShortHours, { printAction, printActionTone } 
   from "@/app/(dashboard)/projects/[projectId]/workMiscOps";
 import ProjectNullValuesWindow, { IsActiveWorkWindow, ProjectWorksExistWindow }
   from "@/components/features/ProjectAlerts";
 import { WorkRowActions } from "@/components/features/WorkRowActions";
-import WorkCancelRequest, { WorkMarkComplete } from "@/components/features/WorkActions";
-import { RotateCcwKey } from "lucide-react";
-import router from "@/app/(auth)/routes/auth";
-
-interface ManageWorksProps {
-    project: Project,
-    enrichedWorks: enrichedWorks[],
-    remainingDays: number,
-    missingWorks: number
-}
+import { UserProfile, User, Assignment } 
+  from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 
 function actionButtonClass(actionTone: "amber" | "blue" | "red" | "green") {
   if (actionTone === "amber") {
@@ -39,10 +34,26 @@ function actionButtonClass(actionTone: "amber" | "blue" | "red" | "green") {
   return "bg-red-500 text-white hover:bg-red-600";
 }
 
+interface ManageWorksProps {
+    project: Project,
+    enrichedWorks: enrichedWorks[],
+    remainingDays: number,
+    missingWorks: number
+}
+
+type Assignee = {
+  userProfile: UserProfile;
+  user: User;
+}
+
 type enrichedWorks = {
   work: Work;
   printedAssignee: string;
   printedStatus: string;
+  availableAssignees: Assignee[];
+  recommendedAssignees: Assignee[];
+  applications: Assignee[];
+  assignment: Assignment;
 };
 
 export default function ManageWorksPage({
@@ -52,44 +63,49 @@ export default function ManageWorksPage({
   missingWorks
 }: ManageWorksProps) {
   
-  const printActionButton = (work: Work, status: string) => {
+  const printActionButton = (
+    work: Work, 
+    status: string,
+    available: Assignee[],
+    recommended: Assignee[],
+    applications: Assignee[],
+    assignment: Assignment
+  ) => {
     const actionTone = printActionTone(status);
-    const actions = returnAction(work, status)
+    const printedAction = printAction(status);
 
     return (<div key={work.work_id} className="flex items-center justify-between gap-2">
-      {(status != "🎉 COMPLETED") ?
-      (<button
-        type="button"
-        className={`h-7 rounded px-2 text-xs font-semibold ${actionButtonClass(
-          actionTone,
-        )}`}
-        onClick={actions!}
-      >
-        {printAction(status)}
-      </button>
-      ) : null}
+      {status.startsWith("🌐 OPEN POOL") ? (
+        <ViewApplicationsButton 
+          workId={work.work_id}
+          refresh={refresh}
+          applications={applications}
+        />
+      ) : status.startsWith("⌛ REQUEST SENT") ? (
+        <CancelRequestButton initialLabel={printedAction} refresh={refresh} work={work} />
+      ) : status.startsWith("⚠ WITHDRAWN") ||
+          status.startsWith("✅ ASSIGNED") ||
+          status.startsWith("⚠ UNASSIGNED") ? (
+        <AssignPersonButton
+          label={printedAction}
+          tone={actionTone}
+          availableAssignees={available}
+          recommendedAssignees={recommended}
+          assignment={assignment}
+          refresh={refresh}
+          withdrawn={status.startsWith("⚠ WITHDRAWN") ? true : false}
+        />
+      ) : status.startsWith("🔍 FOR REVIEW") ? (
+        <MarkCompleteWorkButton
+          label={printedAction}
+          tone={actionTone}
+          work={work}
+          refresh={refresh}
+        />
+      ) : (
+        null
+      )}
     </div>);
-  }
-
-  const returnAction = (work: Work, status: string) => {
-  switch(status) {
-      case "⚠ UNASSIGNED":
-        //return assign employee
-      case "⚠ WITHDRAWN":
-        //return view withdraw reason, then assign employee
-      case "🌐 OPEN POOL":
-        //return view open requests
-      case "⌛ REQUEST SENT":
-        return () => { setActiveWork(work); setCancelRequestWindow(true); } 
-      case "✅ ASSIGNED":
-        //return ;
-      case "🔍 FOR REVIEW":
-        return () => { setActiveWork(work); setMarkCompleteWindow(true); } 
-      case "🎉 COMPLETED":
-        //return ;
-      default:
-        //return ;
-    }
   }
 
   async function refresh(filters: string[] = []) {
@@ -101,10 +117,6 @@ export default function ManageWorksPage({
   const [nullWindow, setNullWindow] = useState(false);
   const [activeWindow, setActiveWindow] = useState(false);
   const [worksWindow, setWorksWindow] = useState(false);
-
-  const [activeWork, setActiveWork] = useState<Work | null>(null);
-  const [cancelRequestWindow, setCancelRequestWindow] = useState(false);
-  const [markCompleteWindow, setMarkCompleteWindow] = useState(false);
 
   const title = project?.project_name ?? "AdHoc Co. Christmas Party";
   const description =
@@ -238,7 +250,14 @@ export default function ManageWorksPage({
                   </td>
                   <td className="px-3 py-1">
                     <div className="flex items-center justify-between w-full">
-                    {printActionButton(row.work, row.printedStatus)}
+                    {printActionButton(
+                      row.work, 
+                      row.printedStatus,
+                      row.availableAssignees,
+                      row.recommendedAssignees,
+                      row.applications,
+                      row.assignment
+                      )}
                     <WorkRowActions
                       workId={row.work.work_id}
                       projectId={row.work.project_id}
@@ -278,28 +297,10 @@ export default function ManageWorksPage({
           onClose={() => setActiveWindow(false)}
         />
 
-        <WorkCancelRequest
-            open={cancelRequestWindow} 
-            onClose={() => setCancelRequestWindow(false)}
-            refresh={refresh}
-            cancelRequest={async () => {
-              if (activeWork) await cancelRequest(activeWork.work_id);
-            }}
-          />
-
-          <WorkMarkComplete
-            open={markCompleteWindow} 
-            onClose={() => setMarkCompleteWindow(false)}
-            refresh={refresh}
-            markComplete={async () => {
-              if (activeWork) await markWorkAsComplete(activeWork.work_id);
-            }}
-          />
-
-          <ProjectWorksExistWindow 
-            open={worksWindow}
-            onClose={() => setWorksWindow(false)}
-          />
+        <ProjectWorksExistWindow 
+          open={worksWindow}
+          onClose={() => setWorksWindow(false)}
+        />
       </div>
     </div>
   );

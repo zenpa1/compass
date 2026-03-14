@@ -6,6 +6,8 @@ import { db } from "@/lib/prisma"; // Direct DB access
 import { Decimal } from "@prisma/client/runtime/client";
 import { printAssignee, printStatus } 
   from "@/app/(dashboard)/projects/[projectId]/workMiscOps";
+import { getAvailableAssignees, getRecommendedAssignees, getAssignment, getApplications } 
+  from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 
 export interface Work {
   work_id: number;
@@ -64,9 +66,15 @@ export async function createWork(new_project_id: number, new_project_role: strin
       work_start_date: new_work_start_date,
       work_start_time: new_work_start_time,
       work_end_time: new_work_end_time,
-      work_status: new_work_status
+      work_status: new_work_status,
+    
+      assignment: {
+        create: {
+          
+        }
+      }
     }
-  })
+  });
 }
 
 export async function editWork(work_id: number, new_project_id: number,
@@ -138,11 +146,19 @@ export async function getEnrichedWorks(project_id: number) {
   const enrichedWorks = await Promise.all(works.map(async (work) => {
       const printedAssignee = await printAssignee(work);
       const printedStatus = await printStatus(work);
+      const availableAssignees = await getAvailableAssignees(work);
+      const recommendedAssignees = await getRecommendedAssignees(work, work.project_role);
+      const applications = await getApplications(work.work_id);
+      const assignment = await getAssignment(work.work_id);
       
       return {
         work: work,
         printedAssignee: printedAssignee ?? "",
-        printedStatus: printedStatus
+        printedStatus: printedStatus,
+        availableAssignees: availableAssignees,
+        recommendedAssignees: recommendedAssignees,
+        applications: applications,
+        assignment: assignment!
       };
   }));
 
@@ -161,8 +177,9 @@ export async function cancelRequest(work_id: number) {
     where: { work_id: work_id },
   });
 
-  await db.assignment.delete({
-    where: { assignment_id: assignment!.assignment_id }
+  await db.assignment.update({
+    where: { assignment_id: assignment!.assignment_id },
+    data: { user_id: null }
   });
 }
 
