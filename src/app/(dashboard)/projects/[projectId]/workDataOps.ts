@@ -9,6 +9,8 @@ import { printAssignee, printStatus }
 import { getAvailableAssignees, getRecommendedAssignees, getAssignment, getApplications } 
   from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 
+type category = "PHOTO" | "VIDEO" | "EDITOR" | "ASSISTANT" | "ANY"; 
+
 export interface Work {
   work_id: number;
   project_id: number;
@@ -82,6 +84,13 @@ export async function editWork(work_id: number, new_project_id: number,
     new_work_start_date: Date, new_work_start_time: Date | null, new_work_end_time: Date | null) {
   
     const convertSalary = Decimal(new_expected_salary);
+    const work = await getWork(work_id);
+
+    const status = (work?.work_status != "ASSIGNED" && 
+      work?.work_status != "COMPLETED" && 
+      new_is_open_pool == true) ? "OPEN" : "PENDING";
+
+    
     await db.work.update({
     where: {work_id: work_id},
     data: {
@@ -92,6 +101,7 @@ export async function editWork(work_id: number, new_project_id: number,
       work_start_date: new_work_start_date,
       work_start_time: new_work_start_time,
       work_end_time: new_work_end_time,
+      work_status: status
     }
   })
 }
@@ -113,6 +123,14 @@ export async function checkDeleteWorkConflict(work_id: number) {
 }
 
 export async function deleteWork(work_id: number) {
+  const assignment = await db.assignment.findFirst({
+    where: {work_id: work_id}
+  })
+
+  await db.assignment.delete({
+    where: { assignment_id: assignment?.assignment_id }
+  })
+
   await db.work.delete({
     where: { work_id: work_id }
   });

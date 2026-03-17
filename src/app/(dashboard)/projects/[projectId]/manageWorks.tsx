@@ -17,6 +17,8 @@ import ProjectNullValuesWindow, { IsActiveWorkWindow, ProjectWorksExistWindow }
 import { WorkRowActions } from "@/components/features/WorkRowActions";
 import { UserProfile, User, Assignment } 
   from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
+import { getRemainingDays, getProjectMissingWorks } 
+  from "@/app/(dashboard)/projects/projectDataOps";
 
 function actionButtonClass(actionTone: "amber" | "blue" | "red" | "green") {
   if (actionTone === "amber") {
@@ -37,8 +39,8 @@ function actionButtonClass(actionTone: "amber" | "blue" | "red" | "green") {
 interface ManageWorksProps {
     project: Project,
     enrichedWorks: enrichedWorks[],
-    remainingDays: number,
-    missingWorks: number
+    initialRemainingDays: number,
+    initialMissingWorks: number
 }
 
 type Assignee = {
@@ -59,8 +61,8 @@ type enrichedWorks = {
 export default function ManageWorksPage({
   project,
   enrichedWorks,
-  remainingDays,
-  missingWorks
+  initialRemainingDays,
+  initialMissingWorks
 }: ManageWorksProps) {
   
   const printActionButton = (
@@ -110,13 +112,21 @@ export default function ManageWorksPage({
 
   async function refresh(filters: string[] = []) {
       const newWorks = await getEnrichedWorks(project.project_id);
+      const newRemainingDays = await getRemainingDays(project.project_id);
+      const newMissingWorks = await getProjectMissingWorks(project.project_id);
+
       setWorks(() => newWorks);
+      setRemainingDays(newRemainingDays);
+      setMissingWorks(newMissingWorks);
   }
 
   const [works, setWorks] = useState<enrichedWorks[]>(enrichedWorks)
   const [nullWindow, setNullWindow] = useState(false);
   const [activeWindow, setActiveWindow] = useState(false);
   const [worksWindow, setWorksWindow] = useState(false);
+
+  const [remainingDays, setRemainingDays] = useState(initialRemainingDays);
+  const [missingWorks, setMissingWorks] = useState(initialMissingWorks);
 
   const title = project?.project_name ?? "AdHoc Co. Christmas Party";
   const description =
@@ -144,7 +154,7 @@ export default function ManageWorksPage({
               {remainingDays} DAY{(remainingDays==1) ? " " : "S "}LEFT
             </span>
             <span className="flex h-8 items-center justify-center rounded-full bg-amber-500 px-3 text-sm font-bold text-white">
-              {enrichedWorks.length - missingWorks}/{enrichedWorks.length} ROLES
+              {works.length - missingWorks}/{works.length} ROLES
             </span>
           </div>
 

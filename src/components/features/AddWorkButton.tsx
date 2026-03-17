@@ -39,13 +39,13 @@ export function AddWorkButton(
   const closeModal = () => {resetValues(); setOpen(false);}
 
   const resetValues = () => {
-    setRole("");
-    setDescription(roleOptions[0]);
+    setRole(roleOptions[0]);
+    setDescription("");
     setDate(new Date());
     setSalary(0.0);
     setStartTime(new Date());
     setEndTime(new Date());
-    setPublishToOpenPool(true);
+    setPublishToOpenPool(false);
     setSetToTba(false);
   }
 

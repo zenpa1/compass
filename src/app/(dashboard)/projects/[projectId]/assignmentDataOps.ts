@@ -92,7 +92,9 @@ export async function getAvailableAssignees(work: Work) {
     where: {
       user: {
         assignment: {
-          none: { work_id: work.work_id }
+          none: { 
+            work: { project_id: work.project_id }
+          }
         }
       }
     },

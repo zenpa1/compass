@@ -75,7 +75,7 @@ export function WorkRowActions({
         startTime,
         endTime
       );
-            
+         
       refresh();
       closeEditModal();   
     }
