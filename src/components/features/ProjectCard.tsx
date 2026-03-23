@@ -11,9 +11,9 @@ import {
   editProject,
   deleteProject,
   archiveProject,
-  checkProjectWorks,
+  getProjectWorks,
   checkEditProjectConflict,
-  checkProjectActiveWorks,
+  getProjectActiveWorks,
   activateProject,
 } from "@/app/(dashboard)/projects/projectDataOps";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
@@ -67,7 +67,7 @@ export function ProjectCard({
   const [overrideWindow, setOverrideWindow] = useState(false);
 
   const handleViewProject = () => {
-    router.push(`/projects/viewProject?id=${projectId}`);
+    router.push(`/projects/${projectId}`);
   };
 
   const handleStartDateChange = (event: any) => {
@@ -112,7 +112,7 @@ export function ProjectCard({
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
 
-    const project = await checkProjectWorks(name);
+    const project = await getProjectWorks(name);
 
     //Cannot delete project if it has active works
     if (project != null) {
@@ -166,7 +166,7 @@ export function ProjectCard({
   //Occurs when the user chooses to override the conflicting project with their current
   //project
   async function overrideProject() {
-    const existingWorks = await checkProjectWorks(editName);
+    const existingWorks = await getProjectWorks(editName);
     if (existingWorks != null) {
       openWorkConflictWindow();
     } else {
@@ -192,7 +192,7 @@ export function ProjectCard({
 
   //Occurs when the user wants to archive a project
   const handleArchiveConfirm = async () => {
-    const project = await checkProjectActiveWorks(projectId as number);
+    const project = await getProjectActiveWorks(projectId as number);
 
     //Project cannot be archived if it has active works
     if (project != null) {
