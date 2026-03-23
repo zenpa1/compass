@@ -1,6 +1,5 @@
 "use client";
 
-import { workapplication_application_status } from "@prisma/client";
 import { WorkStatus } from "./WorkTabs";
 import type { Work } from "@/type/work";
 
