@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProjectOverrideWindow } from "@/components/features/ProjectAlerts";
-import checkCreateProjectConflict, { createProject, checkProjectWorks, getProjectId,
+import checkCreateProjectConflict, { createProject, getProjectWorks, getProjectId,
   deleteProject } from "@/app/(dashboard)/projects/projectDataOps";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,7 @@ export function AddProjectButton({
   //Occurs when the user chooses to override their old project with the new one because of
   //a conflict in project name
   async function overrideProject() {
-    const existingWorks = await checkProjectWorks(projectName);
+    const existingWorks = await getProjectWorks(projectName);
 
     //Will not allow the old project to be overrided if it still has active works
     if(existingWorks != null) {
@@ -220,7 +220,7 @@ export function AddProjectButton({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setShowModal(false)}
+                onClick={() => {resetValues(); setShowModal(false);}}
               >
                 Cancel
               </Button>

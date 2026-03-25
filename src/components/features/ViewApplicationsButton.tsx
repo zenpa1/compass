@@ -2,34 +2,20 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { UserProfile, User, Assignment, acceptApplication } 
+  from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 
-type Applicant = {
-  id: number;
-  name: string;
-  specialties: string[];
-};
+type Assignee = {
+  userProfile: UserProfile;
+  user: User;
+}
 
 interface ViewApplicationsButtonProps {
   label?: string;
+  workId: number;
+  refresh: () => void;
+  applications: Assignee[];
 }
-
-const mockApplicants: Applicant[] = [
-  {
-    id: 1,
-    name: "Ariety",
-    specialties: ["Photo", "Video"],
-  },
-  {
-    id: 2,
-    name: "Jules",
-    specialties: ["Photo"],
-  },
-  {
-    id: 3,
-    name: "Mika",
-    specialties: ["Video", "Editing"],
-  },
-];
 
 function getInitials(name: string) {
   return name
@@ -40,17 +26,28 @@ function getInitials(name: string) {
     .join("");
 }
 
-export function ViewApplicationsButton({ label }: ViewApplicationsButtonProps) {
+export function ViewApplicationsButton({ 
+  label,
+  workId,
+  refresh,
+  applications
+}: ViewApplicationsButtonProps) {
   const [showModal, setShowModal] = useState(false);
 
-  const buttonText = label ?? `View Application [${mockApplicants.length}]`;
+  const buttonText = label ?? `View Application [${applications.length}]`;
+
+  async function handleAccept(user: User) {
+    acceptApplication(workId, user.user_id);
+    setShowModal(false);
+    refresh();
+  }
 
   return (
     <>
       <button
         type="button"
         className="h-7 rounded bg-red-500 px-2 text-xs font-semibold text-white hover:bg-red-600"
-        onClick={() => setShowModal(true)}
+        onClick={() => { setShowModal(true); }}
         aria-haspopup="dialog"
         aria-expanded={showModal}
       >
@@ -91,35 +88,43 @@ export function ViewApplicationsButton({ label }: ViewApplicationsButtonProps) {
 
             <div className="mt-4 max-h-[280px] overflow-y-auto pr-1">
               <div className="space-y-2.5">
-                {mockApplicants.map((applicant) => (
+                {applications.map((applicant) => (
                   <div
-                    key={applicant.id}
+                    key={applicant.user.user_id}
                     className="grid grid-cols-[auto_1fr_auto] items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-2.5"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-300 text-xs font-bold text-slate-800">
-                      {getInitials(applicant.name)}
+                      {getInitials(applicant.user.full_name!)}
                     </div>
 
                     <div>
                       <p className="text-lg font-semibold leading-none text-slate-900">
-                        {applicant.name}
+                        {applicant.user.full_name}
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        {applicant.specialties.map((specialty) => (
-                          <span
-                            key={specialty}
-                            className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-white"
-                          >
-                            {specialty}
-                          </span>
-                        ))}
+                        <span
+                          key={applicant.userProfile.primary_role}
+                          className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-white"
+                        >
+                          {applicant.userProfile.primary_role}
+                        </span>
+                        {(applicant.userProfile.secondary_role) ?
+                          (
+                            <span
+                              key={applicant.userProfile.secondary_role}
+                              className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-white"
+                            >
+                              {applicant.userProfile.secondary_role}
+                            </span>
+                          )
+                        : null}
                       </div>
                     </div>
 
                     <Button
                       type="button"
                       className="h-8 min-w-24 rounded-md bg-slate-800 px-4 text-xs font-semibold uppercase tracking-wide text-white hover:bg-slate-700"
-                      onClick={() => setShowModal(false)}
+                      onClick={() => handleAccept(applicant.user)}
                     >
                       Select
                     </Button>

@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Work, markWorkAsComplete } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 
 interface MarkCompleteWorkButtonProps {
   label: string;
   tone: "amber" | "blue" | "red" | "green";
+  work: Work;
+  refresh: () => void;
 }
 
 function triggerClassByTone(tone: "amber" | "blue" | "red" | "green") {
@@ -27,12 +30,15 @@ function triggerClassByTone(tone: "amber" | "blue" | "red" | "green") {
 export function MarkCompleteWorkButton({
   label,
   tone,
+  work,
+  refresh
 }: MarkCompleteWorkButtonProps) {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleConfirm = () => {
-    // Frontend-only interaction for now; backend completion update will be added later.
+    markWorkAsComplete(work.work_id);
     setShowConfirm(false);
+    refresh();
   };
 
   return (

@@ -1,40 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { UserProfile, User, Assignment, assignPerson, removeWithdrawal } 
+  from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
+import { Button } from "@/components/ui/button";
 
-type AssigneeCandidate = {
-  id: number;
-  name: string;
-  skills: string[];
-  isFreelancer: boolean;
-};
+type Assignee = {
+  userProfile: UserProfile;
+  user: User;
+}
 
 interface AssignPersonButtonProps {
   label: string;
   tone: "amber" | "blue" | "red" | "green";
+  availableAssignees: Assignee[],
+  recommendedAssignees: Assignee[],
+  assignment: Assignment,
+  refresh: () => void,
+  withdrawn: boolean
 }
-
-const candidates: AssigneeCandidate[] = [
-  {
-    id: 1,
-    name: "Krauss Santos",
-    skills: ["Photo", "Video"],
-    isFreelancer: false,
-  },
-  {
-    id: 2,
-    name: "Joey Santos",
-    skills: ["Photo", "Editor"],
-    isFreelancer: false,
-  },
-  {
-    id: 3,
-    name: "Francis Samson",
-    skills: ["Photo", "Video"],
-    isFreelancer: false,
-  },
-  { id: 4, name: "Ariety", skills: ["Photo", "Video"], isFreelancer: true },
-];
 
 function triggerClassByTone(tone: "amber" | "blue" | "red" | "green") {
   if (tone === "amber") {
@@ -61,37 +45,67 @@ function initialsOf(name: string) {
     .join("");
 }
 
-export function AssignPersonButton({ label, tone }: AssignPersonButtonProps) {
+export function AssignPersonButton({ 
+  label, 
+  tone,
+  availableAssignees,
+  recommendedAssignees,
+  assignment,
+  refresh,
+  withdrawn
+}: AssignPersonButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [isManualMode, setIsManualMode] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [hiredFreelancer, setHiredFreelancer] = useState(false);
+  const [withdrawnModal, setWithdrawnModal] = useState(false);
 
   const filteredManualCandidates = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
-    const baseCandidates = hiredFreelancer
-      ? candidates.filter((candidate) => candidate.isFreelancer)
-      : candidates.filter((candidate) => !candidate.isFreelancer);
+    const baseCandidates = availableAssignees;
 
     if (!query) {
       return baseCandidates;
     }
 
-    return baseCandidates.filter((candidate) =>
-      candidate.name.toLowerCase().includes(query),
+    const filtered = baseCandidates.filter((candidate) =>
+      candidate.user.full_name!.toLowerCase().includes(query),
     );
+
+    return filtered;
   }, [hiredFreelancer, searchTerm]);
 
-  const displayedCandidates = isManualMode
-    ? filteredManualCandidates
-    : candidates;
+  const displayedCandidates = !hiredFreelancer ? 
+    (isManualMode
+      ? filteredManualCandidates
+      : recommendedAssignees) :
+    null
+
+  async function handleAssign(user: User) {
+    assignPerson(assignment.assignment_id, user);
+    setShowModal(false);
+    refresh();
+  }
+
+  function handleOpen() {
+    if(withdrawn) setWithdrawnModal(true);
+    else setShowModal(true);
+  }
+
+  function handleWithdrawClose() {
+    removeWithdrawal(assignment.assignment_id);
+    setWithdrawnModal(false);
+    refresh();
+
+    setShowModal(true);
+  }
 
   return (
     <>
       <button
         type="button"
         className={`h-7 rounded px-2 text-xs font-semibold ${triggerClassByTone(tone)}`}
-        onClick={() => setShowModal(true)}
+        onClick={handleOpen}
         aria-haspopup="dialog"
         aria-expanded={showModal}
       >
@@ -206,51 +220,85 @@ export function AssignPersonButton({ label, tone }: AssignPersonButtonProps) {
 
             <div className="mt-2.5 max-h-[250px] overflow-y-auto pr-1">
               <div className="space-y-2.5">
-                {displayedCandidates.map((candidate) => (
+                {(displayedCandidates) ? displayedCandidates.map((candidate) => (
                   <div
-                    key={candidate.id}
+                    key={candidate.user.user_id}
                     className="grid grid-cols-[auto_1fr_auto] items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-2.5"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-300 text-xs font-bold text-slate-800">
-                      {initialsOf(candidate.name)}
+                      {initialsOf(candidate.user.full_name!)}
                     </div>
 
                     <div>
                       <p className="text-lg font-semibold leading-none text-slate-900">
-                        {candidate.name}
+                        {candidate.user.full_name!}
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        {candidate.skills.map((skill) => (
-                          <span
-                            key={skill}
+                        <span
+                            key={candidate.userProfile.primary_role}
                             className="inline-flex items-center rounded-full bg-black px-2 py-0.5 text-[11px] font-medium text-white"
                           >
-                            {skill}
+                          {candidate.userProfile.primary_role}
+                        </span>
+                        {(candidate.userProfile.secondary_role) ? (
+                          <span
+                            key={candidate.userProfile.secondary_role}
+                            className="inline-flex items-center rounded-full bg-black px-2 py-0.5 text-[11px] font-medium text-white"
+                          >
+                            {candidate.userProfile.secondary_role}
                           </span>
-                        ))}
+                        ) : null}
                       </div>
                     </div>
 
                     <button
                       type="button"
                       className="h-8 min-w-24 rounded-md bg-[#2b4665] px-4 text-xs font-semibold uppercase tracking-wide text-white hover:bg-[#243a54]"
-                      onClick={() => setShowModal(false)}
+                      onClick={() => {handleAssign(candidate.user)}}
                     >
                       Select
                     </button>
                   </div>
-                ))}
+                )) : null}
 
-                {displayedCandidates.length === 0 ? (
+                {(displayedCandidates) ? (displayedCandidates.length === 0 ? (
                   <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-center text-xs text-slate-500">
                     No employees found.
                   </p>
-                ) : null}
+                ) : null) : null}
               </div>
             </div>
           </div>
         </div>
       ) : null}
+
+      {withdrawnModal ? 
+        (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Cancel work request confirmation"
+          >
+            <div className="w-full max-w-sm rounded-xl bg-white p-5 text-center shadow-lg">
+              <h3 className="text-base font-semibold text-slate-900">
+                Withdrawal Reason
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">
+                {assignment.withdrawal_reason}
+              </p>
+              <div className="mt-5 flex justify-center gap-3">
+                <Button
+                  type="button" size="sm" 
+                  onClick={handleWithdrawClose}
+                >
+                  Reassign
+                </Button>
+              </div>
+            </div>
+          </div>
+        )
+      : null}
     </>
   );
 }
