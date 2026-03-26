@@ -1,6 +1,5 @@
 "use client";
 
-import { workapplication_application_status } from "@prisma/client";
 import { WorkStatus } from "./WorkTabs";
 import type { Work } from "@/type/work";
 
@@ -26,7 +25,17 @@ export function WorkCard({
   const deadline = new Date(work.project.project_end_date).toLocaleDateString();
   const start_date = new Date(work.work_start_date).toLocaleDateString();
   const start_time = new Date(work.work_start_date).toLocaleTimeString();
+  
+  console.log("status:", status);
+  console.log("applications:", work.workapplication);
+  console.log("first application:", work.workapplication?.[0]);
+  console.log("application_status:", work.workapplication?.[0]?.application_status);
 
+  console.log(
+    "REAL STATUS VALUE:",
+    work.workapplication?.[0]?.application_status,
+    typeof work.workapplication?.[0]?.application_status
+  );
   return (
     <div className="border rounded-xl p-4 shadow">
       <h3 className="text-lg font-semibold">{work.project.project_name}</h3>
