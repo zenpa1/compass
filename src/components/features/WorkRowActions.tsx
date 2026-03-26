@@ -1,12 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
 import DatePicker from "react-datepicker";
-import { editWork, isWorkActive, deleteWork } 
-  from "@/app/(dashboard)/projects/[projectId]/workDataOps";
+import {
+  editWork,
+  isWorkActive,
+  deleteWork,
+} from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 
 interface WorkRowActionsProps {
   projectId: number;
@@ -17,7 +20,7 @@ interface WorkRowActionsProps {
   oldStartTime: Date | null;
   oldEndTime: Date | null;
   oldSetToTba: boolean;
-  oldPublishToOpenPool: boolean,
+  oldPublishToOpenPool: boolean;
   openNullWindow: () => void;
   openActiveWindow: () => void;
   refresh: () => void;
@@ -35,9 +38,12 @@ export function WorkRowActions({
   oldPublishToOpenPool,
   openNullWindow,
   openActiveWindow,
-  refresh
+  refresh,
 }: WorkRowActionsProps) {
-  const detailsRef = useRef<HTMLDetailsElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [description, setDescription] = useState(oldDescription);
@@ -46,25 +52,19 @@ export function WorkRowActions({
   const [startTime, setStartTime] = useState(oldStartTime);
   const [endTime, setEndTime] = useState(oldEndTime);
   const [setToTba, setSetToTba] = useState(oldSetToTba);
-  const [publishToOpenPool, setPublishToOpenPool] = useState(oldPublishToOpenPool);
+  const [publishToOpenPool, setPublishToOpenPool] =
+    useState(oldPublishToOpenPool);
 
-  const openEditModal = (event?: React.MouseEvent<HTMLButtonElement>) => {
-    (
-      event?.currentTarget?.closest("details") as HTMLDetailsElement | null
-    )?.removeAttribute("open");
-    detailsRef.current?.removeAttribute("open");
+  const openEditModal = () => {
+    setMenuOpen(false);
     setShowEditModal(true);
   };
 
   const handleEdit = () => {
-    if(
-      description == "" ||
-      date == null 
-    ) {
+    if (description == "" || date == null) {
       // Notifies the user of unfilled form values via a new window
       openNullWindow();
-    }
-    else {
+    } else {
       editWork(
         workId,
         projectId,
@@ -73,20 +73,20 @@ export function WorkRowActions({
         description,
         date,
         startTime,
-        endTime
+        endTime,
       );
-         
+
       refresh();
-      closeEditModal();   
+      closeEditModal();
     }
-  }
+  };
 
   const closeEditModal = () => {
     setShowEditModal(false);
   };
 
   const openDeleteConfirm = () => {
-    detailsRef.current?.removeAttribute("open");
+    setMenuOpen(false);
     setShowDeleteConfirm(true);
   };
 
@@ -95,11 +95,10 @@ export function WorkRowActions({
   };
 
   const handleDeleteConfirm = async () => {
-    const isActive = await isWorkActive(workId)
-    if(isActive) {
+    const isActive = await isWorkActive(workId);
+    if (isActive) {
       openActiveWindow();
-    }
-    else {
+    } else {
       deleteWork(workId);
 
       refresh();
@@ -109,27 +108,132 @@ export function WorkRowActions({
 
   const handleStartDateChange = (event: any) => {
     const dateString = event.target.value;
-    if (dateString) {setDate(new Date(dateString));}
+    if (dateString) {
+      setDate(new Date(dateString));
+    }
   };
+
+  const positionMenu = () => {
+    const trigger = triggerRef.current;
+    if (!trigger) {
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const menuWidth = 144;
+    const menuHeight = 86;
+    const gutter = 8;
+
+    let left = rect.right + gutter;
+    if (left + menuWidth > window.innerWidth - gutter) {
+      left = rect.left - menuWidth - gutter;
+    }
+    if (left < gutter) {
+      left = gutter;
+    }
+
+    let top = rect.top;
+    if (top + menuHeight > window.innerHeight - gutter) {
+      top = window.innerHeight - menuHeight - gutter;
+    }
+    if (top < gutter) {
+      top = gutter;
+    }
+
+    setMenuPosition({ top, left });
+  };
+
+  useEffect(() => {
+    const onMenuOpenEvent = (event: Event) => {
+      const detail = (event as CustomEvent<{ workId: number }>).detail;
+      if (detail?.workId !== workId) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener(
+      "work-row-menu-open",
+      onMenuOpenEvent as EventListener,
+    );
+    return () => {
+      window.removeEventListener(
+        "work-row-menu-open",
+        onMenuOpenEvent as EventListener,
+      );
+    };
+  }, [workId]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        triggerRef.current?.contains(target) ||
+        menuRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setMenuOpen(false);
+    };
+
+    const handleReposition = () => {
+      positionMenu();
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [menuOpen]);
 
   return (
     <>
-      <details ref={detailsRef} className="group relative">
-        <summary
+      <div className="relative">
+        <button
+          ref={triggerRef}
+          type="button"
           className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
           aria-label="Open work row menu"
+          aria-expanded={menuOpen}
+          onClick={() => {
+            if (menuOpen) {
+              setMenuOpen(false);
+              return;
+            }
+
+            positionMenu();
+            window.dispatchEvent(
+              new CustomEvent("work-row-menu-open", { detail: { workId } }),
+            );
+            setMenuOpen(true);
+          }}
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
             <circle cx="12" cy="5" r="1.8" />
             <circle cx="12" cy="12" r="1.8" />
             <circle cx="12" cy="19" r="1.8" />
           </svg>
-        </summary>
-        <div className="absolute right-0 top-9 z-20 w-36 rounded-md border border-slate-200 bg-white p-1 text-sm shadow-md">
+        </button>
+      </div>
+
+      {menuOpen ? (
+        <div
+          ref={menuRef}
+          className="fixed z-40 w-36 rounded-md border border-slate-200 bg-white p-1 text-sm shadow-md"
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+        >
           <button
             type="button"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
-            onClick={(event) => openEditModal(event)}
+            onClick={openEditModal}
           >
             <svg
               viewBox="0 0 24 24"
@@ -169,7 +273,7 @@ export function WorkRowActions({
             Delete
           </button>
         </div>
-      </details>
+      ) : null}
 
       {showEditModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
@@ -224,9 +328,13 @@ export function WorkRowActions({
                     Salary:
                   </span>
                   <Input
-                    type="number" min="0" step=".01"
+                    type="number"
+                    min="0"
+                    step=".01"
                     value={salary}
-                    onChange={(event) => setSalary(parseFloat(event.target.value))}
+                    onChange={(event) =>
+                      setSalary(parseFloat(event.target.value))
+                    }
                     placeholder="Enter salary in pesos"
                     className="h-8 border-slate-300 px-2 text-xs"
                   />

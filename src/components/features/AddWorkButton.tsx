@@ -8,7 +8,7 @@ import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
 import DatePicker from "react-datepicker";
 
 interface AddWorkButtonProps {
-  projectId: number
+  projectId: number;
   refresh: () => void;
   openNullWindow: () => void;
 }
@@ -23,9 +23,11 @@ const roleOptions = [
   "Photoman",
 ];
 
-export function AddWorkButton(
-  {projectId, refresh, openNullWindow}: AddWorkButtonProps
-) {
+export function AddWorkButton({
+  projectId,
+  refresh,
+  openNullWindow,
+}: AddWorkButtonProps) {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState(roleOptions[0]);
   const [description, setDescription] = useState("");
@@ -36,7 +38,10 @@ export function AddWorkButton(
   const [setToTba, setSetToTba] = useState(false);
   const [publishToOpenPool, setPublishToOpenPool] = useState(false);
 
-  const closeModal = () => {resetValues(); setOpen(false);}
+  const closeModal = () => {
+    resetValues();
+    setOpen(false);
+  };
 
   const resetValues = () => {
     setRole(roleOptions[0]);
@@ -47,17 +52,13 @@ export function AddWorkButton(
     setEndTime(new Date());
     setPublishToOpenPool(false);
     setSetToTba(false);
-  }
+  };
 
   const handleConfirm = () => {
-    if(
-      description == "" ||
-      date == null 
-    ) {
+    if (description == "" || date == null) {
       // Notifies the user of unfilled form values via a new window
       openNullWindow();
-    }
-    else {
+    } else {
       createWork(
         projectId,
         role,
@@ -68,31 +69,37 @@ export function AddWorkButton(
         date,
         startTime,
         endTime,
-        (publishToOpenPool ? "OPEN" : "PENDING")
+        publishToOpenPool ? "OPEN" : "PENDING",
       );
 
       //Resets the values in the form so that they are empty when the user
       //opens it again
       resetValues();
-        
+
       refresh();
-      closeModal();   
+      closeModal();
     }
   };
 
   const handleStartDateChange = (event: any) => {
     const dateString = event.target.value;
-    if (dateString) {setDate(new Date(dateString));}
+    if (dateString) {
+      setDate(new Date(dateString));
+    }
   };
 
   const getCategory = () => {
-    if(role == roleOptions[0] || role == roleOptions[6]) return "PHOTO"
-    else if(role == roleOptions[1]) return "VIDEO"
-    else if(role == roleOptions[2] || role == roleOptions[3] || role == roleOptions[4]) 
-      return "ASSISTANT"
-    else if(role == roleOptions[5]) return "EDITOR"
-    return "ANY"
-  }
+    if (role == roleOptions[0] || role == roleOptions[6]) return "PHOTO";
+    else if (role == roleOptions[1]) return "VIDEO";
+    else if (
+      role == roleOptions[2] ||
+      role == roleOptions[3] ||
+      role == roleOptions[4]
+    )
+      return "ASSISTANT";
+    else if (role == roleOptions[5]) return "EDITOR";
+    return "ANY";
+  };
 
   return (
     <>
@@ -174,9 +181,13 @@ export function AddWorkButton(
                     Salary:
                   </span>
                   <Input
-                    type="number" min="0" step=".01"
+                    type="number"
+                    min="0"
+                    step=".01"
                     value={salary}
-                    onChange={(event) => setSalary(parseFloat(event.target.value))}
+                    onChange={(event) =>
+                      setSalary(parseFloat(event.target.value))
+                    }
                     placeholder="Enter salary in pesos"
                     className="h-9 border-slate-300 px-3 text-sm"
                   />

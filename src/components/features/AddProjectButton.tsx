@@ -5,8 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProjectOverrideWindow } from "@/components/features/ProjectAlerts";
-import checkCreateProjectConflict, { createProject, getProjectWorks, getProjectId,
-  deleteProject } from "@/app/(dashboard)/projects/projectDataOps";
+import checkCreateProjectConflict, {
+  createProject,
+  getProjectWorks,
+  getProjectId,
+  deleteProject,
+} from "@/app/(dashboard)/projects/projectDataOps";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +25,7 @@ export function AddProjectButton({
   variant = "floating",
   refresh,
   openNullWindow,
-  openWorkConflictWindow
+  openWorkConflictWindow,
 }: AddProjectButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [projectName, setProjectName] = useState("");
@@ -40,11 +44,11 @@ export function AddProjectButton({
     setEndDate(new Date());
     setLocation("");
     setDescription("");
-  }
+  };
 
   //Occurs when the user confirms their inputs
   const handleConfirm = async () => {
-    if(
+    if (
       projectName == "" ||
       customerName == "" ||
       startDate == null ||
@@ -53,33 +57,31 @@ export function AddProjectButton({
     ) {
       // Notifies the user of unfilled form values via a new window
       openNullWindow();
-    }
-    else {
+    } else {
       const name_conflict = await checkCreateProjectConflict(projectName);
 
       //Checks if the name the user inputted is already in the database
-      if(name_conflict != null) {
+      if (name_conflict != null) {
         //If the name exists, it opens a window that asks the user if they want to
         //override the project with the new one
         setOverrideWindow(true);
-      }
-      else {
+      } else {
         createProject(
           projectName,
           customerName,
           startDate,
           endDate,
           location,
-          description
+          description,
         );
 
         //Resets the values in the form so that they are empty when the user
         //opens it again
         resetValues();
-        
+
         refresh();
         setShowModal(false);
-      }    
+      }
     }
   };
 
@@ -89,24 +91,23 @@ export function AddProjectButton({
     const existingWorks = await getProjectWorks(projectName);
 
     //Will not allow the old project to be overrided if it still has active works
-    if(existingWorks != null) {
+    if (existingWorks != null) {
       openWorkConflictWindow;
-    }
-    else {
+    } else {
       //Overrides the project by deleting the old one and creating the new project with
       //the user's inputs
       const projectId = await getProjectId(projectName);
       deleteProject(projectId!);
 
       createProject(
-          projectName,
-          customerName,
-          startDate,
-          endDate,
-          location,
-          description
-        );
-      
+        projectName,
+        customerName,
+        startDate,
+        endDate,
+        location,
+        description,
+      );
+
       resetValues();
       refresh();
       setOverrideWindow(false);
@@ -117,18 +118,22 @@ export function AddProjectButton({
   //Handles the date changes because they are of a different input type
   const handleStartDateChange = (event: any) => {
     const dateString = event.target.value;
-    if (dateString) {setStartDate(new Date(dateString));}
+    if (dateString) {
+      setStartDate(new Date(dateString));
+    }
   };
 
   const handleEndDateChange = (event: any) => {
     const dateString = event.target.value;
-    if (dateString) {setEndDate(new Date(dateString));}
+    if (dateString) {
+      setEndDate(new Date(dateString));
+    }
   };
 
   const buttonClasses = cn(
     "relative rounded-full border",
     variant === "floating"
-      ? "fixed bottom-8 right-8 h-12 w-12 shadow-lg"
+      ? "fixed bottom-4 right-4 h-12 w-12 shadow-lg sm:bottom-8 sm:right-8"
       : "mt-4 h-16 w-16 shadow-md",
     showModal
       ? "border-slate-200 bg-white text-slate-900 ring-2 ring-amber-300/70 shadow-[0_0_22px_rgba(245,158,11,0.55)]"
@@ -154,7 +159,7 @@ export function AddProjectButton({
           aria-modal="true"
           aria-label="Create project"
         >
-          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-lg">
+          <div className="w-full max-w-lg rounded-xl bg-white p-4 shadow-lg sm:p-5">
             <h3 className="text-base font-semibold text-slate-900">
               Create Project
             </h3>
@@ -179,14 +184,16 @@ export function AddProjectButton({
               </div>
               <div className="space-y-2">
                 <Label>Duration</Label>
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_auto_1fr]">
                   <Input
                     placeholder="Start"
                     type="Date"
                     value={toISODate(startDate)}
                     onChange={handleStartDateChange}
                   />
-                  <span className="text-xs text-slate-500">to</span>
+                  <span className="hidden text-xs text-slate-500 sm:block">
+                    to
+                  </span>
                   <Input
                     placeholder="End"
                     type="Date"
@@ -215,12 +222,15 @@ export function AddProjectButton({
                 />
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {resetValues(); setShowModal(false);}}
+                onClick={() => {
+                  resetValues();
+                  setShowModal(false);
+                }}
               >
                 Cancel
               </Button>
@@ -233,9 +243,9 @@ export function AddProjectButton({
           {/* Override window that shows up when the inputted project name already
           exists the database */}
           <ProjectOverrideWindow
-            onClose = {() => setOverrideWindow(false)}
-            open = {overrideWindow}
-            override = {overrideProject}
+            onClose={() => setOverrideWindow(false)}
+            open={overrideWindow}
+            override={overrideProject}
           />
         </div>
       ) : null}

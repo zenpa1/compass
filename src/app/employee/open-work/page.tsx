@@ -193,24 +193,24 @@ export default function EmployeeOpenWorkPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <div className="flex w-full items-center gap-3 sm:gap-4">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             {selectedTab === "ACTIVE"
               ? "Active Work Details"
               : selectedTab === "PENDING"
                 ? "Your Pending Invites"
                 : "Open Work"}
           </h1>
-          <div className="h-px w-40 bg-slate-300 md:w-[450px]" />
+          <div className="hidden h-px flex-1 bg-slate-300 sm:block" />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
           <Button
             type="button"
             size="sm"
-            className={`h-8 ${tabClass(selectedTab === "OPEN")}`}
+            className={`h-8 px-3 text-xs sm:text-sm ${tabClass(selectedTab === "OPEN")}`}
             onClick={() => setSelectedTab("OPEN")}
           >
             Open Work
@@ -218,7 +218,7 @@ export default function EmployeeOpenWorkPage() {
           <Button
             type="button"
             size="sm"
-            className={`h-8 ${tabClass(selectedTab === "PENDING")}`}
+            className={`h-8 px-3 text-xs sm:text-sm ${tabClass(selectedTab === "PENDING")}`}
             onClick={() => setSelectedTab("PENDING")}
           >
             Pending Invites
@@ -226,7 +226,7 @@ export default function EmployeeOpenWorkPage() {
           <Button
             type="button"
             size="sm"
-            className={`h-8 ${tabClass(selectedTab === "ACTIVE")}`}
+            className={`h-8 px-3 text-xs sm:text-sm ${tabClass(selectedTab === "ACTIVE")}`}
             onClick={() => setSelectedTab("ACTIVE")}
           >
             Active Work
@@ -234,7 +234,7 @@ export default function EmployeeOpenWorkPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
         {filteredCards.length === 0 ? (
           <div className="col-span-full rounded-md border border-slate-300 bg-white p-6 text-sm text-slate-600 shadow-sm">
             No work found for this tab.
@@ -243,12 +243,12 @@ export default function EmployeeOpenWorkPage() {
           filteredCards.map((card) => (
             <article
               key={card.id}
-              className="rounded-md border border-slate-300 bg-white p-4 shadow-sm"
+              className="rounded-md border border-slate-300 bg-white p-3 shadow-sm sm:p-4"
             >
               {contentTab === "ACTIVE" ? (
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="text-2xl font-semibold leading-tight text-slate-900">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h2 className="text-xl font-semibold leading-tight text-slate-900 sm:text-2xl">
                       {card.title}
                     </h2>
                     <div className="flex items-center gap-3">
@@ -317,7 +317,7 @@ export default function EmployeeOpenWorkPage() {
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_180px]">
                     <div>
-                      <p className="text-4xl font-semibold text-slate-900">
+                      <p className="text-3xl font-semibold text-slate-900 sm:text-4xl">
                         P{card.rate}
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
@@ -470,18 +470,18 @@ export default function EmployeeOpenWorkPage() {
                     </div>
 
                     {contentTab === "OPEN" ? (
-                      <div className="mt-3 flex justify-end gap-2">
+                      <div className="mt-3 flex flex-wrap justify-start gap-2 md:justify-end">
                         <Button
                           type="button"
                           variant="outline"
-                          className="h-8 min-w-24 rounded-md border-rose-300 px-4 text-sm text-rose-600 hover:bg-rose-50"
+                          className="h-8 min-w-24 rounded-md border-rose-300 px-4 text-xs text-rose-600 hover:bg-rose-50 sm:text-sm"
                           onClick={() => openDeclineConfirm(card)}
                         >
                           Decline
                         </Button>
                         <Button
                           type="button"
-                          className="h-8 min-w-24 rounded-md bg-green-600 px-5 text-sm text-white hover:bg-green-500"
+                          className="h-8 min-w-24 rounded-md bg-green-600 px-5 text-xs text-white hover:bg-green-500 sm:text-sm"
                           onClick={() => openApplyConfirm(card)}
                         >
                           Apply
@@ -491,7 +491,7 @@ export default function EmployeeOpenWorkPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="mt-3 h-8 min-w-24 self-end rounded-md border-slate-300 px-4 text-sm text-slate-700"
+                        className="mt-3 h-8 min-w-24 self-start rounded-md border-slate-300 px-4 text-xs text-slate-700 sm:self-end sm:text-sm"
                       >
                         Pending
                       </Button>
@@ -499,7 +499,7 @@ export default function EmployeeOpenWorkPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="mt-3 h-8 min-w-24 self-end rounded-md border-slate-300 px-4 text-sm text-slate-700"
+                        className="mt-3 h-8 min-w-24 self-start rounded-md border-slate-300 px-4 text-xs text-slate-700 sm:self-end sm:text-sm"
                       >
                         View
                       </Button>
@@ -588,8 +588,8 @@ export default function EmployeeOpenWorkPage() {
           aria-modal="true"
           aria-label="Withdraw assignment confirmation"
         >
-          <div className="w-full max-w-lg rounded-xl bg-white p-5 text-center shadow-lg">
-            <h3 className="text-3xl font-semibold text-slate-900">
+          <div className="w-full max-w-lg rounded-xl bg-white p-4 text-center shadow-lg sm:p-5">
+            <h3 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
               Withdraw Assignment?
             </h3>
             <p className="mt-2 text-sm text-slate-600">

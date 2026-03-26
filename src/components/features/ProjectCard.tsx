@@ -446,7 +446,7 @@ export function ProjectCard({
           aria-modal="true"
           aria-label="Edit project"
         >
-          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-lg">
+          <div className="w-full max-w-lg rounded-xl bg-white p-4 shadow-lg sm:p-5">
             <h3 className="text-base font-semibold text-slate-900">
               Edit Project
             </h3>
@@ -475,14 +475,16 @@ export function ProjectCard({
               </div>
               <div className="space-y-2">
                 <Label>Duration</Label>
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_auto_1fr]">
                   <Input
                     placeholder="Start"
                     type="Date"
                     value={toISODate(editStartDate)}
                     onChange={handleStartDateChange}
                   />
-                  <span className="text-xs text-slate-500">to</span>
+                  <span className="hidden text-xs text-slate-500 sm:block">
+                    to
+                  </span>
                   <Input
                     placeholder="End"
                     type="Date"
@@ -513,7 +515,7 @@ export function ProjectCard({
                 />
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"

@@ -1,19 +1,25 @@
-'use client'
+"use client";
 
 import { useState } from "react";
 import { ProjectCard } from "@/components/features/ProjectCard"; // Your restored component
 import { OrganizeButton } from "@/components/features/OrganizeButton";
 import { AddProjectButton } from "@/components/features/AddProjectButton";
-import { Project, getProjects, getRemainingDays } from 
-  "@/app/(dashboard)/projects/projectDataOps";
-import ProjectNullValuesWindow, { ProjectWorksExistWindow } 
-    from "@/components/features/ProjectAlerts";
+import {
+  Project,
+  getProjects,
+  getRemainingDays,
+} from "@/app/(dashboard)/projects/projectDataOps";
+import ProjectNullValuesWindow, {
+  ProjectWorksExistWindow,
+} from "@/components/features/ProjectAlerts";
 
 interface ProjectListProps {
-  initialProjects: Project[]; 
+  initialProjects: Project[];
 }
 
-export default function ProjectDashboard({ initialProjects }: ProjectListProps) {
+export default function ProjectDashboard({
+  initialProjects,
+}: ProjectListProps) {
   const [projects, setProjects] = useState<Project[]>(initialProjects);
 
   //Variables for alert windows
@@ -31,14 +37,14 @@ export default function ProjectDashboard({ initialProjects }: ProjectListProps) 
   const hasProjects = projects.length > 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             Project Dashboard
           </h2>
         </div>
-        <OrganizeButton refresh={refresh}/>
+        <OrganizeButton refresh={refresh} />
       </div>
 
       {hasProjects ? (
@@ -68,7 +74,7 @@ export default function ProjectDashboard({ initialProjects }: ProjectListProps) 
       ) : (
         <div className="flex min-h-[65vh] flex-col items-center justify-center text-center">
           <p className="text-lg font-semibold text-slate-900">No Projects</p>
-          <AddProjectButton 
+          <AddProjectButton
             variant="empty"
             refresh={refresh}
             openNullWindow={() => setNullWindow(true)}
@@ -78,23 +84,25 @@ export default function ProjectDashboard({ initialProjects }: ProjectListProps) 
         </div>
       )}
 
-      {hasProjects ? <AddProjectButton 
-        refresh={refresh}
-        openNullWindow={() => setNullWindow(true)}
-        openWorkConflictWindow={() => setWorksWindow(true)}
-      /> : null}
+      {hasProjects ? (
+        <AddProjectButton
+          refresh={refresh}
+          openNullWindow={() => setNullWindow(true)}
+          openWorkConflictWindow={() => setWorksWindow(true)}
+        />
+      ) : null}
 
       {/* Window that appears if one of the required inputs is null */}
-      <ProjectNullValuesWindow 
-            open={nullWindow}
-            onClose={() => setNullWindow(false)}
-          />
+      <ProjectNullValuesWindow
+        open={nullWindow}
+        onClose={() => setNullWindow(false)}
+      />
 
       {/* Window that appears if one of the required inputs is null */}
-      <ProjectWorksExistWindow 
-            open={worksWindow}
-            onClose={() => setWorksWindow(false)}
-          />
+      <ProjectWorksExistWindow
+        open={worksWindow}
+        onClose={() => setWorksWindow(false)}
+      />
     </div>
   );
 }

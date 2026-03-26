@@ -1,54 +1,55 @@
-'use client';
-import { useState } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     const idToken = credentialResponse.credential;
 
     //clear previous errors
-    setErrorMessage('');
+    setErrorMessage("");
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: idToken }),
-      });
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: idToken }),
+      });
 
-      const data = await response.json();
+      const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok) {
         if (data.redirect === "/setup") {
-             //store temp user datafor the setup page
-             localStorage.setItem('temp_user', JSON.stringify(data.user));
+          //store temp user datafor the setup page
+          localStorage.setItem("temp_user", JSON.stringify(data.user));
         }
 
-        router.push(data.redirect); 
-
-      } else {
-        //ERROR HANDLING
-        if (data.errorType === "PRIVATE_APP") {
-          setErrorMessage("This is a private app. Your email is not authorized.");
-        } else {
-          setErrorMessage(data.message || "Login failed");
-        }
-      }
-    } catch (error) {
-      console.error("Login error: ", error);
-      setErrorMessage("Network error. Please try again.");
-    }
-  };
-//67 tung tung tung sahur
+        router.push(data.redirect);
+      } else {
+        //ERROR HANDLING
+        if (data.errorType === "PRIVATE_APP") {
+          setErrorMessage(
+            "This is a private app. Your email is not authorized.",
+          );
+        } else {
+          setErrorMessage(data.message || "Login failed");
+        }
+      }
+    } catch (error) {
+      console.error("Login error: ", error);
+      setErrorMessage("Network error. Please try again.");
+    }
+  };
+  //67 tung tung tung sahur
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-md">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-3 py-6 sm:px-4">
+      <div className="w-full max-w-md space-y-6 rounded-lg bg-white p-4 shadow-md sm:space-y-8 sm:p-6">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             The North Studio
           </h2>
           <p className="mt-2 text-sm text-gray-600">
@@ -67,7 +68,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <div className="flex justify-center mt-8">
+        <div className="mt-6 flex justify-center sm:mt-8">
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => setErrorMessage("Google Sign-In Failed")}
