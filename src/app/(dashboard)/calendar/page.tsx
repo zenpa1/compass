@@ -16,10 +16,7 @@ export default function CalendarPage() {
 
   useEffect(() => {
     async function fetchEvents() {
-      const tabParam =
-        selectedTab === "North Studio works"
-          ? "works"
-          : "tasks";
+      const tabParam = selectedTab === "North Studio works" ? "works" : "tasks";
 
       const res = await fetch(`/api/calendar?tab=${tabParam}`);
       const data = await res.json();
@@ -31,27 +28,32 @@ export default function CalendarPage() {
   }, [selectedTab]);
 
   return (
-    <div className="space-y-6">
-
+    <div className="space-y-4 sm:space-y-6">
       {/* HEADER */}
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-3xl font-bold tracking-tight">Calendar</h2>
-        <div className="flex-1 h-px bg-gray-700"></div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex w-full items-center gap-3 sm:w-auto">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Calendar
+          </h2>
+          <div className="h-px flex-1 bg-gray-700 sm:min-w-[120px]" />
+        </div>
 
-        <CalendarTabs
-          selected={selectedTab}
-          onChange={setSelectedTab}
-        />
+        <CalendarTabs selected={selectedTab} onChange={setSelectedTab} />
       </div>
 
       {/* CALENDAR */}
-      <div className="bg-white text-black p-4 rounded-lg shadow">
-        <FullCalendar
-          plugins={[dayGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          dateClick={handleDateClick}
-          events={events}
-        />
+      <div className="rounded-lg bg-white p-2 text-black shadow sm:p-4">
+        <div className="overflow-x-auto">
+          <div className="min-w-[640px] sm:min-w-0">
+            <FullCalendar
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              dateClick={handleDateClick}
+              events={events}
+              height="auto"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

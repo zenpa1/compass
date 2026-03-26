@@ -151,10 +151,10 @@ export default function PersonalTasksPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             Personal Tasks
           </h1>
         </div>
@@ -175,8 +175,8 @@ export default function PersonalTasksPage() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm">
-        <table className="w-full border-collapse text-left text-sm">
+      <div className="overflow-x-auto rounded-md border border-slate-300 bg-white shadow-sm">
+        <table className="min-w-[640px] w-full border-collapse text-left text-sm">
           <thead className="bg-white text-slate-900">
             <tr>
               <th className="w-16 border-r border-slate-200 px-3 py-2 text-sm font-medium">
@@ -304,8 +304,10 @@ export default function PersonalTasksPage() {
           aria-modal="true"
           aria-label="Edit task"
         >
-          <div className="w-full max-w-2xl rounded-xl bg-white p-5 shadow-lg">
-            <h3 className="text-3xl font-semibold text-slate-900">Edit Task</h3>
+          <div className="w-full max-w-2xl rounded-xl bg-white p-4 shadow-lg sm:p-5">
+            <h3 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
+              Edit Task
+            </h3>
 
             <div className="mt-4 space-y-4 text-sm text-slate-800">
               <input
@@ -317,7 +319,7 @@ export default function PersonalTasksPage() {
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-slate-900">Deadline</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <input
                     value={editMonth}
                     onChange={(event) => setEditMonth(event.target.value)}
@@ -353,7 +355,7 @@ export default function PersonalTasksPage() {
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-slate-900">Tags</p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {allTags.map((tag) => {
                     const isActive = selectedTags.includes(tag);
 
@@ -375,7 +377,7 @@ export default function PersonalTasksPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"

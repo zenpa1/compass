@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react";
 import { AddWorkButton } from "@/components/features/AddWorkButton";
@@ -8,17 +8,28 @@ import { AssignPersonButton } from "@/components/features/AssignPersonButton";
 import { MarkCompleteWorkButton } from "@/components/features/MarkCompleteWorkButton";
 import { CancelRequestButton } from "@/components/features/CancelRequestButton";
 import { Project } from "@/app/(dashboard)/projects/projectDataOps";
-import { Work, getEnrichedWorks } 
-  from "@/app/(dashboard)/projects/[projectId]/workDataOps";
-import toShortHours, { printAction, printActionTone } 
-  from "@/app/(dashboard)/projects/[projectId]/workMiscOps";
-import ProjectNullValuesWindow, { IsActiveWorkWindow, ProjectWorksExistWindow }
-  from "@/components/features/ProjectAlerts";
+import {
+  Work,
+  getEnrichedWorks,
+} from "@/app/(dashboard)/projects/[projectId]/workDataOps";
+import toShortHours, {
+  printAction,
+  printActionTone,
+} from "@/app/(dashboard)/projects/[projectId]/workMiscOps";
+import ProjectNullValuesWindow, {
+  IsActiveWorkWindow,
+  ProjectWorksExistWindow,
+} from "@/components/features/ProjectAlerts";
 import { WorkRowActions } from "@/components/features/WorkRowActions";
-import { UserProfile, User, Assignment } 
-  from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
-import { getRemainingDays, getProjectMissingWorks } 
-  from "@/app/(dashboard)/projects/projectDataOps";
+import {
+  UserProfile,
+  User,
+  Assignment,
+} from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
+import {
+  getRemainingDays,
+  getProjectMissingWorks,
+} from "@/app/(dashboard)/projects/projectDataOps";
 
 function actionButtonClass(actionTone: "amber" | "blue" | "red" | "green") {
   if (actionTone === "amber") {
@@ -37,16 +48,16 @@ function actionButtonClass(actionTone: "amber" | "blue" | "red" | "green") {
 }
 
 interface ManageWorksProps {
-    project: Project,
-    enrichedWorks: enrichedWorks[],
-    initialRemainingDays: number,
-    initialMissingWorks: number
+  project: Project;
+  enrichedWorks: enrichedWorks[];
+  initialRemainingDays: number;
+  initialMissingWorks: number;
 }
 
 type Assignee = {
   userProfile: UserProfile;
   user: User;
-}
+};
 
 type enrichedWorks = {
   work: Work;
@@ -62,65 +73,71 @@ export default function ManageWorksPage({
   project,
   enrichedWorks,
   initialRemainingDays,
-  initialMissingWorks
+  initialMissingWorks,
 }: ManageWorksProps) {
-  
   const printActionButton = (
-    work: Work, 
+    work: Work,
     status: string,
     available: Assignee[],
     recommended: Assignee[],
     applications: Assignee[],
-    assignment: Assignment
+    assignment: Assignment,
   ) => {
     const actionTone = printActionTone(status);
     const printedAction = printAction(status);
 
-    return (<div key={work.work_id} className="flex items-center justify-between gap-2">
-      {status.startsWith("🌐 OPEN POOL") ? (
-        <ViewApplicationsButton 
-          workId={work.work_id}
-          refresh={refresh}
-          applications={applications}
-        />
-      ) : status.startsWith("⌛ REQUEST SENT") ? (
-        <CancelRequestButton initialLabel={printedAction} refresh={refresh} work={work} />
-      ) : status.startsWith("⚠ WITHDRAWN") ||
+    return (
+      <div
+        key={work.work_id}
+        className="flex items-center justify-between gap-2"
+      >
+        {status.startsWith("🌐 OPEN POOL") ? (
+          <ViewApplicationsButton
+            workId={work.work_id}
+            refresh={refresh}
+            applications={applications}
+          />
+        ) : status.startsWith("⌛ REQUEST SENT") ? (
+          <CancelRequestButton
+            initialLabel={printedAction}
+            refresh={refresh}
+            work={work}
+          />
+        ) : status.startsWith("⚠ WITHDRAWN") ||
           status.startsWith("✅ ASSIGNED") ||
           status.startsWith("⚠ UNASSIGNED") ? (
-        <AssignPersonButton
-          label={printedAction}
-          tone={actionTone}
-          availableAssignees={available}
-          recommendedAssignees={recommended}
-          assignment={assignment}
-          refresh={refresh}
-          withdrawn={status.startsWith("⚠ WITHDRAWN") ? true : false}
-        />
-      ) : status.startsWith("🔍 FOR REVIEW") ? (
-        <MarkCompleteWorkButton
-          label={printedAction}
-          tone={actionTone}
-          work={work}
-          refresh={refresh}
-        />
-      ) : (
-        null
-      )}
-    </div>);
-  }
+          <AssignPersonButton
+            label={printedAction}
+            tone={actionTone}
+            availableAssignees={available}
+            recommendedAssignees={recommended}
+            assignment={assignment}
+            refresh={refresh}
+            withdrawn={status.startsWith("⚠ WITHDRAWN") ? true : false}
+          />
+        ) : status.startsWith("🔍 FOR REVIEW") ? (
+          <MarkCompleteWorkButton
+            label={printedAction}
+            tone={actionTone}
+            work={work}
+            refresh={refresh}
+          />
+        ) : null}
+      </div>
+    );
+  };
 
   async function refresh(filters: string[] = []) {
-      const newWorks = await getEnrichedWorks(project.project_id);
-      const newRemainingDays = await getRemainingDays(project.project_id);
-      const newMissingWorks = await getProjectMissingWorks(project.project_id);
+    const newWorks = await getEnrichedWorks(project.project_id);
+    const newRemainingDays = await getRemainingDays(project.project_id);
+    const newMissingWorks = await getProjectMissingWorks(project.project_id);
 
-      setWorks(() => newWorks);
-      setRemainingDays(newRemainingDays);
-      setMissingWorks(newMissingWorks);
+    setWorks(() => newWorks);
+    setRemainingDays(newRemainingDays);
+    setMissingWorks(newMissingWorks);
   }
 
-  const [works, setWorks] = useState<enrichedWorks[]>(enrichedWorks)
+  const [works, setWorks] = useState<enrichedWorks[]>(enrichedWorks);
   const [nullWindow, setNullWindow] = useState(false);
   const [activeWindow, setActiveWindow] = useState(false);
   const [worksWindow, setWorksWindow] = useState(false);
@@ -136,22 +153,24 @@ export default function ManageWorksPage({
   return (
     <div className="space-y-5">
       <div className="space-y-3">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
+          <h2 className="min-w-0 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             {title}
           </h2>
-          <div className="h-px flex-1 bg-slate-300" />
-          <ProjectHeaderActions 
-            project={project} 
-            refresh={refresh} 
-            openWorkConflictWindow={() => setWorksWindow(true)}
-          />
+          <div className="hidden h-px flex-1 bg-slate-300 sm:block" />
+          <div className="shrink-0">
+            <ProjectHeaderActions
+              project={project}
+              refresh={refresh}
+              openWorkConflictWindow={() => setWorksWindow(true)}
+            />
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-4">
           <div className="w-full space-y-2 lg:w-auto lg:min-w-[170px]">
             <span className="flex h-8 items-center justify-center rounded-full bg-red-600 px-3 text-sm font-bold text-white">
-              {remainingDays} DAY{(remainingDays==1) ? " " : "S "}LEFT
+              {remainingDays} DAY{remainingDays == 1 ? " " : "S "}LEFT
             </span>
             <span className="flex h-8 items-center justify-center rounded-full bg-amber-500 px-3 text-sm font-bold text-white">
               {works.length - missingWorks}/{works.length} ROLES
@@ -216,8 +235,8 @@ export default function ManageWorksPage({
       <div className="space-y-4">
         <div className="h-px bg-slate-300" />
 
-        <div className="rounded-md border border-slate-300 bg-white shadow-sm">
-          <table className="w-full border-collapse text-left text-sm">
+        <div className="overflow-x-auto rounded-md border border-slate-300 bg-white shadow-sm">
+          <table className="min-w-[860px] w-full border-collapse text-left text-sm">
             <thead className="bg-slate-100 text-slate-900">
               <tr>
                 <th className="border-r border-slate-300 px-3 py-2 text-xs font-semibold uppercase">
@@ -247,10 +266,16 @@ export default function ManageWorksPage({
                     {row.work.project_role}
                   </td>
                   <td className="border-r border-slate-200 px-3 py-2 text-xs">
-                    {((row.work.work_start_time == null || row.work.work_end_time == null) ?
-                    "TBA" :
-                    (toShortHours(row.work.work_start_time?.getHours() ?? 0) + "-" + toShortHours(row.work.work_end_time?.getHours() ?? 0))
-                    ) + ", " + row.work.work_start_date?.toLocaleDateString()}
+                    {(row.work.work_start_time == null ||
+                    row.work.work_end_time == null
+                      ? "TBA"
+                      : toShortHours(
+                          row.work.work_start_time?.getHours() ?? 0,
+                        ) +
+                        "-" +
+                        toShortHours(row.work.work_end_time?.getHours() ?? 0)) +
+                      ", " +
+                      row.work.work_start_date?.toLocaleDateString()}
                   </td>
                   <td className="border-r border-slate-200 px-3 py-2 text-xs">
                     {row.printedAssignee}
@@ -259,30 +284,32 @@ export default function ManageWorksPage({
                     {row.printedStatus}
                   </td>
                   <td className="px-3 py-1">
-                    <div className="flex items-center justify-between w-full">
-                    {printActionButton(
-                      row.work, 
-                      row.printedStatus,
-                      row.availableAssignees,
-                      row.recommendedAssignees,
-                      row.applications,
-                      row.assignment
+                    <div className="flex w-full items-center justify-between gap-2">
+                      {printActionButton(
+                        row.work,
+                        row.printedStatus,
+                        row.availableAssignees,
+                        row.recommendedAssignees,
+                        row.applications,
+                        row.assignment,
                       )}
-                    <WorkRowActions
-                      workId={row.work.work_id}
-                      projectId={row.work.project_id}
-                      oldDescription={row.work.work_description}
-                      oldDate={row.work.work_start_date!}
-                      oldSalary={row.work.expected_salary}
-                      oldStartTime={row.work.work_start_time}
-                      oldEndTime={row.work.work_end_time}
-                      oldSetToTba={(row.work.work_end_time == null) && 
-                        (row.work.work_start_time == null)}
-                      oldPublishToOpenPool={row.work.is_open_pool}
-                      openNullWindow={() => setNullWindow(true)}
-                      openActiveWindow={() => setActiveWindow(true)}
-                      refresh={refresh}
-                    />
+                      <WorkRowActions
+                        workId={row.work.work_id}
+                        projectId={row.work.project_id}
+                        oldDescription={row.work.work_description}
+                        oldDate={row.work.work_start_date!}
+                        oldSalary={row.work.expected_salary}
+                        oldStartTime={row.work.work_start_time}
+                        oldEndTime={row.work.work_end_time}
+                        oldSetToTba={
+                          row.work.work_end_time == null &&
+                          row.work.work_start_time == null
+                        }
+                        oldPublishToOpenPool={row.work.is_open_pool}
+                        openNullWindow={() => setNullWindow(true)}
+                        openActiveWindow={() => setActiveWindow(true)}
+                        refresh={refresh}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -291,23 +318,23 @@ export default function ManageWorksPage({
           </table>
         </div>
 
-        <AddWorkButton 
+        <AddWorkButton
           projectId={project.project_id}
           refresh={refresh}
           openNullWindow={() => setNullWindow(true)}
         />
 
-        <ProjectNullValuesWindow 
+        <ProjectNullValuesWindow
           open={nullWindow}
           onClose={() => setNullWindow(false)}
         />
 
-        <IsActiveWorkWindow 
+        <IsActiveWorkWindow
           open={activeWindow}
           onClose={() => setActiveWindow(false)}
         />
 
-        <ProjectWorksExistWindow 
+        <ProjectWorksExistWindow
           open={worksWindow}
           onClose={() => setWorksWindow(false)}
         />

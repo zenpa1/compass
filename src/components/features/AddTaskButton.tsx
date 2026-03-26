@@ -49,7 +49,7 @@ export function AddTaskButton() {
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
-          <div className="w-full max-w-lg rounded-md border border-slate-300 bg-white p-5 shadow-xl">
+          <div className="w-full max-w-lg rounded-md border border-slate-300 bg-white p-4 shadow-xl sm:p-5">
             <h3 className="text-xl font-semibold leading-none text-slate-900">
               Create Task
             </h3>
@@ -64,7 +64,7 @@ export function AddTaskButton() {
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-slate-900">Deadline</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <Input
                     value={deadlineMonth}
                     onChange={(event) => setDeadlineMonth(event.target.value)}
@@ -100,7 +100,7 @@ export function AddTaskButton() {
 
               <div className="space-y-2">
                 <p className="text-sm font-medium text-slate-900">Tags</p>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {tagOptions.map((tag) => (
                     <button
                       key={tag}
@@ -118,7 +118,7 @@ export function AddTaskButton() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-1">
+              <div className="flex flex-wrap justify-end gap-2 pt-1">
                 <Button
                   type="button"
                   variant="outline"
