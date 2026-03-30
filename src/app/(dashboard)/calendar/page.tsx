@@ -43,16 +43,18 @@ export default function CalendarPage() {
 
       {/* CALENDAR */}
       <div className="rounded-lg bg-white p-2 text-black shadow sm:p-4">
-        <div className="overflow-x-auto">
-          <div className="min-w-[640px] sm:min-w-0">
-            <FullCalendar
-              plugins={[dayGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              dateClick={handleDateClick}
-              events={events}
-              height="auto"
-            />
-          </div>
+        <div className="compact-mobile-calendar">
+          <FullCalendar
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            dateClick={handleDateClick}
+            events={events}
+            height="auto"
+            fixedWeekCount
+            dayMaxEventRows={1}
+            dayMaxEvents={1}
+            eventDisplay="list-item"
+          />
         </div>
       </div>
     </div>
