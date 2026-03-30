@@ -14,7 +14,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   if (!workExists) return new NextResponse("Work not found", { status: 404 });
 
   try {
-    const userId = req.session.userId;
+    const userId = 1; //insert session handling here
     const application = await db.workapplication.create({
       data: {
         work_id: workId,

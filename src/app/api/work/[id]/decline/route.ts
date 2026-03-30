@@ -5,7 +5,7 @@ import { db } from "@/lib/prisma";
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const workId = parseInt(id);
-  const userId = req.session.userId;
+  const userId = 1; //insert session handling here
 
   if (!workId) return new NextResponse("Invalid work ID", { status: 400 });
 
