@@ -99,7 +99,7 @@ export async function POST(request: Request){
         //send to freelancers if profile already exists
         return NextResponse.json({
             message: "Login Success",
-            redirect: "/freelancers",
+            redirect: "/work",
         });
     } catch(error){
         console.error("Auth Error: ", error);

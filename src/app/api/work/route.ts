@@ -1,5 +1,6 @@
 import { db } from "@/lib/prisma";
 import { workapplication_application_status } from "@/generated/client";
+import { NextRequest, NextResponse } from "next/server";
 
 console.log(workapplication_application_status);
 type TabType = "OPEN" | "PENDING" | "ACTIVE";
@@ -8,12 +9,12 @@ const allowedTabs: TabType[] = ["OPEN", "PENDING", "ACTIVE"];
 //temporary auth, replace with actual auth/session logic
 let current_user: number = 1;
 
-const getUser = async () => {
-  return await db.user.findUnique({ where: { user_id: current_user } });
+const getUser = async (user_id: number) => {
+  return await db.user.findUnique({ where: { user_id: user_id } });
 };
 
-export async function GET(req: Request) {
-  const user = await getUser();
+export async function GET(req: NextRequest) {
+  const user = await getUser(1);
 
   if (!user || user.user_type !== "EMPLOYEE") {
     return new Response(JSON.stringify({ error: "Not authorized" }), { status: 403 });
