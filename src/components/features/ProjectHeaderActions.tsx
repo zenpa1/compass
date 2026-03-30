@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Project, deleteProject, getProjectWorks } 
+import { Project, deleteProjectHeader, getProjectWorks } 
   from "@/app/(dashboard)/projects/projectDataOps";
 import { useRouter } from "next/navigation";
 
@@ -56,11 +56,8 @@ export function ProjectHeaderActions({
     if (works != null) {
       openWorkConflictWindow();
     } else {
-      deleteProject(project.project_id);
+      deleteProjectHeader(project.project_id);
       setShowDeleteConfirm(false);
-      router.push(`/projects`);
-      setTimeout(() => {}, 1000);
-      router.refresh();
     }
   };
 
