@@ -87,10 +87,7 @@ export default function ManageWorksPage({
     const printedAction = printAction(status);
 
     return (
-      <div
-        key={work.work_id}
-        className="flex items-center justify-between gap-2"
-      >
+      <div className="flex items-center justify-between gap-2">
         {status.startsWith("🌐 OPEN POOL") ? (
           <ViewApplicationsButton
             workId={work.work_id}
@@ -124,6 +121,18 @@ export default function ManageWorksPage({
           />
         ) : null}
       </div>
+    );
+  };
+
+  const formatWorkSchedule = (work: Work) => {
+    if (work.work_start_time == null || work.work_end_time == null) {
+      return `TBA, ${work.work_start_date?.toLocaleDateString()}`;
+    }
+
+    return (
+      `${toShortHours(work.work_start_time?.getHours() ?? 0)}-` +
+      `${toShortHours(work.work_end_time?.getHours() ?? 0)}, ` +
+      `${work.work_start_date?.toLocaleDateString()}`
     );
   };
 
@@ -235,7 +244,7 @@ export default function ManageWorksPage({
       <div className="space-y-4">
         <div className="h-px bg-slate-300" />
 
-        <div className="overflow-x-auto rounded-md border border-slate-300 bg-white shadow-sm">
+        <div className="hidden overflow-x-auto rounded-md border border-slate-300 bg-white shadow-sm min-[1040px]:block">
           <table className="min-w-[860px] w-full border-collapse text-left text-sm">
             <thead className="bg-slate-100 text-slate-900">
               <tr>
@@ -266,16 +275,7 @@ export default function ManageWorksPage({
                     {row.work.project_role}
                   </td>
                   <td className="border-r border-slate-200 px-3 py-2 text-xs">
-                    {(row.work.work_start_time == null ||
-                    row.work.work_end_time == null
-                      ? "TBA"
-                      : toShortHours(
-                          row.work.work_start_time?.getHours() ?? 0,
-                        ) +
-                        "-" +
-                        toShortHours(row.work.work_end_time?.getHours() ?? 0)) +
-                      ", " +
-                      row.work.work_start_date?.toLocaleDateString()}
+                    {formatWorkSchedule(row.work)}
                   </td>
                   <td className="border-r border-slate-200 px-3 py-2 text-xs">
                     {row.printedAssignee}
@@ -316,6 +316,71 @@ export default function ManageWorksPage({
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="space-y-3 min-[1040px]:hidden">
+          {works.map((row) => (
+            <article
+              key={row.work.work_id}
+              className="rounded-md border border-slate-300 bg-white p-3 shadow-sm"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  {row.work.project_role}
+                </h3>
+                <WorkRowActions
+                  workId={row.work.work_id}
+                  projectId={row.work.project_id}
+                  oldDescription={row.work.work_description}
+                  oldDate={row.work.work_start_date!}
+                  oldSalary={row.work.expected_salary}
+                  oldStartTime={row.work.work_start_time}
+                  oldEndTime={row.work.work_end_time}
+                  oldSetToTba={
+                    row.work.work_end_time == null &&
+                    row.work.work_start_time == null
+                  }
+                  oldPublishToOpenPool={row.work.is_open_pool}
+                  openNullWindow={() => setNullWindow(true)}
+                  openActiveWindow={() => setActiveWindow(true)}
+                  refresh={refresh}
+                />
+              </div>
+
+              <div className="mt-3 space-y-1 text-xs text-slate-700">
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Schedule:{" "}
+                  </span>
+                  {formatWorkSchedule(row.work)}
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Assignee:{" "}
+                  </span>
+                  {row.printedAssignee}
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">Status: </span>
+                  {row.printedStatus}
+                </p>
+              </div>
+
+              <div className="mt-3 border-t border-slate-200 pt-3">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Action
+                </p>
+                {printActionButton(
+                  row.work,
+                  row.printedStatus,
+                  row.availableAssignees,
+                  row.recommendedAssignees,
+                  row.applications,
+                  row.assignment,
+                )}
+              </div>
+            </article>
+          ))}
         </div>
 
         <AddWorkButton

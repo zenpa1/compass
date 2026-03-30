@@ -123,3 +123,52 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media (max-width: 640px) {
+  .compact-mobile-calendar .fc .fc-toolbar {
+    gap: 0.35rem;
+  }
+
+  .compact-mobile-calendar .fc .fc-toolbar-title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .compact-mobile-calendar .fc .fc-button {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.75rem;
+  }
+
+  .compact-mobile-calendar .fc .fc-col-header-cell-cushion {
+    padding: 0.2rem 0;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .compact-mobile-calendar .fc .fc-daygrid-day-number {
+    padding: 0.15rem 0.2rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+
+  .compact-mobile-calendar .fc .fc-daygrid-day-frame {
+    min-height: 3.1rem;
+  }
+
+  .compact-mobile-calendar .fc .fc-daygrid-event {
+    margin-top: 1px;
+    margin-bottom: 0;
+    font-size: 0.62rem;
+    border-radius: 0.2rem;
+  }
+
+  .compact-mobile-calendar .fc .fc-daygrid-dot-event {
+    margin: 0;
+  }
+
+  .compact-mobile-calendar .fc .fc-daygrid-day-events {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}

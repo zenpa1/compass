@@ -9,6 +9,7 @@ import CalendarTabs, { CalendarTab } from "@/components/features/CalendarTabs";
 export default function CalendarPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [selectedTab, setSelectedTab] = useState<CalendarTab>("personal tasks");
+  const [isMobile, setIsMobile] = useState(false);
 
   const handleDateClick = (arg: any) => {
     alert("Date clicked: " + arg.dateStr);
@@ -27,6 +28,14 @@ export default function CalendarPage() {
     fetchEvents();
   }, [selectedTab]);
 
+  useEffect(() => {
+    const updateMobile = () => setIsMobile(window.innerWidth <= 640);
+    updateMobile();
+
+    window.addEventListener("resize", updateMobile);
+    return () => window.removeEventListener("resize", updateMobile);
+  }, []);
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* HEADER */}
@@ -43,16 +52,21 @@ export default function CalendarPage() {
 
       {/* CALENDAR */}
       <div className="rounded-lg bg-white p-2 text-black shadow sm:p-4">
-        <div className="overflow-x-auto">
-          <div className="min-w-[640px] sm:min-w-0">
-            <FullCalendar
-              plugins={[dayGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              dateClick={handleDateClick}
-              events={events}
-              height="auto"
-            />
-          </div>
+        <div className="compact-mobile-calendar">
+          <FullCalendar
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            dateClick={handleDateClick}
+            events={events}
+            height="auto"
+            fixedWeekCount
+            dayMaxEventRows={1}
+            dayMaxEvents={1}
+            eventDisplay="list-item"
+            dayHeaderContent={(arg) =>
+              isMobile ? arg.text.slice(0, 1) : arg.text
+            }
+          />
         </div>
       </div>
     </div>
