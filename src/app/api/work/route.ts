@@ -1,7 +1,6 @@
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { workapplication_application_status } from "@/generated/client";
-import { Router, Request } from 'express';
 
 console.log(workapplication_application_status);
 type TabType = "OPEN" | "PENDING" | "ACTIVE";
@@ -17,11 +16,13 @@ const getUser = async (user_id: number) => {
 export async function GET(req: Request) {
   const session = await getSession();
   const userId = session?.userId || 1;
-  
+
   const user = await getUser(userId);
 
   if (!user || user.user_type !== "EMPLOYEE") {
-    return new Response(JSON.stringify({ error: "Not authorized" }), { status: 403 });
+    return new Response(JSON.stringify({ error: "Not authorized" }), {
+      status: 403,
+    });
   }
 
   //gets the current tab (open|pending|active)
@@ -45,62 +46,58 @@ export async function GET(req: Request) {
           none: {
             user_id: user.user_id,
             application_status: {
-              in: ["PENDING", "APPROVAL", "APPROVED"] // Omit if already applied/waiting/active
-            }
-          }
-        }
+              in: ["PENDING", "APPROVAL", "APPROVED"], // Omit if already applied/waiting/active
+            },
+          },
+        },
       },
-      include: { 
+      include: {
         project: true,
-        workapplication: true
-      }
+        workapplication: true,
+      },
     });
-  }
-
-  else if (tab === "PENDING") {
+  } else if (tab === "PENDING") {
     works = await db.work.findMany({
       where: {
         workapplication: {
           some: {
             user_id: user.user_id,
             application_status: {
-              in: ["PENDING", "APPROVAL"] // Filter for the specific statuses you want to see
-            }
-          }
-        }
+              in: ["PENDING", "APPROVAL"], // Filter for the specific statuses you want to see
+            },
+          },
+        },
       },
-      include: { 
+      include: {
         project: true,
-        workapplication: true
-      }
+        workapplication: true,
+      },
     });
-  }
-
-  else if (tab === "ACTIVE") {
+  } else if (tab === "ACTIVE") {
     works = await db.work.findMany({
       where: {
         is_open_pool: false,
         work_status: {
-          in: ["ASSIGNED", "REVIEW", "COMPLETED"]
+          in: ["ASSIGNED", "REVIEW", "COMPLETED"],
         },
         workapplication: {
           some: {
             user_id: user.user_id,
             application_status: {
-              in: ["APPROVED"]
-            }
-          } 
-        }
+              in: ["APPROVED"],
+            },
+          },
+        },
       },
-      include: { 
+      include: {
         project: true,
-        workapplication: true
-      }
+        workapplication: true,
+      },
     });
-  }
-
-  else {
-    return new Response(JSON.stringify({ error: "Invalid tab" }), { status: 400 });
+  } else {
+    return new Response(JSON.stringify({ error: "Invalid tab" }), {
+      status: 400,
+    });
   }
 
   return new Response(JSON.stringify(works));
