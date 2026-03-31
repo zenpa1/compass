@@ -7,9 +7,15 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { editProject, deleteProject, archiveProject, checkProjectWorks,
-  checkEditProjectConflict, checkProjectActiveWorks, activateProject }
-  from "@/app/(dashboard)/projects/projectDataOps";
+import {
+  editProject,
+  deleteProject,
+  archiveProject,
+  getProjectWorks,
+  checkEditProjectConflict,
+  getProjectActiveWorks,
+  activateProject,
+} from "@/app/(dashboard)/projects/projectDataOps";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
 import { ProjectOverrideWindow } from "@/components/features/ProjectAlerts";
 
@@ -40,7 +46,7 @@ export function ProjectCard({
   status,
   openNullWindow,
   openWorkConflictWindow,
-  refresh
+  refresh,
 }: ProjectCardProps) {
   const headerTone = status === "ARCHIVED" ? "bg-rose-300" : "bg-slate-800";
   const router = useRouter();
@@ -49,7 +55,7 @@ export function ProjectCard({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [showActiveConfirm, setShowActiveConfirm] = useState(false);
-  
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(name);
   const [editClient, setEditClient] = useState(client);
@@ -61,17 +67,21 @@ export function ProjectCard({
   const [overrideWindow, setOverrideWindow] = useState(false);
 
   const handleViewProject = () => {
-    router.push(`/projects/viewProject?id=${projectId}`);
+    router.push(`/projects/${projectId}`);
   };
 
   const handleStartDateChange = (event: any) => {
     const dateString = event.target.value;
-    if (dateString) {setEditStartDate(new Date(dateString));}
+    if (dateString) {
+      setEditStartDate(new Date(dateString));
+    }
   };
 
   const handleEndDateChange = (event: any) => {
     const dateString = event.target.value;
-    if (dateString) {setEditEndDate(new Date(dateString));}
+    if (dateString) {
+      setEditEndDate(new Date(dateString));
+    }
   };
 
   const openDeleteConfirm = (e: any) => {
@@ -80,6 +90,9 @@ export function ProjectCard({
   };
 
   const openEditModal = (e: any) => {
+    (
+      e?.currentTarget?.closest("details") as HTMLDetailsElement | null
+    )?.removeAttribute("open");
     detailsRef.current?.removeAttribute("open");
     setEditName(name);
     setShowEditModal(true);
@@ -99,13 +112,12 @@ export function ProjectCard({
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
 
-    const project = await checkProjectWorks(name);
+    const project = await getProjectWorks(name);
 
     //Cannot delete project if it has active works
-    if(project != null) {
+    if (project != null) {
       openWorkConflictWindow();
-    }
-    else {
+    } else {
       deleteProject(projectId as number);
       refresh();
       setShowEditModal(false);
@@ -115,7 +127,7 @@ export function ProjectCard({
 
   //Occurs when the user tries to save their edit changes
   const handleEditConfirm = async () => {
-    if(
+    if (
       editName == "" ||
       editClient == "" ||
       editStartDate == null ||
@@ -124,16 +136,17 @@ export function ProjectCard({
     ) {
       // Notifies the user of unfilled form values via a new window
       openNullWindow();
-    }
-    else {
+    } else {
       //Opens the override window if the inputted name already exists in the database
       //(and that name is not the original name of the project)
-      const name_conflict = await checkEditProjectConflict(projectId as number, editName);
+      const name_conflict = await checkEditProjectConflict(
+        projectId as number,
+        editName,
+      );
 
-      if(name_conflict != null) {
+      if (name_conflict != null) {
         setOverrideWindow(true);
-      }
-      else {
+      } else {
         editProject(
           projectId as number,
           editName,
@@ -141,36 +154,35 @@ export function ProjectCard({
           editStartDate,
           editEndDate,
           editLocation,
-          editDescription
+          editDescription,
         );
 
         refresh();
         setShowEditModal(false);
-      }    
+      }
     }
   };
 
   //Occurs when the user chooses to override the conflicting project with their current
   //project
   async function overrideProject() {
-    const existingWorks = await checkProjectWorks(editName);
-    if(existingWorks != null) {
+    const existingWorks = await getProjectWorks(editName);
+    if (existingWorks != null) {
       openWorkConflictWindow();
-    }
-    else {
+    } else {
       //Deletes old project
       deleteProject(projectId as number);
 
       //Changes details based on user's inputs
       editProject(
-          projectId as number,
-          editName,
-          editClient,
-          editStartDate,
-          editEndDate,
-          editLocation,
-          editDescription
-        );
+        projectId as number,
+        editName,
+        editClient,
+        editStartDate,
+        editEndDate,
+        editLocation,
+        editDescription,
+      );
 
       refresh();
       setOverrideWindow(false);
@@ -180,17 +192,16 @@ export function ProjectCard({
 
   //Occurs when the user wants to archive a project
   const handleArchiveConfirm = async () => {
-    const project = await checkProjectActiveWorks(projectId as number);
-    
+    const project = await getProjectActiveWorks(projectId as number);
+
     //Project cannot be archived if it has active works
-    if(project != null) {
+    if (project != null) {
       openWorkConflictWindow();
-    }
-    else {
+    } else {
       archiveProject(projectId as number);
       refresh();
       setShowArchiveConfirm(false);
-    } 
+    }
   };
 
   //Un-archives a project
@@ -202,7 +213,7 @@ export function ProjectCard({
 
   return (
     <Card className="relative overflow-hidden border border-slate-200 bg-white p-0 shadow-sm transition-shadow hover:shadow-md">
-      <div className={`h-32 ${headerTone}`} onClick={handleViewProject}/>
+      <div className={`h-32 ${headerTone}`} onClick={handleViewProject} />
       <details ref={detailsRef} className="group absolute right-2 top-2">
         <summary
           className="flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded-full text-amber-500 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -235,14 +246,14 @@ export function ProjectCard({
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
-              style={{ pointerEvents: 'none' }}
+              style={{ pointerEvents: "none" }}
             >
               <path d="M12 20h9" />
               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
             </svg>
             Edit Project
           </button>
-    
+
           <button
             type="button"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-rose-600 hover:bg-rose-50"
@@ -259,7 +270,7 @@ export function ProjectCard({
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
-              style={{ pointerEvents: 'none' }}
+              style={{ pointerEvents: "none" }}
             >
               <path d="M3 6h18" />
               <path d="M8 6V4h8v2" />
@@ -269,54 +280,53 @@ export function ProjectCard({
             {isDeleting ? "Deleting..." : "Delete Project"}
           </button>
 
-          { (status == "ACTIVE") ?
+          {status == "ACTIVE" ? (
             <button
-            type="button"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-slate-700 hover:bg-slate-100"
-            aria-label={`Archive ${name}`}
-            onClick={openArchiveConfirm}
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-slate-700 hover:bg-slate-100"
+              aria-label={`Archive ${name}`}
+              onClick={openArchiveConfirm}
             >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <rect x="3" y="4" width="18" height="6" rx="1" />
-              <path d="M7 14h10" />
-              <path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10" />
-            </svg>
-            Archive Project
-            </button> :
-
-            <button
-            type="button"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-slate-700 hover:bg-slate-100"
-            aria-label={`Activate ${name}`}
-            onClick={openActiveConfirm}
-            >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <rect x="3" y="4" width="18" height="6" rx="1" />
-              <path d="M7 14h10" />
-              <path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10" />
-            </svg>
-            Activate Project
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="6" rx="1" />
+                <path d="M7 14h10" />
+                <path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10" />
+              </svg>
+              Archive Project
             </button>
-          }
-          
+          ) : (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-slate-700 hover:bg-slate-100"
+              aria-label={`Activate ${name}`}
+              onClick={openActiveConfirm}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="6" rx="1" />
+                <path d="M7 14h10" />
+                <path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10" />
+              </svg>
+              Activate Project
+            </button>
+          )}
         </div>
       </details>
       <CardContent className="px-4 pb-4" onClick={handleViewProject}>
@@ -436,7 +446,7 @@ export function ProjectCard({
           aria-modal="true"
           aria-label="Edit project"
         >
-          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-lg">
+          <div className="w-full max-w-lg rounded-xl bg-white p-4 shadow-lg sm:p-5">
             <h3 className="text-base font-semibold text-slate-900">
               Edit Project
             </h3>
@@ -465,14 +475,16 @@ export function ProjectCard({
               </div>
               <div className="space-y-2">
                 <Label>Duration</Label>
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_auto_1fr]">
                   <Input
                     placeholder="Start"
                     type="Date"
                     value={toISODate(editStartDate)}
                     onChange={handleStartDateChange}
                   />
-                  <span className="text-xs text-slate-500">to</span>
+                  <span className="hidden text-xs text-slate-500 sm:block">
+                    to
+                  </span>
                   <Input
                     placeholder="End"
                     type="Date"
@@ -482,9 +494,7 @@ export function ProjectCard({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor={`location-name-${projectId}`}>
-                  Location
-                </Label>
+                <Label htmlFor={`location-name-${projectId}`}>Location</Label>
                 <Input
                   id={`location-name-${projectId}`}
                   placeholder="Enter Location ..."
@@ -505,7 +515,7 @@ export function ProjectCard({
                 />
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -523,9 +533,9 @@ export function ProjectCard({
 
           {/*Override window for if there are conflicting names during editProject*/}
           <ProjectOverrideWindow
-                      onClose = {() => setOverrideWindow(false)}
-                      open = {overrideWindow}
-                      override = {overrideProject}
+            onClose={() => setOverrideWindow(false)}
+            open={overrideWindow}
+            override={overrideProject}
           />
         </div>
       ) : null}

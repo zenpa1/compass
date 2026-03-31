@@ -1,5 +1,5 @@
 import { SimpleDialogProps } from "@/app/(dashboard)/projects/projectDataOps";
-import { Dialog, DialogTitle, DialogContent } from '@mui/material/';
+import { Dialog, DialogTitle, DialogContent } from "@mui/material";
 import { Button } from "@/components/ui/button";
 
 //================================================
@@ -22,7 +22,7 @@ export default function ProjectNullValuesWindow(props: SimpleDialogProps) {
 }
 
 //================================================
-// Window for informing the user of a conflicting 
+// Window for informing the user of a conflicting
 // project name (and if they want to override it)
 export function ProjectOverrideWindow(props: {
   open: boolean;
@@ -48,7 +48,8 @@ export function ProjectOverrideWindow(props: {
 }
 
 //================================================
-//Window for informing the user of blank fields
+//Window for informing the user if there are active
+//works in the project
 export function ProjectWorksExistWindow(props: SimpleDialogProps) {
   const { onClose, open } = props;
 
@@ -61,6 +62,26 @@ export function ProjectWorksExistWindow(props: SimpleDialogProps) {
       <DialogTitle>Cannot delete project.</DialogTitle>
       <DialogContent>
         <p>There are still active works assigned to the project.</p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+//================================================
+//Window for informing the user if the work is
+//active
+export function IsActiveWorkWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Cannot delete work.</DialogTitle>
+      <DialogContent>
+        <p>The work is still active or being reviewed.</p>
       </DialogContent>
     </Dialog>
   );

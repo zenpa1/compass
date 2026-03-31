@@ -2,16 +2,19 @@
 
 import { Button } from "@/components/ui/button";
 
-export type WorkStatus = "OPEN" | "PENDING" | "ACTIVE";
+export type CalendarTab = "personal tasks" | "North Studio works";
 
-const workStatuses: WorkStatus[] = ["OPEN", "PENDING", "ACTIVE"];
+const workStatuses: CalendarTab[] = ["personal tasks", "North Studio works"];
 
-type WorkTabsProps = {
-  selected: WorkStatus;
-  onChange: (status: WorkStatus) => void;
+type CalendarTabsProps = {
+  selected: CalendarTab;
+  onChange: (status: CalendarTab) => void;
 };
 
-export default function WorkTabs({ selected, onChange }: WorkTabsProps) {
+export default function CalendarTabs({
+  selected,
+  onChange,
+}: CalendarTabsProps) {
   return (
     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
       {workStatuses.map((status) => (
@@ -21,7 +24,7 @@ export default function WorkTabs({ selected, onChange }: WorkTabsProps) {
           onClick={() => onChange(status)}
           className="h-8 px-3 text-xs capitalize sm:h-9 sm:text-sm"
         >
-          {status.toLowerCase()}
+          {status}
         </Button>
       ))}
     </div>

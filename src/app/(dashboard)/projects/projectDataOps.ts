@@ -1,8 +1,10 @@
 'use server'
 
 //File for all data operations related to project
-import { Prisma } from "@/generated/prisma";
+import { Prisma } from "@/generated/client";
 import { db } from "@/lib/prisma"; // Direct DB access
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 export interface Project {
   project_id: number;
@@ -48,18 +50,25 @@ export async function createProject(new_project_name: string, new_client_name: s
 }
 
 //Checks if a project has active works
-export async function checkProjectWorks(name: string) {
+export async function getProjectWorks(name: string) {
   const project = await db.project.findFirst({
     where: { project_name: name },
   });
 
   const projectId = project?.project_id;
 
-  const works = await db.work.findFirst({
+  const works = await db.work.findMany({
     where: { project_id: projectId },
   });
 
-  return works;
+  const worksWithNumberSalary = works.map((work) => ({
+  ...work,
+  expected_salary: Number(work.expected_salary), // or parseFloat(work.salary)
+  }));
+
+  if (worksWithNumberSalary.length == 0) return null;
+
+  return worksWithNumberSalary;
 }
 
 //Gets the project's id using the inputted name
@@ -103,7 +112,7 @@ export async function getProjects(filterOptions: String[]) {
   else {orderBy = {project_end_date: "asc"}}
 
   //Initializes the 'where' part of the sql command (if filters were inputted)
-  let where: Prisma.ProjectWhereInput = {}
+  let where: Prisma.projectWhereInput = {}
   if(completed && !notCompleted) {where.project_status = "ARCHIVED"}
   else if(!completed && notCompleted) {where.project_status = "ACTIVE"}
 
@@ -156,8 +165,8 @@ export async function archiveProject(project_id: number) {
 }
 
 //Checks if the project has active works (AKA works that are not marked as completed)
-export async function checkProjectActiveWorks(project_id: number) {
-  const works = await db.work.findFirst({
+export async function getProjectActiveWorks(project_id: number) {
+  const works = await db.work.findMany({
     where: { 
       AND: {
         project_id: project_id,
@@ -188,4 +197,30 @@ export async function activateProject(project_id: number) {
       where: {project_id: project_id},
       data: {project_status: "ACTIVE"}
     })
+}
+
+export async function getProjectMissingWorks(project_id: number) {
+  const works = await db.work.findMany({
+    where: { 
+      AND: {
+        project_id: project_id,
+        OR: [
+          {work_status: "PENDING"},
+          {work_status: "OPEN"}
+        ]
+      }
+    },
+  });
+
+  return works.length;
+}
+
+//Special version of delete when deleting from within a project's work page
+export async function deleteProjectHeader(id: number) {
+  await db.project.delete({
+    where: { project_id: id }
+  });
+
+  revalidatePath('/projects')
+  redirect('/projects')
 }

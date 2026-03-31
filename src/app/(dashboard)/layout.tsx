@@ -1,9 +1,12 @@
+"use client";
+
 /*
 The layout.tsx is the file that creates the frame such as the sidebar.
 This is your main way of wrapping all your pages, much like a header or a footer.
 It is always visible even upon switching pages.
 */
 import Link from "next/link"; // Swaps the content instantly without reloading the browser
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button"; // from Shadcn UI
 import { SidebarLogoutButton } from "@/components/features/SidebarLogoutButton";
 
@@ -12,6 +15,10 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode; // TypeScript ensuring 'children' is valid HTML/React code
 }) {
+  const pathname = usePathname();
+  const projectsActive = pathname.startsWith("/projects");
+  const calendarActive = pathname.startsWith("/calendar");
+
   return (
     <div className="flex h-screen bg-slate-50">
       {/* PARENT CONTAINER */}
@@ -29,7 +36,9 @@ export default function DashboardLayout({
             <Button
               variant="ghost"
               size="icon"
-              className="w-full h-12 hover:bg-slate-800 hover:text-white text-amber-500"
+              className={`h-12 w-full hover:bg-slate-800 hover:text-white ${
+                projectsActive ? "text-amber-500" : "text-slate-300"
+              }`}
               aria-label="Projects"
             >
               {/* variant="ghost" is a button with no background until hovered over */}
@@ -50,7 +59,9 @@ export default function DashboardLayout({
             <Button
               variant="ghost"
               size="icon"
-              className="w-full h-12 hover:bg-slate-800 hover:text-white"
+              className={`h-12 w-full hover:bg-slate-800 hover:text-white ${
+                calendarActive ? "text-amber-500" : "text-slate-300"
+              }`}
               aria-label="Calendar"
             >
               <svg

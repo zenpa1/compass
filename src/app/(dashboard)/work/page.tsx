@@ -1,5 +1,5 @@
 "use client";
-
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import WorkTabs, { WorkStatus } from "@/components/features/WorkTabs";
 import { WorkCard } from "@/components/features/WorkCard";
@@ -35,14 +35,14 @@ export default function WorksPage() {
   };
 
   const handleApply = async (workId: number) => {
-    console.log("Applying workId:", workId); 
+    console.log("Applying workId:", workId);
     try {
       const res = await fetch(`/api/work/${workId}/apply`, {
         method: "POST",
       });
-      console.log("Fetch response status:", res.status); 
+      console.log("Fetch response status:", res.status);
       const text = await res.text();
-      console.log("Fetch response body:", text); 
+      console.log("Fetch response body:", text);
       if (!res.ok) throw new Error("Failed to apply");
     } catch (err) {
       console.error(err);
@@ -65,22 +65,25 @@ export default function WorksPage() {
     fetchWorks();
   };
 
-
   useEffect(() => {
     fetchWorks();
   }, [selectedTab]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* HEADER */}
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-3xl font-bold tracking-tight">Works</h2>
-        <div className="flex-1 h-px bg-gray-700"></div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex w-full items-center gap-3 sm:w-auto">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Works
+          </h2>
+          <div className="h-px flex-1 bg-gray-700 sm:min-w-[120px]"></div>
+        </div>
         <WorkTabs selected={selectedTab} onChange={setSelectedTab} />
       </div>
 
       {/* GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {loading ? (
           <p className="text-slate-500 col-span-full">Loading works...</p>
         ) : works.length === 0 ? (

@@ -24,7 +24,7 @@
 // // 4. Save the connection to the global variable (prevents crashes in development)
 // if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
 
-import { PrismaClient } from "../generated/client"; 
+import { PrismaClient } from "../generated/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
 const globalForPrisma = global as unknown as {

@@ -1,19 +1,17 @@
+import { Router, Request, Response } from 'express';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const workId = parseInt(id);
-  const userId = 1; // Replace with actual session logic
+  const userId = 1; //insert session handling here
 
   if (!workId) return new NextResponse("Invalid work ID", { status: 400 });
 
   try {
-    // 1. We use a transaction to ensure both updates happen, or neither happens
     await db.$transaction(async (tx) => {
       
-      // 2. Update the Application status for this specific user/work combo
-      // We use updateMany because we don't have the unique 'application_id' handy
       await tx.workapplication.updateMany({
         where: {
           work_id: workId,

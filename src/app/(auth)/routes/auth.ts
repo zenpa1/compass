@@ -3,7 +3,7 @@ import { AuthService } from '../services/authService';
 import type { 
   userprofile_primary_role, 
   userprofile_secondary_role 
-} from '../../../generated/prisma';
+} from "@/generated/client";
 
 const router = Router();
 const authService = new AuthService();
@@ -35,7 +35,7 @@ router.post('/google', async (req: Request, res: Response) => {
     }
 
     // Determine redirect path based on profile completion
-    const redirectTo = result.user!.hasProfile ? '/dashboard' : '/setup-roles';
+    const redirectTo = result.user!.hasProfile ? '/work' : '/setup-roles';
 
     return res.status(200).json({
       success: true,

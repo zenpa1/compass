@@ -1,9 +1,9 @@
 import { OAuth2Client } from 'google-auth-library';
 // Import the singleton instance
-import { prisma } from '../../../lib/prisma'; 
+import { db } from "@/lib/prisma"; 
 // Import the types/enums you need
-import { RoleCategory, UserType, PrismaClient } from '@prisma/client';
 
+type RoleCategory = "PHOTO" | "VIDEO" | "EDITOR" | "ASSISTANT" | "ANY"; 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 interface AuthResult {
@@ -38,10 +38,10 @@ export class AuthService {
 
       // 2. Check if user exists
       // Note: We use include: { profile: true } because your schema says 'profile UserProfile?'
-      let user = await prisma.user.findUnique({
+      let user = await db.user.findUnique({
         where: { email },
         include: {
-          profile: true 
+          userprofile: true 
         }
       });
 
@@ -55,7 +55,7 @@ export class AuthService {
 
       // 4. Update Google info if it changed
       if (user.google_id !== googleId || user.avatar_url !== picture || user.full_name !== name) {
-        user = await prisma.user.update({
+        user = await db.user.update({
           where: { user_id: user.user_id },
           data: {
             google_id: googleId,
@@ -63,7 +63,7 @@ export class AuthService {
             full_name: name || user.full_name
           },
           include: {
-            profile: true
+            userprofile: true
           }
         });
       }
@@ -78,7 +78,7 @@ export class AuthService {
           avatarUrl: user.avatar_url,
           userType: user.user_type,
           // Check 'user.profile', not 'user.userprofile'
-          hasProfile: !!user.profile 
+          hasProfile: !!user.userprofile 
         }
       };
 
@@ -104,7 +104,7 @@ export class AuthService {
 
       // Validate: ASSISTANT/ANY cannot be primary
       // We use the Enum values for safer checking
-      if (primaryRole === RoleCategory.ASSISTANT || primaryRole === RoleCategory.ANY) {
+      if (primaryRole === "ASSISTANT" || primaryRole === "ANY") {
         return {
           success: false,
           message: 'ASSISTANT and ANY can only be selected as secondary roles'
@@ -112,22 +112,22 @@ export class AuthService {
       }
 
       // Check if user exists
-      const user = await prisma.user.findUnique({
+      const user = await db.user.findUnique({
         where: { user_id: userId },
-        include: { profile: true }
+        include: { userprofile: true }
       });
 
       if (!user) {
         return { success: false, message: 'User not found' };
       }
 
-      if (user.profile) {
+      if (user.userprofile) {
         return { success: false, message: 'User profile already exists' };
       }
 
       // Create the profile
       // Note: prisma.userProfile (camelCase) matches model UserProfile
-      await prisma.userProfile.create({
+      await db.userprofile.create({
         data: {
           user_id: userId,
           primary_role: primaryRole,
@@ -146,10 +146,10 @@ export class AuthService {
 
   // Get user info
   async getUserWithProfile(userId: number) {
-    return await prisma.user.findUnique({
+    return await db.user.findUnique({
       where: { user_id: userId },
       include: {
-        profile: true
+        userprofile: true
       }
     });
   }
@@ -168,14 +168,14 @@ export class AuthService {
         };
       }
 
-      if (primaryRole === RoleCategory.ASSISTANT || primaryRole === RoleCategory.ANY) {
+      if (primaryRole === "ASSISTANT" || primaryRole === "ANY") {
         return {
           success: false,
           message: 'ASSISTANT and ANY can only be selected as secondary roles'
         };
       }
 
-      await prisma.userProfile.update({
+      await db.userprofile.update({
         where: { user_id: userId },
         data: {
           primary_role: primaryRole,
