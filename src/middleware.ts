@@ -21,10 +21,15 @@ export async function middleware(req: NextRequest) {
 
   try {
     await jwtVerify(token, SECRET);
-    return NextResponse.next();
-  } catch {
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
+  } catch(error) {
     // Token expired or invalid
-    return NextResponse.redirect(new URL('/', req.url));
+    console.error('JWT Verification failed:', error);
+    const response = NextResponse.redirect(new URL('/login', req.url));
+    response.cookies.delete('auth_token');
+    return response;
   }
 }
 

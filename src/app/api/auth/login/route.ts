@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '@/lib/db';
-import { cookies } from 'next/headers';
 import { createSession } from '@/lib/session';
 
 const client = new OAuth2Client(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
@@ -81,6 +80,12 @@ export async function POST(request: Request) {
 
         //redirect to role setup if first time
         if (profile.is_setup_complete === false) {
+            await createSession({
+                userId: user.user_id,
+                email: user.email,
+                role: 'EMPLOYEE',
+            });
+
             return NextResponse.json({
                 message: "Setup Required",
                 redirect: "/setup",
