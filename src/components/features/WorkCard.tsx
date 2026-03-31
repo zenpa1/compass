@@ -10,6 +10,7 @@ interface WorkCardProps {
   onAccept?: (id: number) => void;
   onDecline?: (id: number) => void;
   onWithdraw?: (id: number) => void;
+  onMarkDone?: (id: number) => void;
 }
 
 export function WorkCard({
@@ -19,6 +20,7 @@ export function WorkCard({
   onAccept,
   onDecline,
   onWithdraw,
+  onMarkDone
 }: WorkCardProps) {
   const deadline = new Date(work.project.project_end_date).toLocaleDateString();
   const start_date = new Date(work.work_start_date).toLocaleDateString();
@@ -96,6 +98,15 @@ export function WorkCard({
             className="w-full rounded-xl border-2 border-black p-2 sm:w-1/2"
           >
             Withdraw
+          </button>
+        )}
+
+        {status === "ACTIVE" && work.work_status === "ASSIGNED" && (
+          <button
+            onClick={() => onMarkDone?.(work.work_id)}
+            className="border-2 flex-1 border-green-500 rounded-xl p-2 text-green-500 font-semibold"
+          >
+            Mark As Done
           </button>
         )}
 
