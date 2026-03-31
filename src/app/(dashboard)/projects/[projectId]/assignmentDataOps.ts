@@ -3,6 +3,7 @@
 import { db } from "@/lib/prisma"; // Direct DB access
 import { Work } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import { release } from "os";
+import { workapplication_application_status } from "@/generated/client";
 
 export interface UserProfile {
   profile_id: number;
@@ -181,9 +182,21 @@ export async function getRecommendedAssignees(work: Work, role: string) {
 }
 
 export async function assignPerson(assignmentId: number, user: User) {
+  const work = await db.assignment.findFirst({where: {assignment_id: assignmentId}})
+  
+  await db.workapplication.create({
+      data: {
+        work_id: work!.work_id,
+        user_id: user.user_id,
+        application_status: "PENDING", 
+      },  
+  });
+
   await db.assignment.update({
     where: {assignment_id: assignmentId},
-    data: {user_id: user.user_id}
+    data: {
+      user_id: user.user_id,
+    }
   })
 }
 
@@ -198,7 +211,7 @@ export async function getApplications(workId: number) {
   const users = await db.workapplication.findMany({
     where: {
       work_id: workId,
-      application_status: "PENDING",
+      application_status: "APPROVAL",
     },
     include: { user: {
       include: { userprofile: true }
@@ -251,11 +264,65 @@ export async function acceptApplication(workId: number, userId: number) {
 
   await db.work.update({
     where: {work_id: workId},
-    data: {work_status: "ASSIGNED"}
+    data: {work_status: "ASSIGNED", is_open_pool: false}
   })
 
   await db.assignment.update({
     where: {assignment_id: assignment!.assignment_id},
     data: {user_id: userId}
+  })
+}
+
+export async function clearAssignee(workId: number) {
+  const assignment = await db.assignment.findFirst({where: {work_id: workId}})
+
+  await db.work.update({
+    where: {work_id: assignment!.work_id},
+    data: {work_status: "PENDING"}
+  })
+  await db.workapplication.deleteMany({where: {work_id: assignment!.work_id}});
+  await db.assignment.update({
+    where: {assignment_id: assignment!.assignment_id},
+    data: {
+      user_id: null,
+      assignment_status: "PENDING"
+    }
+  })
+}
+
+export async function employeeMarkDone(workId: number) {
+  const assignment = await db.assignment.findFirst({where: {work_id: workId}});
+
+  await db.workapplication.deleteMany({
+    where: {
+      work_id: assignment!.work_id,
+      user_id: assignment!.user_id!
+    }
+  });
+
+  await db.work.update({
+    where: {work_id: workId},
+    data: {work_status: "REVIEW"}
+  })
+}
+
+export async function employeeWithdraw(workId: number, withdrawalReason: string) {
+  const assignment = await db.assignment.findFirst({where: {work_id: workId}})
+
+  await db.work.update({
+    where: {work_id: workId},
+    data: {work_status: "PENDING"}
+  });
+
+  await db.workapplication.deleteMany({
+    where: {
+      work_id: assignment?.work_id,
+      user_id: assignment?.user_id!
+    }
+  })
+
+  await db.assignment.update({
+    where: { assignment_id: assignment!.assignment_id },
+    data: { withdrawal_reason: withdrawalReason }
   })
 }

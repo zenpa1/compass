@@ -42,7 +42,7 @@ export default function RoleSetupPage() {
       if (response.ok) {
         //clear temp data then forward to dashboasrd
         localStorage.removeItem("temp_user");
-        router.push("/dashboard");
+        router.push("/work");
       } else {
         alert("Failed to save roles. Please try again.");
       }

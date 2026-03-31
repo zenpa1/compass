@@ -1,10 +1,13 @@
+import { Router, Request, Response } from 'express';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const workId = parseInt(id);
-  const userId = 1; // Replace with actual session logic
+  const session = await getSession();
+  const userId = session?.userId || 1;
 
   if (!workId) return new NextResponse("Invalid work ID", { status: 400 });
 

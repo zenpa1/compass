@@ -1,10 +1,29 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export function SidebarLogoutButton() {
   const [showModal, setShowModal] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      //call API route
+      const response = await fetch('/api/auth/logout', { 
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        //clear local navigation cache and redirect to login
+        router.push("/login");
+        router.refresh(); 
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <>
@@ -56,7 +75,7 @@ export function SidebarLogoutButton() {
               <Button
                 type="button"
                 size="sm"
-                onClick={() => setShowModal(false)}
+                onClick={handleLogout}
               >
                 Confirm
               </Button>

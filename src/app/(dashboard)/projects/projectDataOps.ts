@@ -3,6 +3,8 @@
 //File for all data operations related to project
 import { Prisma } from "@/generated/client";
 import { db } from "@/lib/prisma"; // Direct DB access
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 export interface Project {
   project_id: number;
@@ -211,4 +213,14 @@ export async function getProjectMissingWorks(project_id: number) {
   });
 
   return works.length;
+}
+
+//Special version of delete when deleting from within a project's work page
+export async function deleteProjectHeader(id: number) {
+  await db.project.delete({
+    where: { project_id: id }
+  });
+
+  revalidatePath('/projects')
+  redirect('/projects')
 }
