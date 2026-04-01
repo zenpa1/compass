@@ -1,7 +1,9 @@
-'use server'
-
-import { db } from "@/lib/prisma"; // Your real DB connection
+import { db } from "@/lib/prisma";
 import ProjectDashboard from "@/app/(dashboard)/projects/projectDashboard";
+
+// This page reads live DB data and must render at request time on Vercel.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // async as it must wait for the database to reply
 export default async function ProjectsPage() {
