@@ -1,7 +1,6 @@
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { workapplication_application_status } from "@/generated/client";
-import { Router, Request } from 'express';
 
 console.log(workapplication_application_status);
 type TabType = "OPEN" | "PENDING" | "ACTIVE";
