@@ -7,6 +7,7 @@ export default function LoginPage() {
 
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState("");
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     const idToken = credentialResponse.credential;
@@ -70,11 +71,17 @@ export default function LoginPage() {
         )}
 
         <div className="mt-6 flex justify-center sm:mt-8">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => setErrorMessage("Google Sign-In Failed")}
-            useOneTap
-          />
+          {googleClientId ? (
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setErrorMessage("Google Sign-In Failed")}
+              useOneTap
+            />
+          ) : (
+            <p className="text-sm text-red-600">
+              Login is unavailable: NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set.
+            </p>
+          )}
         </div>
       </div>
     </div>

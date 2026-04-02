@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
-export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params; 
+export async function POST(
+  req: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const params = await context.params;
   console.log("Params object:", params);
   console.log("Request URL:", req.url);
 
@@ -15,14 +18,14 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   try {
     const session = await getSession();
-    const userId = session?.userId || 1
+    const userId = session?.userId || 1;
 
     const application = await db.workapplication.create({
       data: {
         work_id: workId,
         user_id: userId!,
-        application_status: "APPROVAL", 
-      },  
+        application_status: "APPROVAL",
+      },
     });
 
     console.log("Created application:", application);
