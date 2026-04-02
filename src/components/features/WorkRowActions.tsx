@@ -10,6 +10,8 @@ import {
   isWorkActive,
   deleteWork,
 } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
+import { clearAssignee
+} from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 
 interface WorkRowActionsProps {
   projectId: number;
@@ -112,6 +114,12 @@ export function WorkRowActions({
       setDate(new Date(dateString));
     }
   };
+
+  const handleClearAssignee = async () => {
+    clearAssignee(workId);
+    setMenuOpen(false);
+    refresh();
+  }
 
   const positionMenu = () => {
     const trigger = triggerRef.current;
@@ -230,6 +238,26 @@ export function WorkRowActions({
           className="fixed z-40 w-36 rounded-md border border-slate-200 bg-white p-1 text-sm shadow-md"
           style={{ top: menuPosition.top, left: menuPosition.left }}
         >
+        <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+            onClick={handleClearAssignee}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            Clear Assignees
+          </button>
           <button
             type="button"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params; 
@@ -14,7 +15,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   if (!workExists) return new NextResponse("Work not found", { status: 404 });
 
   try {
-    const userId = 1; //insert session handling here
+    const session = await getSession();
+    const userId = session?.userId || 1
+
     const application = await db.workapplication.create({
       data: {
         work_id: workId,

@@ -1,6 +1,7 @@
 import { db } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 import { workapplication_application_status } from "@/generated/client";
-import { NextRequest, NextResponse } from "next/server";
+import { Router, Request } from 'express';
 
 console.log(workapplication_application_status);
 type TabType = "OPEN" | "PENDING" | "ACTIVE";
@@ -13,8 +14,11 @@ const getUser = async (user_id: number) => {
   return await db.user.findUnique({ where: { user_id: user_id } });
 };
 
-export async function GET(req: NextRequest) {
-  const user = await getUser(1);
+export async function GET(req: Request) {
+  const session = await getSession();
+  const userId = session?.userId || 1;
+  
+  const user = await getUser(userId);
 
   if (!user || user.user_type !== "EMPLOYEE") {
     return new Response(JSON.stringify({ error: "Not authorized" }), { status: 403 });
