@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -9,6 +8,6 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    adapter: new PrismaMariaDb(process.env.DATABASE_URL!),
+    url: process.env.DATABASE_URL!,
   },
 });
