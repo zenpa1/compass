@@ -1,15 +1,13 @@
-import { PrismaClient } from "@/generated/client"; 
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import "dotenv/config";
+import { defineConfig } from "prisma/config";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter: new PrismaMariaDb(process.env.DATABASE_URL!),
-    log: ['query'],
-  });
-
-globalForPrisma.prisma = prisma;
+export default defineConfig({
+  schema: "prisma/schema.prisma",
+  migrations: {
+    path: "prisma/migrations",
+    seed: "tsx prisma/seed.ts",
+  },
+  datasource: {
+    url: process.env.DATABASE_URL!,
+  },
+});
