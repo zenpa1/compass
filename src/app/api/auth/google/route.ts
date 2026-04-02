@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 // We use the relative path to be safe
-import { AuthService } from '../../../(auth)/services/authService'; 
+import { AuthService } from '../../../(auth)/services/authService';
 
 const authService = new AuthService();
 
@@ -11,12 +11,7 @@ const authService = new AuthService();
 export async function OPTIONS() {
   return NextResponse.json({}, {
     status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': 'http://127.0.0.1:5500', // MUST match your frontend URL exactly
-      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Allow-Credentials': 'true',
-    },
+    headers: corsHeaders(),
   });
 }
 
@@ -42,12 +37,12 @@ export async function POST(request: Request) {
 
     // Set Cookie
     const cookieStore = await cookies();
-    cookieStore.set('userId', String(result.user!.userId), { 
+    cookieStore.set('userId', String(result.user!.userId), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7 
+      maxAge: 60 * 60 * 24 * 7
     });
 
     // Return Success with CORS Headers
@@ -63,7 +58,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Auth route error:', error);
     return NextResponse.json(
-      { success: false, message: 'Internal server error' }, 
+      { success: false, message: 'Internal server error' },
       { status: 500, headers: corsHeaders() }
     );
   }
@@ -71,8 +66,12 @@ export async function POST(request: Request) {
 
 // Helper function to avoid repeating headers
 function corsHeaders() {
+  const origin = process.env.NODE_ENV === 'production'
+    ? 'https://compass-ten-kappa.vercel.app'
+    : 'http://127.0.0.1:5500';
+
   return {
-    'Access-Control-Allow-Origin': 'http://127.0.0.1:5500',
+    'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',

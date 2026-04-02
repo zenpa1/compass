@@ -4,6 +4,8 @@ import { getRemainingDays, getProjectMissingWorks, getProjectWorks }
 import { getEnrichedWorks } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import ManageWorksPage from "@/app/(dashboard)/projects/[projectId]/manageWorks";
 
+export const dynamic = 'force-dynamic';
+
 interface ProjectDetailPageProps {
   params: { projectId: string };
 }

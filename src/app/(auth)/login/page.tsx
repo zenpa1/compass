@@ -4,6 +4,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState("");
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
