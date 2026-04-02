@@ -1,4 +1,3 @@
-import { Router, Request, Response } from 'express';
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
