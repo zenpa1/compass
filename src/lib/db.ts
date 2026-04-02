@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/generated/prisma";
+import { PrismaClient } from "@/generated/client"; 
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
 const globalForPrisma = globalThis as unknown as {
@@ -12,4 +12,4 @@ export const prisma =
     log: ['query'],
   });
 
-globalForPrisma.prisma = prisma; // always cache it
+globalForPrisma.prisma = prisma;
