@@ -3,7 +3,7 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
 
-export default async function LoginPage() {
+export default function LoginPage() {
 
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState("");
