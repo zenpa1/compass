@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server';
-import { OAuth2Client } from 'google-auth-library';
-import { prisma } from '@/lib/db';
-import { createSession } from '@/lib/session';
+import { NextResponse } from "next/server";
+import { OAuth2Client } from "google-auth-library";
+import { prisma } from "@/lib/db";
+import { createSession } from "@/lib/session";
 
-const client = new OAuth2Client(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+const googleClientId =
+  process.env.GOOGLE_CLIENT_ID ?? process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(googleClientId);
 
 // ==================================================================
 // HELPER: Dynamic CORS Headers
@@ -48,7 +50,7 @@ export async function POST(request: Request) {
         if (!payload || !payload.email) {
             return NextResponse.json(
                 { message: "Invalid token" }, 
-                { status: 400, headers: corsHeaders() } // Correctly separated options
+                { status: 400, headers: corsHeaders() }
             );
         }
 
@@ -63,7 +65,7 @@ export async function POST(request: Request) {
         if (!user) {
             return NextResponse.json(
                 { message: "Access Denied", errorType: "PRIVATE_APP" },
-                { status: 403, headers: corsHeaders() } // Correctly separated options
+                { status: 403, headers: corsHeaders() }
             );
         }
 
@@ -94,7 +96,7 @@ export async function POST(request: Request) {
                 }
             }, {
                 status: 200, 
-                headers: corsHeaders() // Correctly separated options
+                headers: corsHeaders()
             });
         }
 
@@ -127,7 +129,7 @@ export async function POST(request: Request) {
                 user: { id: user.user_id, email: user.email }
             }, {
                 status: 200, 
-                headers: corsHeaders() // Correctly separated options
+                headers: corsHeaders()
             });
         }
 
@@ -141,14 +143,14 @@ export async function POST(request: Request) {
         // Send to freelancers if profile already exists
         return NextResponse.json(
             { message: "Login Success", redirect: "/work" },
-            { status: 200, headers: corsHeaders() } // Correctly separated options
+            { status: 200, headers: corsHeaders() }
         );
 
     } catch (error) {
         console.error("Auth Error: ", error);
         return NextResponse.json(
             { message: "Server Error" }, 
-            { status: 500, headers: corsHeaders() } // Added missing CORS headers here
+            { status: 500, headers: corsHeaders() }
         );
     }
 }
