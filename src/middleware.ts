@@ -33,6 +33,11 @@ export async function middleware(req: NextRequest) {
   }
 }
 
+// export async function middleware(req: NextRequest) {
+//   console.log('Middleware running on:', req.nextUrl.pathname);
+//   return NextResponse.next(); // bypass auth completely
+// }
+
 //match page paths here
 export const config = { 
   matcher: [ 

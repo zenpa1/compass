@@ -74,25 +74,27 @@ export default function EmployeeLayout({
               </Button>
             </Link>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-12 w-full hover:bg-slate-800 hover:text-white"
-              aria-label="Calendar"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="size-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <Link href="/employee/calendar" aria-label="Calendar">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-full hover:bg-slate-800 hover:text-white"
+                aria-label="Calendar"
               >
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <path d="M16 2v4M8 2v4M3 10h18" />
-              </svg>
-            </Button>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
+                </svg>
+              </Button>
+            </Link>
           </nav>
 
           <div className="mt-auto w-full px-4">

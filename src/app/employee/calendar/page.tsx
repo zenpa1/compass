@@ -28,6 +28,7 @@ function formatDate(dateStr?: string) {
 function formatTime(dateStr?: string) {
   if (!dateStr) return null;
   const d = new Date(dateStr);
+  // return date only if time is 00:00
   if (d.getHours() === 0 && d.getMinutes() === 0) return null;
   return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 }
