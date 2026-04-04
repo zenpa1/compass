@@ -76,7 +76,8 @@ export default function WorksPage() {
   const handleWithdraw = async () => {
     employeeWithdraw(currentWork, withdrawDescription);
     setWithdrawModal(false);
-    fetchWorks();
+    setSelectedTab("ACTIVE");
+    setTimeout(() => {fetchWorks();}, 500)
   };
 
   const handleMarkDone = async (workId: number) => {

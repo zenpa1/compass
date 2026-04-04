@@ -2,7 +2,14 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Project, deleteProjectHeader, getProjectWorks } 
+import { 
+  Project, 
+  deleteProjectHeader, 
+  getProjectWorks, 
+  archiveProject, 
+  getProjectActiveWorks,
+  activateProject,
+  refreshProjectHeader } 
   from "@/app/(dashboard)/projects/projectDataOps";
 import { useRouter } from "next/navigation";
 
@@ -22,6 +29,7 @@ export function ProjectHeaderActions({
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
   const [showMarkCompleteConfirm, setShowMarkCompleteConfirm] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [showActiveConfirm, setShowActiveConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const openMarkCompleteConfirm = () => {
@@ -34,6 +42,11 @@ export function ProjectHeaderActions({
     setShowArchiveConfirm(true);
   };
 
+  const openActiveConfirm = (e: any) => {
+    detailsRef.current?.removeAttribute("open");
+    setShowActiveConfirm(true);
+  };
+
   const openDeleteConfirm = () => {
     detailsRef.current?.removeAttribute("open");
     setShowDeleteConfirm(true);
@@ -44,9 +57,22 @@ export function ProjectHeaderActions({
     setShowMarkCompleteConfirm(false);
   };
 
-  const handleArchiveConfirm = () => {
-    // Frontend-only interaction for now; backend archive update will be added later.
-    setShowArchiveConfirm(false);
+  const handleArchiveConfirm = async () => {
+    const check = await getProjectActiveWorks(project.project_id);
+    
+    if (check != null) {
+      openWorkConflictWindow();
+    } else {
+      archiveProject(project.project_id);
+      refreshProjectHeader(project.project_id);
+      setShowArchiveConfirm(false);
+    }
+  };
+
+  const handleActiveConfirm = async () => {
+      activateProject(project.project_id);
+      refreshProjectHeader(project.project_id);
+      setShowActiveConfirm(false);
   };
 
   const handleDeleteConfirm = async () => {
@@ -76,7 +102,7 @@ export function ProjectHeaderActions({
         </summary>
 
         <div className="absolute right-0 top-9 z-20 w-44 rounded-md border border-slate-200 bg-white p-1 text-sm shadow-md">
-          <button
+          {/*<button
             type="button"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-slate-700 hover:bg-slate-100"
             onClick={openMarkCompleteConfirm}
@@ -94,9 +120,10 @@ export function ProjectHeaderActions({
               <path d="M20 6L9 17l-5-5" />
             </svg>
             Mark Complete
-          </button>
+          </button>*/}
 
-          <button
+          {(project.project_status == "ACTIVE") ? (
+            <button
             type="button"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-slate-700 hover:bg-slate-100"
             onClick={openArchiveConfirm}
@@ -117,6 +144,30 @@ export function ProjectHeaderActions({
             </svg>
             Archive
           </button>
+          ) : (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-slate-700 hover:bg-slate-100"
+              aria-label={`Activate ${name}`}
+              onClick={openActiveConfirm}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="6" rx="1" />
+                <path d="M7 14h10" />
+                <path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10" />
+              </svg>
+              Activate
+            </button>
+          )}
 
           <button
             type="button"
@@ -204,6 +255,38 @@ export function ProjectHeaderActions({
                 Cancel
               </Button>
               <Button type="button" size="sm" onClick={handleArchiveConfirm}>
+                Confirm
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showActiveConfirm ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Activate project confirmation"
+        >
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 text-center shadow-lg">
+            <h3 className="text-base font-semibold text-slate-900">
+              Activate Project
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Do you want to reactivate project "{project.project_name}"?
+            </p>
+            <div className="mt-5 flex justify-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                onClick={() => setShowActiveConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="button" size="sm" onClick={handleActiveConfirm}>
                 Confirm
               </Button>
             </div>

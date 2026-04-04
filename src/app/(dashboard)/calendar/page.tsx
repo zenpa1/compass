@@ -66,6 +66,11 @@ export default function CalendarPage() {
             dayHeaderContent={(arg) =>
               isMobile ? arg.text.slice(0, 1) : arg.text
             }
+            eventTimeFormat={{
+              hour: 'numeric',
+              minute: '2-digit',
+              meridiem: 'short' // This results in '5:08pm' or '5:08p' depending on space
+            }}
           />
         </div>
       </div>

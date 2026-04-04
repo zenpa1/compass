@@ -322,7 +322,36 @@ export async function employeeWithdraw(workId: number, withdrawalReason: string)
   })
 
   await db.assignment.update({
-    where: { assignment_id: assignment!.assignment_id },
-    data: { withdrawal_reason: withdrawalReason }
+    where: { 
+      assignment_id: assignment!.assignment_id 
+    },
+    data: { 
+      withdrawal_reason: withdrawalReason 
+    }
+  })
+}
+
+export async function reassignPerson(assignmentId: number, user: User) {
+  const work = await db.assignment.findFirst({where: {assignment_id: assignmentId}})
+  
+  await db.workapplication.updateMany({
+      where: { work_id: work!.work_id },
+      data: {
+        user_id: user.user_id,
+        application_status: "PENDING", 
+      },  
+  });
+
+  await db.work.update({
+    where: { work_id: work!.work_id },
+    data: { work_status: "PENDING" }
+  })
+
+  await db.assignment.update({
+    where: {assignment_id: assignmentId},
+    data: {
+      user_id: user.user_id,
+      assignment_status: "PENDING"
+    }
   })
 }

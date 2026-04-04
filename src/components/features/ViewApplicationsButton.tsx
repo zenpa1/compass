@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserProfile, User, Assignment, acceptApplication } 
   from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
+import { workapplication_application_status } from "@/generated/client";
 
 type Assignee = {
   userProfile: UserProfile;
@@ -132,6 +133,14 @@ export function ViewApplicationsButton({
                 ))}
               </div>
             </div>
+
+            {(applications.length == 0) ? (
+              <div className="mb-3">
+                <p className="text-base leading-none text-slate-900 text-center">
+                  No applicants yet
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

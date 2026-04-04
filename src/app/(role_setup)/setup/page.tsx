@@ -2,15 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { SimpleDialogProps } from "@/app/(dashboard)/projects/projectDataOps";
+import { Dialog, DialogTitle, DialogContent } from "@mui/material";
 
 const ROLES = ["PHOTO", "VIDEO", "EDITOR", "ASSISTANT", "ANY"];
 
 export default function RoleSetupPage() {
   const router = useRouter();
   const [user, setUser] = useState<{ id: number; name: string } | null>(null);
-  const [primaryRole, setPrimaryRole] = useState("PHOTO");
+  const [primaryRole, setPrimaryRole] = useState("");
   const [secondaryRole, setSecondaryRole] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [invalidRoleWindow, setInvalidRoleWindow] = useState(false);
+  const [missingRoleWindow, setMissingRoleWindow] = useState(false);
 
   //load user data saved from login
   useEffect(() => {
@@ -26,33 +31,43 @@ export default function RoleSetupPage() {
     e.preventDefault();
     if (!user) return;
 
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/auth/setup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          primaryRole,
-          secondaryRole: secondaryRole === "NONE" ? null : secondaryRole,
-        }),
-      });
-
-      if (response.ok) {
-        //clear temp data then forward to dashboasrd
-        localStorage.removeItem("temp_user");
-        router.push("/work");
-      } else {
-        alert("Failed to save roles. Please try again.");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("An error occurred.");
-    } finally {
-      setIsSubmitting(false);
+    if(primaryRole == "") {
+      setMissingRoleWindow(true);
     }
-  };
+    else {
+      if(primaryRole == secondaryRole) {
+        setInvalidRoleWindow(true);
+      }
+      else {
+        setIsSubmitting(true);
+
+        try {
+          const response = await fetch("/api/auth/setup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: user.id,
+              primaryRole,
+              secondaryRole: secondaryRole === "NONE" ? null : secondaryRole,
+            }),
+          });
+
+          if (response.ok) {
+            //clear temp data then forward to dashboasrd
+            localStorage.removeItem("temp_user");
+            router.push("/work");
+          } else {
+            alert("Failed to save roles. Please try again.");
+          }
+        } catch (error) {
+          console.error(error);
+          alert("An error occurred.");
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+    }
+  }
 
   if (!user) return null;
 
@@ -81,6 +96,10 @@ export default function RoleSetupPage() {
               onChange={(e) => setPrimaryRole(e.target.value)}
               className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:outline-none"
             >
+              <option value="" disabled>
+                None
+              </option>
+
               {ROLES.map((role) => (
                 <option key={role} value={role}>
                   {role}
@@ -118,6 +137,50 @@ export default function RoleSetupPage() {
           </button>
         </form>
       </div>
+
+      <InvalidRolesWindow
+        onClose={() => setInvalidRoleWindow(false)}
+        open={invalidRoleWindow}
+      />
+
+      <MissingRoleWindow
+        onClose={() => setMissingRoleWindow(false)}
+        open={missingRoleWindow}
+      />
     </div>
+  );
+}
+
+export function InvalidRolesWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Invalid Roles</DialogTitle>
+      <DialogContent>
+        <p>You cannot have the same primary and invalid role.</p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function MissingRoleWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>No Primary Role</DialogTitle>
+      <DialogContent>
+        <p>You cannot finish setup without choosing a primary role.</p>
+      </DialogContent>
+    </Dialog>
   );
 }

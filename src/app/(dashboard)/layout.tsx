@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { SidebarLogoutButton } from "@/components/features/SidebarLogoutButton";
 // 1. Import your new Check Button component!
 import { SidebarCheckButton } from "@/components/features/SidebarCheckButton"; 
+import { useState, useEffect } from "react";
+import { getProfilePicture, getSidebarUrl } 
+  from "@/app/(dashboard)/projects/projectDataOps";
 
 export default function DashboardLayout({
   children,
@@ -18,6 +21,22 @@ export default function DashboardLayout({
   // 2. Add an active state check for your tasks route!
   const tasksActive = pathname.startsWith("/tasks"); 
 
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [sidebarUrl, setSidebarUrl] = useState("");
+
+  useEffect(() => {
+    const fetchUrls = async () => { 
+      const url = await getProfilePicture();
+      const sidebar = await getSidebarUrl();
+
+      setAvatarUrl(url!);
+      setSidebarUrl(sidebar)
+    }
+
+    fetchUrls();
+  }, [])
+
+
   return (
     <div className="flex h-screen bg-slate-50">
       
@@ -25,13 +44,15 @@ export default function DashboardLayout({
       <aside className="w-20 bg-slate-900 flex flex-col items-center py-6 h-full text-slate-300">
         
         {/* LOGO */}
-        <div className="mb-8 h-10 w-10 rounded-full bg-slate-800" />
+        <div className="mb-8 h-10 w-10 rounded-full bg-slate-800 overflow-hidden">
+          {avatarUrl ? <img src={avatarUrl} alt="Profile" /> : null}
+        </div>
 
         {/* NAVIGATION SECTION */}
         <nav className="flex-1 flex flex-col gap-6 w-full px-4">
           
           {/* Projects Link */}
-          <Link href="/projects">
+          <Link href={sidebarUrl}>
             <Button
               variant="ghost"
               size="icon"

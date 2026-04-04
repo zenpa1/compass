@@ -111,6 +111,7 @@ export default function ManageWorksPage({
             assignment={assignment}
             refresh={refresh}
             withdrawn={status.startsWith("⚠ WITHDRAWN") ? true : false}
+            work={work}
           />
         ) : status.startsWith("🔍 FOR REVIEW") ? (
           <MarkCompleteWorkButton
@@ -126,13 +127,13 @@ export default function ManageWorksPage({
 
   const formatWorkSchedule = (work: Work) => {
     if (work.work_start_time == null || work.work_end_time == null) {
-      return `TBA, ${work.work_start_date?.toLocaleDateString()}`;
+      return `${work.work_start_date?.toLocaleDateString()}, TBA`;
     }
 
     return (
+      `${work.work_start_date?.toLocaleDateString()}, ` +
       `${toShortHours(work.work_start_time?.getHours() ?? 0)}-` +
-      `${toShortHours(work.work_end_time?.getHours() ?? 0)}, ` +
-      `${work.work_start_date?.toLocaleDateString()}`
+      `${toShortHours(work.work_end_time?.getHours() ?? 0)}`
     );
   };
 

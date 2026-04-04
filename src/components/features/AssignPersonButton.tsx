@@ -1,9 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { UserProfile, User, Assignment, assignPerson, removeWithdrawal } 
+import { 
+  UserProfile, 
+  User, 
+  Assignment, 
+  assignPerson, 
+  removeWithdrawal, 
+  reassignPerson, 
+  getAvailableAssignees, 
+  getRecommendedAssignees } 
   from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
+import { Work } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import { Button } from "@/components/ui/button";
+import { userAgent } from "next/server";
 
 type Assignee = {
   userProfile: UserProfile;
@@ -18,6 +28,7 @@ interface AssignPersonButtonProps {
   assignment: Assignment,
   refresh: () => void,
   withdrawn: boolean
+  work: Work;
 }
 
 function triggerClassByTone(tone: "amber" | "blue" | "red" | "green") {
@@ -52,7 +63,8 @@ export function AssignPersonButton({
   recommendedAssignees,
   assignment,
   refresh,
-  withdrawn
+  withdrawn,
+  work
 }: AssignPersonButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [isManualMode, setIsManualMode] = useState(true);
@@ -60,9 +72,17 @@ export function AssignPersonButton({
   const [hiredFreelancer, setHiredFreelancer] = useState(false);
   const [withdrawnModal, setWithdrawnModal] = useState(false);
 
+  const [updatedAvailableAssignees, setUpdatedAvailableAssignees] = 
+    useState<Assignee[]>(availableAssignees);
+  const [updatedRecommendedAssignees, setUpdatedRecommendedAssignees] = 
+    useState<Assignee[]>(recommendedAssignees);
+
+  const [selectedUser, setSelectedUser] = useState<User>();
+  const [showChangeAssigneeConfirm, setShowChangeAssigneeConfirm] = useState(false);
+
   const filteredManualCandidates = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
-    const baseCandidates = availableAssignees;
+    const baseCandidates = updatedAvailableAssignees;
 
     if (!query) {
       return baseCandidates;
@@ -78,26 +98,52 @@ export function AssignPersonButton({
   const displayedCandidates = !hiredFreelancer ? 
     (isManualMode
       ? filteredManualCandidates
-      : recommendedAssignees) :
+      : updatedRecommendedAssignees) :
     null
 
+  async function refreshAssignees() {
+    const temp1 = await getAvailableAssignees(work);
+    const temp2 = await getRecommendedAssignees(work, work.project_role);
+
+    setUpdatedAvailableAssignees(() => temp1);
+    setUpdatedRecommendedAssignees(() => temp2);
+  }
+
   async function handleAssign(user: User) {
-    assignPerson(assignment.assignment_id, user);
+    setSelectedUser(user);
+
+    if(assignment.user_id != null) {
+      setShowChangeAssigneeConfirm(true);
+    }
+    else {
+      assignPerson(assignment.assignment_id, user);
+      setShowModal(false);
+      refresh();
+    }
+  }
+
+  async function handleReassign() {
+    reassignPerson(assignment.assignment_id, selectedUser!);
+    setShowChangeAssigneeConfirm(false);
     setShowModal(false);
     refresh();
   }
 
-  function handleOpen() {
+  async function handleOpen() {
     if(withdrawn) setWithdrawnModal(true);
-    else setShowModal(true);
+    else {
+      await refreshAssignees();
+      setShowModal(true)
+    }
   }
 
-  function handleWithdrawClose() {
-    removeWithdrawal(assignment.assignment_id);
+  async function handleWithdrawClose() {
+    await removeWithdrawal(assignment.assignment_id);
     setWithdrawnModal(false);
     refresh();
 
-    setShowModal(true);
+    refreshAssignees();
+    setTimeout(() => {setShowModal(true)}, 500);
   }
 
   return (
@@ -299,6 +345,38 @@ export function AssignPersonButton({
           </div>
         )
       : null}
+
+      {showChangeAssigneeConfirm ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Reassign work confirmation"
+        >
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 text-center shadow-lg">
+            <h3 className="text-base font-semibold text-slate-900">
+              Reassign Work
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Do you want to reassign this work?
+            </p>
+            <div className="mt-5 flex justify-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                onClick={() => setShowChangeAssigneeConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="button" size="sm" onClick={handleReassign}>
+                Confirm
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
