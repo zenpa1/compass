@@ -131,6 +131,10 @@ export async function deleteWork(work_id: number) {
     where: { assignment_id: assignment?.assignment_id }
   })
 
+  await db.workapplication.deleteMany({
+    where: { work_id: work_id }
+  })
+
   await db.work.delete({
     where: { work_id: work_id }
   });
@@ -199,6 +203,10 @@ export async function cancelRequest(work_id: number) {
     where: { assignment_id: assignment!.assignment_id },
     data: { user_id: null }
   });
+
+  await db.workapplication.deleteMany({
+    where: { work_id: work_id }
+  })
 }
 
 export async function markWorkAsComplete(work_id: number) {

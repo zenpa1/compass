@@ -11,6 +11,7 @@ import {
 } from "@/app/(dashboard)/projects/projectDataOps";
 import ProjectNullValuesWindow, {
   ProjectWorksExistWindow,
+  ProjectInvalidDeadlineWindow
 } from "@/components/features/ProjectAlerts";
 
 interface ProjectListProps {
@@ -25,6 +26,7 @@ export default function ProjectDashboard({
   //Variables for alert windows
   const [nullWindow, setNullWindow] = useState(false);
   const [worksWindow, setWorksWindow] = useState(false);
+  const [deadlineWindow, setDeadlineWindow] = useState(false);
 
   //Gets the projects in the database and assigns them to the projects displayed in the
   //dashboard. The method is passed down to most child components so they can "refresh"
@@ -67,6 +69,7 @@ export default function ProjectDashboard({
               //from another component
               openNullWindow={() => setNullWindow(true)}
               openWorkConflictWindow={() => setWorksWindow(true)}
+              openInvalidDeadlineWindow={() => setDeadlineWindow(true)}
               refresh={refresh}
             />
           ))}
@@ -79,6 +82,7 @@ export default function ProjectDashboard({
             refresh={refresh}
             openNullWindow={() => setNullWindow(true)}
             openWorkConflictWindow={() => setWorksWindow(true)}
+            openInvalidDeadlineWindow={() => setDeadlineWindow(true)}
           />
           <p className="mt-3 text-sm text-slate-500">Click to add</p>
         </div>
@@ -89,6 +93,7 @@ export default function ProjectDashboard({
           refresh={refresh}
           openNullWindow={() => setNullWindow(true)}
           openWorkConflictWindow={() => setWorksWindow(true)}
+          openInvalidDeadlineWindow={() => setDeadlineWindow(true)}
         />
       ) : null}
 
@@ -98,10 +103,16 @@ export default function ProjectDashboard({
         onClose={() => setNullWindow(false)}
       />
 
-      {/* Window that appears if one of the required inputs is null */}
+      {/* Window that appears if project has active works */}
       <ProjectWorksExistWindow
         open={worksWindow}
         onClose={() => setWorksWindow(false)}
+      />
+
+      {/* Window that appears if owner sets the deadline to be before the current date */}
+      <ProjectInvalidDeadlineWindow
+        open={deadlineWindow}
+        onClose={() => setDeadlineWindow(false)}
       />
     </div>
   );

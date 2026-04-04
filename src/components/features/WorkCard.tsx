@@ -104,7 +104,7 @@ export function WorkCard({
         {status === "ACTIVE" && work.work_status === "ASSIGNED" && (
           <button
             onClick={() => onMarkDone?.(work.work_id)}
-            className="border-2 flex-1 border-green-500 rounded-xl p-2 text-green-500 font-semibold"
+            className="border-2 flex-1 border-green-500 rounded-xl p-2 text-green-500 font-semibold ml-[7.5px]"
           >
             Mark As Done
           </button>
