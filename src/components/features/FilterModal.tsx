@@ -126,14 +126,22 @@ export function FilterModal({ isOpen, onClose, onConfirm, allTasks }: FilterModa
                 <div className="space-y-2 mb-4">
                     <button
                         className="flex items-center gap-3 w-full text-sm text-slate-700"
-                        onClick={() => setShowCompleted(!showCompleted)}
+                        onClick={() => {
+                            const nextState = !showCompleted;
+                            setShowCompleted(nextState);
+                            if (nextState) setShowNotCompleted(false);
+                        }}
                     >
                         <CheckBox active={showCompleted} />
                         Completed
                     </button>
                     <button
                         className="flex items-center gap-3 w-full text-sm text-slate-700"
-                        onClick={() => setShowNotCompleted(!showNotCompleted)}
+                        onClick={() => {
+                            const nextState = !showNotCompleted;
+                            setShowNotCompleted(nextState);
+                            if (nextState) setShowCompleted(false);
+                        }}
                     >
                         <CheckBox active={showNotCompleted} />
                         Not completed
