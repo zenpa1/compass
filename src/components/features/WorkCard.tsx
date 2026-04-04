@@ -6,10 +6,11 @@ import type { Work } from "@/type/work";
 interface WorkCardProps {
   work: Work;
   status: WorkStatus;
-  onApply?: (id: number) => void;
-  onAccept?: (id: number) => void;
-  onDecline?: (id: number) => void;
-  onWithdraw?: (id: number) => void;
+  onApply: (workId: number) => Promise<void>;
+  onAccept: (workId: number) => Promise<void>;
+  onDecline: (workId: number) => Promise<void>;
+  onWithdraw: (workId: number) => Promise<void>;
+  onMarkDone?: (workId: number) => Promise<void>;
 }
 
 function activeBadgeClass(workStatus: string) {
