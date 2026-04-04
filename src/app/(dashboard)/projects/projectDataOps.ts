@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/client";
 import { db } from "@/lib/prisma"; // Direct DB access
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getSession } from "@/lib/session";
 
 export interface Project {
   project_id: number;
@@ -175,7 +176,8 @@ export async function getProjectActiveWorks(project_id: number) {
     },
   });
 
-  return works;
+  const check = (works.length == 0) ? null : 1
+  return check;
 }
 
 //Gets the remaining days before the project's deadline
@@ -223,4 +225,37 @@ export async function deleteProjectHeader(id: number) {
 
   revalidatePath('/projects')
   redirect('/projects')
+}
+
+//Gets a user's profile picture for the sidebar
+export async function getProfilePicture() {
+  const session = await getSession();
+  const userId = session?.userId || 1;
+
+  const user = await db.user.findFirst({ where: { user_id: userId } })
+  return user?.avatar_url || null;
+}
+
+//Checks if a user is an employee or not
+export async function getSidebarUrl() {
+  const session = await getSession();
+  const userId = session?.userId || 1;
+
+  const user = await db.user.findFirst({ where: { user_id: userId } });
+  return (user?.user_type == "OWNER") ? "/projects" : "/work";
+}
+
+//Checks if a project's given deadline is past the current date
+export async function isValidDeadline(date: Date) {
+  const currentDate = new Date();
+  const check = currentDate > date;
+
+  return (check) ? 1 : 0;
+}
+
+export async function refreshProjectHeader(projectId: number) {
+  const path = "/projects/" + projectId;
+
+  revalidatePath(path)
+  redirect(path)
 }

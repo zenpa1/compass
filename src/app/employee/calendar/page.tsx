@@ -57,7 +57,6 @@ export default function CalendarPage() {
     return () => window.removeEventListener("resize", updateMobile);
   }, []);
 
-  // Close popover on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
@@ -65,7 +64,6 @@ export default function CalendarPage() {
       }
     }
     if (popover) {
-      // Slight delay so the opening click doesn't immediately close it
       const t = setTimeout(() => document.addEventListener("mousedown", handleClickOutside), 10);
       return () => {
         clearTimeout(t);
@@ -92,7 +90,6 @@ export default function CalendarPage() {
     });
   };
 
-  // Clamp popover so it doesn't go off-screen
   const getPopoverStyle = (): React.CSSProperties => {
     if (!popover) return {};
     const popoverWidth = 288; // w-72

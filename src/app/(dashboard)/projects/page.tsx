@@ -1,8 +1,7 @@
-'use server'
-
 import { db } from "@/lib/prisma"; // Your real DB connection
 import ProjectDashboard from "@/app/(dashboard)/projects/projectDashboard";
 
+export const dynamic = 'force-dynamic';
 // async as it must wait for the database to reply
 export default async function ProjectsPage() {
   // FETCH REAL DATA

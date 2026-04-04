@@ -41,7 +41,7 @@ export function ProjectOverrideWindow(props: {
       <DialogContent>
         <p>Do you want to override the existing project?</p>
         <Button onClick={override}>Yes</Button>
-        <Button onClick={handleClose}>No</Button>
+        <Button onClick={handleClose} className="ml-2.5">No</Button>
       </DialogContent>
     </Dialog>
   );
@@ -82,6 +82,23 @@ export function IsActiveWorkWindow(props: SimpleDialogProps) {
       <DialogTitle>Cannot delete work.</DialogTitle>
       <DialogContent>
         <p>The work is still active or being reviewed.</p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function ProjectInvalidDeadlineWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Invalid Deadline</DialogTitle>
+      <DialogContent>
+        <p>The set deadline is already past the current date.</p>
       </DialogContent>
     </Dialog>
   );

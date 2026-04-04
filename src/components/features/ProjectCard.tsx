@@ -1,7 +1,7 @@
 "use client";
 
 // A "dumb" reusable UI component wherein it handles no logic, just takes data and displays it
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   checkEditProjectConflict,
   getProjectActiveWorks,
   activateProject,
+  isValidDeadline
 } from "@/app/(dashboard)/projects/projectDataOps";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
 import { ProjectOverrideWindow } from "@/components/features/ProjectAlerts";
@@ -31,6 +32,7 @@ interface ProjectCardProps {
   status: "ACTIVE" | "ARCHIVED";
   openNullWindow: () => void;
   openWorkConflictWindow: () => void;
+  openInvalidDeadlineWindow: () => void;
   refresh: () => void;
 }
 
@@ -46,9 +48,15 @@ export function ProjectCard({
   status,
   openNullWindow,
   openWorkConflictWindow,
+  openInvalidDeadlineWindow,
   refresh,
 }: ProjectCardProps) {
-  const headerTone = status === "ARCHIVED" ? "bg-rose-300" : "bg-slate-800";
+  //bg-rose-300 = archived
+  //bg-blue-800 = chill
+  //"bg-rose-600" = overdue
+  //"bg-yellow-500" = urgent
+
+  const headerTone = status === "ARCHIVED" ? "bg-rose-300" : getHeaderTone();
   const router = useRouter();
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -65,6 +73,20 @@ export function ProjectCard({
   const [editDescription, setEditDescription] = useState(description);
 
   const [overrideWindow, setOverrideWindow] = useState(false);
+
+  useEffect(() => {
+  const handleClickOutside = (event: any) => {
+    if (detailsRef.current && !detailsRef.current.contains(event.target)) {
+      detailsRef.current.removeAttribute('open');
+    }
+  };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [detailsRef]);
 
   const handleViewProject = () => {
     router.push(`/projects/${projectId}`);
@@ -147,7 +169,13 @@ export function ProjectCard({
       if (name_conflict != null) {
         setOverrideWindow(true);
       } else {
-        editProject(
+        const deadline_conflict = await isValidDeadline(editEndDate);
+
+        if(deadline_conflict == 1) {
+          openInvalidDeadlineWindow();
+        }
+        else {
+          editProject(
           projectId as number,
           editName,
           editClient,
@@ -159,9 +187,26 @@ export function ProjectCard({
 
         refresh();
         setShowEditModal(false);
+        }
       }
     }
   };
+
+  function getHeaderTone() {
+    const currentDate = new Date();
+
+    if(currentDate > endDate) {
+      return "bg-rose-600";
+    }
+
+    if(currentDate.getFullYear() == endDate.getFullYear() && 
+      currentDate.getMonth() == endDate.getMonth() && 
+      currentDate.getDay() == (endDate.getDay() - 1)) {
+      return "bg-yellow-500";
+    }
+
+    return "bg-blue-800 = chill";
+  }
 
   //Occurs when the user chooses to override the conflicting project with their current
   //project

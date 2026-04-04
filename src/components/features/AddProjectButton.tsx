@@ -10,6 +10,7 @@ import checkCreateProjectConflict, {
   getProjectWorks,
   getProjectId,
   deleteProject,
+  isValidDeadline
 } from "@/app/(dashboard)/projects/projectDataOps";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ interface AddProjectButtonProps {
   refresh: () => void;
   openNullWindow: () => void;
   openWorkConflictWindow: () => void;
+  openInvalidDeadlineWindow: () => void;
 }
 
 export function AddProjectButton({
@@ -26,6 +28,7 @@ export function AddProjectButton({
   refresh,
   openNullWindow,
   openWorkConflictWindow,
+  openInvalidDeadlineWindow
 }: AddProjectButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [projectName, setProjectName] = useState("");
@@ -66,7 +69,13 @@ export function AddProjectButton({
         //override the project with the new one
         setOverrideWindow(true);
       } else {
-        createProject(
+        const deadline_conflict = await isValidDeadline(endDate);
+
+        if(deadline_conflict == 1) {
+          openInvalidDeadlineWindow();
+        }
+        else {
+          createProject(
           projectName,
           customerName,
           startDate,
@@ -81,6 +90,7 @@ export function AddProjectButton({
 
         refresh();
         setShowModal(false);
+        }
       }
     }
   };

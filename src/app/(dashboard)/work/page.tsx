@@ -1,5 +1,4 @@
 "use client";
-export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import WorkTabs, { WorkStatus } from "@/components/features/WorkTabs";
 import { WorkCard } from "@/components/features/WorkCard";
@@ -77,7 +76,8 @@ export default function WorksPage() {
   const handleWithdraw = async () => {
     employeeWithdraw(currentWork, withdrawDescription);
     setWithdrawModal(false);
-    fetchWorks();
+    setSelectedTab("ACTIVE");
+    setTimeout(() => {fetchWorks();}, 500)
   };
 
   const handleMarkDone = async (workId: number) => {
