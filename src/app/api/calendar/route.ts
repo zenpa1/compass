@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
-
-let current_user: number = 1;
+import { getSession } from "@/lib/session";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const tab = searchParams.get("tab");
+
+  const session = await getSession();
+  const current_user = session?.userId || 1;  
 
   // NORTH STUDIO WORKS
   if (tab === "works") {

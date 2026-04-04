@@ -30,7 +30,12 @@ function formatTime(dateStr?: string) {
   const d = new Date(dateStr);
   // return date only if time is 00:00
   if (d.getHours() === 0 && d.getMinutes() === 0) return null;
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const period = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  const mins = m === 0 ? "" : `:${String(m).padStart(2, "0")}`;
+  return `${hour}${mins} ${period}`;
 }
 
 export default function CalendarPage() {
@@ -92,12 +97,13 @@ export default function CalendarPage() {
 
   const getPopoverStyle = (): React.CSSProperties => {
     if (!popover) return {};
-    const popoverWidth = 288; // w-72
+    const popoverWidth = 288;
     const vw = window.innerWidth;
-    let left = popover.x - popoverWidth / 2;
+    let top = popover.y - window.scrollY;
+    let left = (popover.x - window.scrollX) - popoverWidth / 2;
     if (left < 8) left = 8;
     if (left + popoverWidth > vw - 8) left = vw - popoverWidth - 8;
-    return { top: popover.y, left };
+    return { top, left };
   };
 
   const props = popover?.extendedProps ?? {};
@@ -129,6 +135,11 @@ export default function CalendarPage() {
               isMobile ? arg.text.slice(0, 1) : arg.text
             }
             eventClick={handleEventClick}
+            eventTimeFormat={{  
+              hour: "numeric",
+              minute: "2-digit",
+              meridiem: "short",
+            }}
           />
         </div>
       </div>
@@ -137,8 +148,8 @@ export default function CalendarPage() {
       {popover && (
         <div
           ref={popoverRef}
-          style={{ ...getPopoverStyle(), position: "absolute" }}
-          className="z-50 w-72 rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-150"
+          style={{ ...getPopoverStyle(), position: "fixed" }}
+          className="z-[10000] w-72 rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-150"
         >
           {/* Header strip */}
           <div className="flex items-start justify-between rounded-t-xl bg-slate-900 px-4 py-3">
