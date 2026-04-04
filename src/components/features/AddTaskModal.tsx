@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+// Added ProjectNullValuesWindow here!
+import { ProjectInvalidDeadlineWindow } from "./ProjectAlerts"; 
+import ProjectNullValuesWindow from "./ProjectAlerts";
 
 type AddTaskModalProps = {
   isOpen: boolean;
@@ -19,16 +22,70 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
+const PASTEL_COLORS = [
+  "bg-[#fcd5ce] text-[#2a3f54]", // Pastel Pink
+  "bg-[#cddafd] text-[#2a3f54]", // Pastel Blue
+  "bg-[#ffecd1] text-[#2a3f54]", // Pastel Orange
+  "bg-[#d8e2dc] text-[#2a3f54]", // Pastel Green
+  "bg-[#e9edc9] text-[#2a3f54]", // Pastel Yellow-Green
+  "bg-[#f8edeb] text-[#2a3f54]", // Pastel Rose
+  "bg-[#e8e8e4] text-[#2a3f54]", // Pastel Gray
+  "bg-[#ffcad4] text-[#2a3f54]", // Pastel Red/Pink
+];
+
+// Generate years from the current year up to 2100
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 2100 - CURRENT_YEAR + 1 }, (_, i) => CURRENT_YEAR + i);
+
 export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) {
   const [title, setTitle] = useState("");
-  const [month, setMonth] = useState("January");
-  const [day, setDay] = useState("1");
-  const [year, setYear] = useState(new Date().getFullYear().toString());
+  // Set these to empty strings for the placeholder effect
+  const [month, setMonth] = useState("");
+  const [day, setDay] = useState("");
+  const [year, setYear] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State for teammate's modals
+  const [isInvalidDateModalOpen, setIsInvalidDateModalOpen] = useState(false);
+  const [isNullModalOpen, setIsNullModalOpen] = useState(false);
+
+  // --- Dynamic Days Logic ---
+  const monthIndex = MONTHS.indexOf(month);
+  // Fallback to current year if year isn't selected so leap year math doesn't break
+  const selectedYear = year ? parseInt(year) : CURRENT_YEAR; 
+  
+  // JavaScript date trick: getting the 0th day of the NEXT month gives the last day of the CURRENT month
+  const daysInMonth = monthIndex !== -1 
+    ? new Date(selectedYear, monthIndex + 1, 0).getDate() 
+    : 31; 
+
+  const validDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  // If the user switches to a month with fewer days (e.g., Jan 31 -> Feb), clear the day
+  useEffect(() => {
+    if (day && parseInt(day) > daysInMonth) {
+      setDay("");
+    }
+  }, [month, year, daysInMonth, day]);
+  // --------------------------
 
   if (!isOpen) return null;
+
+  const resetForm = () => {
+    setTitle("");
+    setMonth("");
+    setDay("");
+    setYear("");
+    setDescription("");
+    setSelectedTags([]);
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onClose();
+  };
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -37,10 +94,25 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
   };
 
   const handleConfirm = async () => {
-    if (!title.trim()) return;
+    // Check for empty fields and trigger the null values window
+    if (!title.trim() || !month || !day || !year) {
+      setIsNullModalOpen(true);
+      return;
+    }
 
-    const monthIndex = MONTHS.indexOf(month) + 1;
-    const isoDate = `${year}-${String(monthIndex).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const monthIndex = MONTHS.indexOf(month);
+    
+    // Check if the selected date is in the past
+    const selectedDate = new Date(Number(year), monthIndex, Number(day));
+    const midnightToday = new Date();
+    midnightToday.setHours(0, 0, 0, 0);
+
+    if (selectedDate < midnightToday) {
+      setIsInvalidDateModalOpen(true);
+      return;
+    }
+
+    const isoDate = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
     setIsSubmitting(true);
     try {
@@ -57,13 +129,7 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
 
       if (!res.ok) throw new Error("Failed to save task");
 
-      setTitle("");
-      setMonth("January");
-      setDay("1");
-      setYear(new Date().getFullYear().toString());
-      setDescription("");
-      setSelectedTags([]);
-
+      resetForm();
       onSuccess();
     } catch (error) {
       console.error(error);
@@ -74,115 +140,141 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog">
-      <div
-        className="w-full max-w-[500px] rounded-xl bg-white shadow-2xl flex flex-col p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-xl font-medium text-slate-800 tracking-tight mb-5">
-          Create Task
-        </h3>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" role="dialog">
+        <div
+          className="w-full max-w-[500px] rounded-xl bg-white shadow-2xl flex flex-col p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="text-xl font-medium text-slate-800 tracking-tight mb-5">
+            Create Task
+          </h3>
 
-        <div className="space-y-4">
+          <div className="space-y-4">
 
-          {/* Title */}
-          <div>
-            <input
-              type="text"
-              placeholder="Enter Project Name ..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
-            />
-          </div>
-
-          {/* Deadline */}
-          <div>
-            <label className="block text-sm font-medium text-slate-800 mb-2">Deadline</label>
-            <div className="flex gap-2">
-              <select
-                value={month}
-                onChange={(e) => setMonth(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm text-slate-700 outline-none transition-all"
-              >
-                {MONTHS.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+            {/* Title */}
+            <div>
               <input
-                type="number"
-                value={day}
-                min={1}
-                max={31}
-                onChange={(e) => setDay(e.target.value)}
-                className="w-16 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm text-slate-700 outline-none transition-all text-center"
-              />
-              <input
-                type="number"
-                value={year}
-                min={2024}
-                max={2100}
-                onChange={(e) => setYear(e.target.value)}
-                className="w-24 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm text-slate-700 outline-none transition-all text-center"
+                type="text"
+                placeholder="Enter Project Name ..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
               />
             </div>
-          </div>
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-slate-800 mb-2">Description</label>
-            <textarea
-              placeholder="Enter Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full h-32 resize-none rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
-            />
-          </div>
+            {/* Deadline */}
+            <div>
+              <label className="block text-sm font-medium text-slate-800 mb-2">Deadline</label>
+              <div className="flex gap-2">
+                <select
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                  className={`flex-1 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${
+                    month === "" ? "text-slate-400" : "text-slate-700"
+                  }`}
+                >
+                  <option value="" disabled>Month</option>
+                  {MONTHS.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+                <select
+                  value={day}
+                  onChange={(e) => setDay(e.target.value)}
+                  className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${
+                    day === "" ? "text-slate-400" : "text-slate-700"
+                  }`}
+                >
+                  <option value="" disabled>Day</option>
+                  {validDays.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+                <select
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  className={`w-24 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${
+                    year === "" ? "text-slate-400" : "text-slate-700"
+                  }`}
+                >
+                  <option value="" disabled>Year</option>
+                  {YEARS.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-          {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium text-slate-800 mb-2">Tags</label>
-            <div className="flex flex-wrap gap-2">
-              {AVAILABLE_TAGS.map((tag) => {
-                const isSelected = selectedTags.includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${isSelected
-                        ? "bg-[#b0c4b1] text-[#2a3f54]"
-                        : "bg-slate-300 text-white hover:bg-slate-400"
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-slate-800 mb-2">Description</label>
+              <textarea
+                placeholder="Enter Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full h-32 resize-none rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
+              />
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-sm font-medium text-slate-800 mb-2">Tags</label>
+              <div className="flex flex-wrap gap-2">
+                {AVAILABLE_TAGS.map((tag, index) => {
+                  const isSelected = selectedTags.includes(tag);
+                  const activeColorClass = PASTEL_COLORS[index % PASTEL_COLORS.length];
+
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                        isSelected
+                          ? activeColorClass
+                          : "bg-slate-300 text-white hover:bg-slate-400"
                       }`}
-                  >
-                    {tag}
-                  </button>
-                );
-              })}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-3 mt-8">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isSubmitting}
+              className="px-6 border-slate-300 text-slate-700 hover:bg-slate-50 font-medium"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirm}
+              disabled={isSubmitting}
+              className="bg-[#2a3f54] hover:bg-[#1e2d3d] text-white px-6 font-medium disabled:opacity-50"
+            >
+              {isSubmitting ? "Saving..." : "Confirm"}
+            </Button>
           </div>
 
         </div>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 mt-8">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-6 border-slate-300 text-slate-700 hover:bg-slate-50 font-medium"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={isSubmitting || !title.trim()}
-            className="bg-[#2a3f54] hover:bg-[#1e2d3d] text-white px-6 font-medium"
-          >
-            {isSubmitting ? "Saving..." : "Confirm"}
-          </Button>
-        </div>
-
       </div>
-    </div>
+
+      {/* Teammate's Windows */}
+      <ProjectInvalidDeadlineWindow 
+        open={isInvalidDateModalOpen} 
+        onClose={() => setIsInvalidDateModalOpen(false)} 
+      />
+      <ProjectNullValuesWindow 
+        open={isNullModalOpen} 
+        onClose={() => setIsNullModalOpen(false)} 
+      />
+    </>
   );
 }

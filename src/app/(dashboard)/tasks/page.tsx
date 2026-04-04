@@ -154,7 +154,7 @@ export default function TasksPage() {
                 </div>
 
                 {/* Table Body (Scrollable!) */}
-                <div className="flex flex-col max-h-[360px] overflow-y-auto">
+                <div className="flex flex-col max-h-[500px] overflow-y-auto">
                     {loading ? (
                         <div className="p-8 text-center text-slate-500">Loading tasks...</div>
                     ) : displayedTasks.length === 0 ? (

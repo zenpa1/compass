@@ -23,17 +23,10 @@ export function DeleteTaskModal({ isOpen, onClose, onConfirm, isDeleting }: Dele
         </h3>
         
         <p className="text-slate-600 mb-8 text-sm">
-          Do you want delete this Task?
+          Do you want to delete this Task?
         </p>
 
         <div className="flex justify-center gap-4 w-full">
-          <Button
-            onClick={onConfirm}
-            disabled={isDeleting}
-            className="bg-[#2a3f54] hover:bg-[#1e2d3d] text-white px-8 font-medium rounded-md"
-          >
-            {isDeleting ? "Deleting..." : "Confirm"}
-          </Button>
           <Button 
             variant="outline" 
             onClick={onClose} 
@@ -41,6 +34,13 @@ export function DeleteTaskModal({ isOpen, onClose, onConfirm, isDeleting }: Dele
             className="px-8 border-slate-300 text-slate-700 hover:bg-slate-50 font-medium rounded-md"
           >
             Cancel
+          </Button>
+          <Button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="bg-[#ec003f] hover:bg-[#c40034] text-white px-8 font-medium rounded-md"
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
           </Button>
         </div>
       </div>
