@@ -20,6 +20,9 @@ export default function DashboardLayout({
   const calendarActive = pathname.startsWith("/calendar");
   // 2. Add an active state check for your tasks route!
   const tasksActive = pathname.startsWith("/tasks"); 
+  
+  // Fixed: Changed this to check for "/manageprofile" instead of "/settings"
+  const settingsActive = pathname.startsWith("/manageprofile");
 
   const [avatarUrl, setAvatarUrl] = useState("");
   const [sidebarUrl, setSidebarUrl] = useState("");
@@ -86,6 +89,23 @@ export default function DashboardLayout({
 
           {/* 3. Drop in your new Check Button and pass the active state! */}
           <SidebarCheckButton isActive={tasksActive} />
+
+          {/* Manage Profile Link (Swapped to Person Icon) */}
+          <Link href="/manageprofile">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-12 w-full hover:bg-slate-800 hover:text-white ${
+                settingsActive ? "text-amber-500" : "text-slate-300"
+              }`}
+              aria-label="Manage Profile"
+            >
+              <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </Button>
+          </Link>
 
         </nav>
 
