@@ -77,7 +77,7 @@ export default function RoleSetupPage() {
         {/*header*/}
         <div className="mb-5 text-center sm:mb-6">
           <h1 className="text-xl font-bold text-gray-800 sm:text-2xl">
-            Welcome, {user.name}!
+            Welcome!
           </h1>
           <p className="mt-2 text-sm text-gray-600 sm:text-base">
             Let's finish setting up your profile. What do you do at The North
