@@ -9,7 +9,8 @@ import {
   removeWithdrawal, 
   reassignPerson, 
   getAvailableAssignees, 
-  getRecommendedAssignees } 
+  getRecommendedAssignees,
+  assignFreelancer } 
   from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 import { Work } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import { Button } from "@/components/ui/button";
@@ -125,8 +126,15 @@ export function AssignPersonButton({
   async function handleReassign() {
     reassignPerson(assignment.assignment_id, selectedUser!);
     setShowChangeAssigneeConfirm(false);
-    setShowModal(false);
-    refresh();
+
+    if(assignment.user_id != null) {
+      setShowChangeAssigneeConfirm(true);
+    }
+    else {
+      assignPerson(assignment.assignment_id, selectedUser!);
+      setShowModal(false);
+      refresh();
+    }
   }
 
   async function handleOpen() {
@@ -144,6 +152,15 @@ export function AssignPersonButton({
 
     refreshAssignees();
     setTimeout(() => {setShowModal(true)}, 500);
+  }
+
+  async function handleFreelancerAssign() {
+    await assignFreelancer(assignment.assignment_id, searchTerm);
+
+    setSearchTerm("");
+    refresh();
+
+    setShowModal(false);
   }
 
   return (
@@ -191,7 +208,7 @@ export function AssignPersonButton({
                 </h3>
               </div>
 
-              <div className="flex items-center gap-2">
+              {(!hiredFreelancer) ?  (<div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setIsManualMode(false)}
@@ -214,7 +231,7 @@ export function AssignPersonButton({
                 >
                   Manual
                 </button>
-              </div>
+              </div>) : null }
             </div>
 
             {isManualMode ? (
@@ -256,13 +273,21 @@ export function AssignPersonButton({
               </div>
             ) : null}
 
-            <p className="mt-3 text-xs font-medium text-slate-400">
+            <div className="mt-3 flex items-center gap-2">
+            <p className="text-xs font-medium text-slate-400 m-0">
               {isManualMode
                 ? hiredFreelancer
-                  ? "Showing Available Freelancers"
+                  ? "Enter Freelancer Name"
                   : "Showing Available Employees"
                 : "Showing Recommended Employees"}
             </p>
+            {(hiredFreelancer) ? (<Button
+              type="button" size="sm" 
+              onClick={handleFreelancerAssign}
+            >
+              Assign Freelancer
+            </Button>) : null}
+            </div>
 
             <div className="mt-2.5 max-h-[250px] overflow-y-auto pr-1">
               <div className="space-y-2.5">
