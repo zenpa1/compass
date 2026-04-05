@@ -1,7 +1,7 @@
 'use server'
 
 //File for all data operations related to project
-import { Prisma } from "@/generated/client";
+import { assignment_assignment_status, Prisma } from "@/generated/client";
 import { db } from "@/lib/prisma"; // Direct DB access
 import { Decimal } from "@prisma/client/runtime/client";
 import { printAssignee, printStatus } 
@@ -216,4 +216,12 @@ export async function markWorkAsComplete(work_id: number) {
       work_status: "COMPLETED"
     }
   })
+}
+
+export async function getFreelancer(work_id: number) {
+  const assignment = await db.assignment.findFirst({
+    where: { work_id: work_id }
+  });
+
+  return assignment?.outsider_name;
 }
