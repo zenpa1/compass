@@ -134,7 +134,10 @@ export async function getRecommendedAssignees(work: Work, role: string) {
   const recommended = await db.userprofile.findMany({
     where: {
       user: {
-        assignment: { none: { OR: conflictConditions } }
+        AND: [
+          {assignment: {none: {OR: conflictConditions}}},
+          {assignment: {none: {work: { project_id: work.project_id }}}}
+        ]
       },
       OR: [
         { primary_role: { in: label } },
@@ -269,7 +272,10 @@ export async function acceptApplication(workId: number, userId: number) {
 
   await db.assignment.update({
     where: {assignment_id: assignment!.assignment_id},
-    data: {user_id: userId}
+    data: {
+      user_id: userId,
+      assignment_status: "CONFIRMED"
+    }
   })
 }
 
@@ -285,7 +291,8 @@ export async function clearAssignee(workId: number) {
     where: {assignment_id: assignment!.assignment_id},
     data: {
       user_id: null,
-      assignment_status: "PENDING"
+      assignment_status: "PENDING",
+      outsider_name: null
     }
   })
 }
@@ -352,6 +359,25 @@ export async function reassignPerson(assignmentId: number, user: User) {
     data: {
       user_id: user.user_id,
       assignment_status: "PENDING"
+    }
+  })
+}
+
+export async function assignFreelancer(assignmentId: number, freelancer: string) {
+  const work = await db.assignment.findFirst({where: {assignment_id: assignmentId}})
+  
+  await db.work.update({
+    where: {work_id: work?.work_id},
+    data: {
+      work_status: "REVIEW"
+    }
+  })
+
+  await db.assignment.update({
+    where: {assignment_id: assignmentId},
+    data: {
+      outsider_name: freelancer,
+      assignment_status: "CONFIRMED"
     }
   })
 }
