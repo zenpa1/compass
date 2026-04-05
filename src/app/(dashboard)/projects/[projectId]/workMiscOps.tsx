@@ -1,4 +1,4 @@
-import { Work, getAssignee, checkWithdrawal } from 
+import { Work, getAssignee, checkWithdrawal, getFreelancer } from 
   "@/app/(dashboard)/projects/[projectId]/workDataOps";
 
 export default function toShortHours(hours: number)  {
@@ -22,7 +22,12 @@ export function toISOTime(date: Date) {
  //Returns the assignee to be shown in the work table
  export async function printAssignee(work: Work) {
     const assignee =  await getAssignee(work.work_id);
-    if(assignee == null) { return "NONE" }
+    if(assignee == null) { 
+      const freelancer = await getFreelancer(work.work_id);
+
+      if(freelancer == null) { return "NONE" }
+      else { return freelancer }
+    }
     else { return assignee?.full_name };
   }
 
