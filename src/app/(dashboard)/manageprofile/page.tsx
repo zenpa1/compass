@@ -16,6 +16,9 @@ export default function ManageProfilePage() {
   // These track what is currently saved in the database to display at the top
   const [savedPrimaryRole, setSavedPrimaryRole] = useState<string | null>(null);
   const [savedSecondaryRole, setSavedSecondaryRole] = useState<string | null>(null);
+  
+  // NEW: State to track if the user has accepted work
+  const [hasAcceptedWork, setHasAcceptedWork] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -23,6 +26,7 @@ export default function ManageProfilePage() {
   const [invalidRoleWindow, setInvalidRoleWindow] = useState(false);
   const [missingRoleWindow, setMissingRoleWindow] = useState(false);
   const [successWindow, setSuccessWindow] = useState(false); 
+  const [activeWorkWindow, setActiveWorkWindow] = useState(false); // NEW: Active work modal state
 
   // 1. Fetch the session ID, then fetch the user's data
   useEffect(() => {
@@ -46,6 +50,9 @@ export default function ManageProfilePage() {
            // Set the display at the top
            setSavedPrimaryRole(profileData.primaryRole || "Not Set");
            setSavedSecondaryRole(profileData.secondaryRole || "None");
+           
+           // Check if they have active work assignments
+           setHasAcceptedWork(profileData.hasAcceptedWork || false);
         }
       } catch (error) {
         console.error("Failed to load user data:", error);
@@ -58,6 +65,12 @@ export default function ManageProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return; 
+
+    // NEW: Block the save and show the new modal if they have accepted work!
+    if (hasAcceptedWork) {
+      setActiveWorkWindow(true);
+      return;
+    }
 
     if (primaryRole === "") {
       setMissingRoleWindow(true);
@@ -80,9 +93,11 @@ export default function ManageProfilePage() {
         if (response.ok) {
           setSuccessWindow(true);
           
-          // Update the top display to reflect the new saved changes
           setSavedPrimaryRole(primaryRole);
           setSavedSecondaryRole(secondaryRole === "NONE" ? "None" : secondaryRole);
+        } else if (response.status === 403) {
+          // Catch the backend security check just in case
+          setActiveWorkWindow(true);
         } else {
           alert("Failed to update roles. Please try again.");
         }
@@ -133,10 +148,8 @@ export default function ManageProfilePage() {
         </div>
         
         <div className="p-6">
-          {/* Added mx-auto right here! */}
           <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
             
-            {/* Grid container to hold both roles side-by-side on desktop, stacked on mobile */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               
               {/* Primary role selection */}
@@ -175,7 +188,7 @@ export default function ManageProfilePage() {
 
             </div>
 
-            {/* Submit Button (Removed sm:w-auto so it spans full width) */}
+            {/* Submit Button */}
             <div className="pt-2">
               <button
                 type="submit"
@@ -204,6 +217,12 @@ export default function ManageProfilePage() {
         onClose={() => setSuccessWindow(false)}
         open={successWindow}
       />
+
+      {/* NEW: Active Work Modal */}
+      <ActiveWorkWindow
+        onClose={() => setActiveWorkWindow(false)}
+        open={activeWorkWindow}
+      />
     </div>
   );
 }
@@ -217,7 +236,7 @@ export function InvalidRolesWindow(props: SimpleDialogProps) {
 
   return (
     <Dialog onClose={onClose} open={open}>
-      <DialogTitle>Invalid Roles</DialogTitle>
+      <DialogTitle className="font-semibold text-black">Invalid Roles</DialogTitle>
       <DialogContent>
         <p className="text-gray-700">You cannot have the same primary and secondary role.</p>
       </DialogContent>
@@ -230,7 +249,7 @@ export function MissingRoleWindow(props: SimpleDialogProps) {
 
   return (
     <Dialog onClose={onClose} open={open}>
-      <DialogTitle>No Primary Role</DialogTitle>
+      <DialogTitle className="font-semibold text-black">No Primary Role</DialogTitle>
       <DialogContent>
         <p className="text-gray-700">You must select a primary role to save your profile.</p>
       </DialogContent>
@@ -246,6 +265,20 @@ export function SuccessWindow(props: SimpleDialogProps) {
       <DialogTitle className="text-black font-semibold">Success</DialogTitle>
       <DialogContent>
         <p className="text-gray-700">Your profile roles have been updated successfully!</p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// NEW: Modal to block role updates when assigned to work
+export function ActiveWorkWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  return (
+    <Dialog onClose={onClose} open={open}>
+      <DialogTitle className="text-black font-semibold">Cannot Update Roles</DialogTitle>
+      <DialogContent>
+        <p className="text-gray-700">You cannot change your roles while you are assigned to an active work. Please finish your assignments first!</p>
       </DialogContent>
     </Dialog>
   );
