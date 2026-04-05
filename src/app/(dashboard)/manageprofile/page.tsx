@@ -22,7 +22,7 @@ export default function ManageProfilePage() {
   // Modal states
   const [invalidRoleWindow, setInvalidRoleWindow] = useState(false);
   const [missingRoleWindow, setMissingRoleWindow] = useState(false);
-  const [successWindow, setSuccessWindow] = useState(false); // NEW: Success modal state
+  const [successWindow, setSuccessWindow] = useState(false); 
 
   // 1. Fetch the session ID, then fetch the user's data
   useEffect(() => {
@@ -78,7 +78,6 @@ export default function ManageProfilePage() {
         });
 
         if (response.ok) {
-          // Trigger our new success modal instead of the browser alert!
           setSuccessWindow(true);
           
           // Update the top display to reflect the new saved changes
@@ -134,48 +133,54 @@ export default function ManageProfilePage() {
         </div>
         
         <div className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
+          {/* Added mx-auto right here! */}
+          <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
             
-            {/* Primary role selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Primary Role <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={primaryRole}
-                onChange={(e) => setPrimaryRole(e.target.value)}
-                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-              >
-                <option value="" disabled>Select a role</option>
-                {ROLES.map((role) => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
+            {/* Grid container to hold both roles side-by-side on desktop, stacked on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              
+              {/* Primary role selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Primary Role <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={primaryRole}
+                  onChange={(e) => setPrimaryRole(e.target.value)}
+                  className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                >
+                  <option value="" disabled>Select a role</option>
+                  {ROLES.map((role) => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Secondary role selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Secondary Role <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <select
+                  value={secondaryRole}
+                  onChange={(e) => setSecondaryRole(e.target.value)}
+                  className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                >
+                  <option value="NONE">None</option>
+                  {ROLES.map((role) => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
+
             </div>
 
-            {/* Secondary role selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Secondary Role <span className="text-gray-400 font-normal">(Optional)</span>
-              </label>
-              <select
-                value={secondaryRole}
-                onChange={(e) => setSecondaryRole(e.target.value)}
-                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-              >
-                <option value="NONE">None</option>
-                {ROLES.map((role) => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Submit Button */}
+            {/* Submit Button (Removed sm:w-auto so it spans full width) */}
             <div className="pt-2">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-10 w-full rounded-md bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-300 sm:w-auto"
+                className="h-10 w-full rounded-md bg-[#2a3f54] px-4 text-sm font-semibold text-white transition hover:bg-[#1e2d3d] focus:outline-none focus:ring-2 focus:ring-[#2a3f54] focus:ring-offset-2 disabled:opacity-70"
               >
                 {isSubmitting ? "Saving Changes..." : "Save Changes"}
               </button>
@@ -233,13 +238,11 @@ export function MissingRoleWindow(props: SimpleDialogProps) {
   );
 }
 
-// NEW: Success Modal Component
 export function SuccessWindow(props: SimpleDialogProps) {
   const { onClose, open } = props;
 
   return (
     <Dialog onClose={onClose} open={open}>
-      {/* Changed text-green-600 to text-black and added font-semibold for a clean look */}
       <DialogTitle className="text-black font-semibold">Success</DialogTitle>
       <DialogContent>
         <p className="text-gray-700">Your profile roles have been updated successfully!</p>
