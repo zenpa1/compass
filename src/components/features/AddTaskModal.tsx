@@ -156,7 +156,7 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
             <div>
               <input
                 type="text"
-                placeholder="Enter Project Name ..."
+                placeholder="Enter Task Name ..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
