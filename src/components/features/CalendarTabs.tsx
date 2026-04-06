@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-
 export type CalendarTab = "personal tasks" | "North Studio works";
 
 const workStatuses: CalendarTab[] = ["personal tasks", "North Studio works"];
@@ -11,21 +9,23 @@ type CalendarTabsProps = {
   onChange: (status: CalendarTab) => void;
 };
 
-export default function CalendarTabs({
-  selected,
-  onChange,
-}: CalendarTabsProps) {
+export default function CalendarTabs({ selected, onChange }: CalendarTabsProps) {
   return (
-    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
-      {workStatuses.map((status) => (
-        <Button
+    <div className="flex rounded-md border border-slate-600 overflow-hidden text-sm">
+      {workStatuses.map((status, i) => (
+        <button
           key={status}
-          variant={selected === status ? "default" : "outline"}
           onClick={() => onChange(status)}
-          className="h-8 px-3 text-xs capitalize sm:h-9 sm:text-sm"
+          className={`px-3 py-1.5 font-medium capitalize transition-colors ${
+            i !== 0 ? "border-l border-slate-600" : ""
+          } ${
+            selected === status
+              ? "bg-slate-800 text-white"
+              : "bg-transparent text-slate-400 hover:text-white hover:bg-slate-700"
+          }`}
         >
           {status}
-        </Button>
+        </button>
       ))}
     </div>
   );
