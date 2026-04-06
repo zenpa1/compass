@@ -149,6 +149,7 @@ export function AssignPersonButton({
 
   async function handleWithdrawClose() {
     await removeWithdrawal(assignment.assignment_id);
+    setSearchTerm(".");
     setWithdrawnModal(false);
     refresh();
 
