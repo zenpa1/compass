@@ -35,7 +35,7 @@ export default function WorksPage() {
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("API Error: uhhh", errorText);
+        console.error("API Error: error", errorText);
         throw new Error("Failed to fetch works");
       }
 
@@ -121,26 +121,90 @@ export default function WorksPage() {
       </div>
 
       {/* GRID */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {loading ? (
-          <p className="text-slate-500 col-span-full">Loading works...</p>
-        ) : works.length === 0 ? (
-          <p className="text-slate-500 col-span-full">No works found</p>
-        ) : (
-          works.map((work) => (
-            <WorkCard
-              key={work.work_id}
-              work={work}
-              status={selectedTab}
-              onApply={handleApply}
-              onAccept={handleAccept}
-              onDecline={handleDecline}
-              onWithdraw={openWithdraw}
-              onMarkDone={handleMarkDone}
-            />
-          ))
-        )}
-      </div>
+      {selectedTab === "PENDING" ? (
+        <div className="space-y-6">
+          {loading ? (
+            <p className="text-slate-500">Loading works...</p>
+          ) : (
+            <>
+              {/* PENDING applications */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
+                  Incoming Requests
+                </h3>
+                {works.filter((w) => w.workapplication?.some((a) => a.application_status === "PENDING")).length === 0 ? (
+                  <p className="text-slate-500 text-sm">No pending requests</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {works
+                      .filter((w) => w.workapplication?.some((a) => a.application_status === "PENDING"))
+                      .map((work) => (
+                        <WorkCard
+                          key={work.work_id}
+                          work={work}
+                          status={selectedTab}
+                          onApply={handleApply}
+                          onAccept={handleAccept}
+                          onDecline={handleDecline}
+                          onWithdraw={openWithdraw}
+                          onMarkDone={handleMarkDone}
+                        />
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* APPROVAL applications */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
+                  Awaiting Approval
+                </h3>
+                {works.filter((w) => w.workapplication?.some((a) => a.application_status === "APPROVAL")).length === 0 ? (
+                  <p className="text-slate-500 text-sm">No approvals pending</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {works
+                      .filter((w) => w.workapplication?.some((a) => a.application_status === "APPROVAL"))
+                      .map((work) => (
+                        <WorkCard
+                          key={work.work_id}
+                          work={work}
+                          status={selectedTab}
+                          onApply={handleApply}
+                          onAccept={handleAccept}
+                          onDecline={handleDecline}
+                          onWithdraw={openWithdraw}
+                          onMarkDone={handleMarkDone}
+                        />
+                      ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            <p className="text-slate-500 col-span-full">Loading works...</p>
+          ) : works.length === 0 ? (
+            <p className="text-slate-500 col-span-full">No works found</p>
+          ) : (
+            works.map((work) => (
+              <WorkCard
+                key={work.work_id}
+                work={work}
+                status={selectedTab}
+                onApply={handleApply}
+                onAccept={handleAccept}
+                onDecline={handleDecline}
+                onWithdraw={openWithdraw}
+                onMarkDone={handleMarkDone}
+              />
+            ))
+          )}
+        </div>
+      )}
 
       {withdrawModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
