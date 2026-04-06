@@ -113,11 +113,9 @@ export default function WorksPage() {
     <div className="space-y-4 sm:space-y-6">
       {/* HEADER */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex w-full items-center gap-3 sm:w-auto">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Works
-          </h2>
-          <div className="h-px flex-1 bg-gray-700 sm:min-w-[120px]"></div>
+        <div className="flex w-full items-center gap-3 sm:flex-1">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Works</h2>
+          <div className="h-px flex-1 bg-gray-700"></div>
         </div>
         <WorkTabs selected={selectedTab} onChange={setSelectedTab} />
       </div>
