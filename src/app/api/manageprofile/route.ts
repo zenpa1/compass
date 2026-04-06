@@ -6,7 +6,6 @@ import { prisma } from '@/lib/db';
 // ==========================================
 export async function GET(request: NextRequest) {
     try {
-        // Grab the userId from the URL query params (e.g., ?userId=16)
         const searchParams = request.nextUrl.searchParams;
         const userId = searchParams.get('userId');
 
@@ -16,18 +15,26 @@ export async function GET(request: NextRequest) {
 
         const numericUserId = parseInt(userId, 10);
 
-        const profile = await prisma.userprofile.findUnique({
-            where: { user_id: numericUserId },
-        });
+        // Fetch profile and check if they have accepted work (assignments)
+        const [profile, assignmentCount] = await Promise.all([
+            prisma.userprofile.findUnique({
+                where: { user_id: numericUserId },
+            }),
+            prisma.assignment.count({
+                where: { user_id: numericUserId }
+            })
+        ]);
+
+        const hasAcceptedWork = assignmentCount > 0;
 
         if (!profile) {
-            // If they don't have a profile yet, just return empty values
-            return NextResponse.json({ primaryRole: "", secondaryRole: "NONE" });
+            return NextResponse.json({ primaryRole: "", secondaryRole: "NONE", hasAcceptedWork });
         }
 
         return NextResponse.json({ 
             primaryRole: profile.primary_role, 
-            secondaryRole: profile.secondary_role || "NONE" 
+            secondaryRole: profile.secondary_role || "NONE",
+            hasAcceptedWork
         });
 
     } catch (error) {
@@ -54,13 +61,21 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Invalid User ID format" }, { status: 400 });
         }
 
-        // Using upsert just in case the profile doesn't exist yet!
+        // SECURITY CHECK: Ensure they don't have active work before updating
+        const assignmentCount = await prisma.assignment.count({
+            where: { user_id: numericUserId }
+        });
+
+        if (assignmentCount > 0) {
+            return NextResponse.json({ message: "Cannot change roles while assigned to active work." }, { status: 403 });
+        }
+
         await prisma.userprofile.upsert({
             where: { user_id: numericUserId },
             update: {
                 primary_role: primaryRole,
                 secondary_role: secondaryRole || null,
-                is_setup_complete: true, // Mark setup as complete just to be safe
+                is_setup_complete: true, 
             },
             create: {
                 user_id: numericUserId,
