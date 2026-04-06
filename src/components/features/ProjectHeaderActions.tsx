@@ -76,11 +76,12 @@ export function ProjectHeaderActions({
   };
 
   const handleDeleteConfirm = async () => {
-    const works = await getProjectWorks(project.project_name);
+    const works = await getProjectActiveWorks(project.project_id);
     
     //Cannot delete project if it has active works
     if (works != null) {
       openWorkConflictWindow();
+      console.log(works);
     } else {
       deleteProjectHeader(project.project_id);
       setShowDeleteConfirm(false);

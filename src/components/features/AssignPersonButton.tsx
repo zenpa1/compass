@@ -30,6 +30,8 @@ interface AssignPersonButtonProps {
   refresh: () => void,
   withdrawn: boolean
   work: Work;
+  openNullWindow: () => void;
+  closeApplications?: () => void;
 }
 
 function triggerClassByTone(tone: "amber" | "blue" | "red" | "green") {
@@ -65,7 +67,9 @@ export function AssignPersonButton({
   assignment,
   refresh,
   withdrawn,
-  work
+  work,
+  openNullWindow,
+  closeApplications
 }: AssignPersonButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [isManualMode, setIsManualMode] = useState(true);
@@ -119,29 +123,27 @@ export function AssignPersonButton({
     else {
       assignPerson(assignment.assignment_id, user);
       setShowModal(false);
+      if(closeApplications) closeApplications()
       refresh();
     }
   }
 
   async function handleReassign() {
     reassignPerson(assignment.assignment_id, selectedUser!);
+    setShowModal(false);
     setShowChangeAssigneeConfirm(false);
-
-    if(assignment.user_id != null) {
-      setShowChangeAssigneeConfirm(true);
-    }
-    else {
-      assignPerson(assignment.assignment_id, selectedUser!);
-      setShowModal(false);
-      refresh();
-    }
+    if(closeApplications) {closeApplications()}
+    refresh();
   }
 
   async function handleOpen() {
+    setSearchTerm("."); //Refreshes list of available assignees
+
     if(withdrawn) setWithdrawnModal(true);
     else {
       await refreshAssignees();
       setShowModal(true)
+      setSearchTerm("");
     }
   }
 
@@ -151,16 +153,21 @@ export function AssignPersonButton({
     refresh();
 
     refreshAssignees();
-    setTimeout(() => {setShowModal(true)}, 500);
+    setTimeout(() => {setShowModal(true); setSearchTerm("");}, 500);
   }
 
   async function handleFreelancerAssign() {
-    await assignFreelancer(assignment.assignment_id, searchTerm);
+    if(searchTerm == "") {
+      openNullWindow();
+    }
+    else {
+      await assignFreelancer(assignment.assignment_id, searchTerm);
 
-    setSearchTerm("");
-    refresh();
+      setSearchTerm("");
+      refresh();
 
-    setShowModal(false);
+      setShowModal(false);
+    }
   }
 
   return (
@@ -237,22 +244,32 @@ export function AssignPersonButton({
             {isManualMode ? (
               <div className="mt-4 grid gap-2.5 md:grid-cols-[1fr_auto] md:items-center">
                 <label className="flex h-10 items-center gap-2 rounded-lg border border-slate-400 bg-slate-50 px-3">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4 text-slate-500"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3-3" />
-                  </svg>
+                  {!(hiredFreelancer) ? (
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4 text-slate-500"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3-3" />
+                    </svg>
+                  ) : null}
+                  
                   <input
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        if(hiredFreelancer) {
+                          handleFreelancerAssign();
+                        }
+                      }
+                    }}
                     type="text"
                     placeholder="Enter name here"
                     className="h-full w-full bg-transparent text-xs text-slate-800 outline-none placeholder:text-slate-400"

@@ -95,7 +95,7 @@ export function toISOTime(date: Date) {
       case "🔍 FOR REVIEW":
         return "Mark Complete?";
       case "🎉 COMPLETED":
-        return "green";
+        return "Undo Mark Complete?";
       default:
         return "green";
     }

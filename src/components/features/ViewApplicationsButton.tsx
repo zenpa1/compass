@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { UserProfile, User, Assignment, acceptApplication } 
   from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 import { workapplication_application_status } from "@/generated/client";
+import { AssignPersonButton } from "@/components/features/AssignPersonButton";
+import { Work } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 
 type Assignee = {
   userProfile: UserProfile;
@@ -12,10 +14,16 @@ type Assignee = {
 }
 
 interface ViewApplicationsButtonProps {
-  label?: string;
   workId: number;
   refresh: () => void;
   applications: Assignee[];
+  tone: "amber" | "blue" | "red" | "green";
+  availableAssignees: Assignee[],
+  recommendedAssignees: Assignee[],
+  assignment: Assignment,
+  withdrawn: boolean
+  work: Work;
+  openNullWindow: () => void;
 }
 
 function getInitials(name: string) {
@@ -28,14 +36,20 @@ function getInitials(name: string) {
 }
 
 export function ViewApplicationsButton({ 
-  label,
   workId,
   refresh,
-  applications
+  applications,
+  tone,
+  availableAssignees,
+  recommendedAssignees,
+  assignment,
+  withdrawn,
+  work,
+  openNullWindow
 }: ViewApplicationsButtonProps) {
   const [showModal, setShowModal] = useState(false);
 
-  const buttonText = label ?? `View Application [${applications.length}]`;
+  const buttonText = `View Application [${applications.length}]`;
 
   async function handleAccept(user: User) {
     acceptApplication(workId, user.user_id);
@@ -68,7 +82,7 @@ export function ViewApplicationsButton({
                 type="button"
                 className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-900 hover:bg-slate-100"
                 aria-label="Close applications modal"
-                onClick={() => setShowModal(false)}
+                onClick={() => {setShowModal(false); console.log(applications)}}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -85,6 +99,18 @@ export function ViewApplicationsButton({
               <h3 className="text-xl font-semibold tracking-tight text-slate-900">
                 Select Employee
               </h3>
+              <AssignPersonButton
+                label="Manually Assign"
+                tone={tone}
+                availableAssignees={availableAssignees}
+                recommendedAssignees={recommendedAssignees}
+                assignment={assignment}
+                refresh={refresh}
+                withdrawn={false}
+                work={work}
+                openNullWindow={() => openNullWindow()}
+                closeApplications={() => setShowModal(false)}
+              />
             </div>
 
             <div className="mt-4 max-h-[280px] overflow-y-auto pr-1">

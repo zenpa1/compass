@@ -92,6 +92,18 @@ export async function getProject(id: number) {
 
 //Deletes the project based on its id
 export async function deleteProject(id: number) {
+  await db.workapplication.deleteMany({
+    where: { work: { project_id: id } }
+  })
+
+  await db.assignment.deleteMany({
+    where: { work: { project_id: id } }
+  })
+
+  await db.work.deleteMany({
+    where: { project_id: id }
+  })
+
   await db.project.delete({
     where: { project_id: id }
   });
@@ -219,6 +231,18 @@ export async function getProjectMissingWorks(project_id: number) {
 
 //Special version of delete when deleting from within a project's work page
 export async function deleteProjectHeader(id: number) {
+  await db.workapplication.deleteMany({
+    where: { work: { project_id: id } }
+  })
+
+  await db.assignment.deleteMany({
+    where: { work: { project_id: id } }
+  })
+
+  await db.work.deleteMany({
+    where: { project_id: id }
+  })
+
   await db.project.delete({
     where: { project_id: id }
   });
@@ -248,6 +272,10 @@ export async function getSidebarUrl() {
 //Checks if a project's given deadline is past the current date
 export async function isValidDeadline(date: Date) {
   const currentDate = new Date();
+
+  date.setHours(0,0,0,0);
+  currentDate.setHours(0,0,0,0)
+
   const check = currentDate > date;
 
   return (check) ? 1 : 0;
