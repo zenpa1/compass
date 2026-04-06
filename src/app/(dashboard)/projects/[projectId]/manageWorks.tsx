@@ -6,6 +6,7 @@ import { ProjectHeaderActions } from "@/components/features/ProjectHeaderActions
 import { ViewApplicationsButton } from "@/components/features/ViewApplicationsButton";
 import { AssignPersonButton } from "@/components/features/AssignPersonButton";
 import { MarkCompleteWorkButton } from "@/components/features/MarkCompleteWorkButton";
+import { UndoMarkCompleteButton } from "@/components/features/UndoMarkCompleteButton";
 import { CancelRequestButton } from "@/components/features/CancelRequestButton";
 import { Project } from "@/app/(dashboard)/projects/projectDataOps";
 import {
@@ -19,6 +20,7 @@ import toShortHours, {
 import ProjectNullValuesWindow, {
   IsActiveWorkWindow,
   ProjectWorksExistWindow,
+  ProjectInvalidRoleWindow
 } from "@/components/features/ProjectAlerts";
 import { WorkRowActions } from "@/components/features/WorkRowActions";
 import {
@@ -30,6 +32,7 @@ import {
   getRemainingDays,
   getProjectMissingWorks,
 } from "@/app/(dashboard)/projects/projectDataOps";
+import { ProjectInvalidDeadlineWindow } from "@/components/features/ProjectAlerts";
 
 function actionButtonClass(actionTone: "amber" | "blue" | "red" | "green") {
   if (actionTone === "amber") {
@@ -93,6 +96,13 @@ export default function ManageWorksPage({
             workId={work.work_id}
             refresh={refresh}
             applications={applications}
+            tone={actionTone}
+            availableAssignees={available}
+            recommendedAssignees={recommended}
+            assignment={assignment}
+            withdrawn={status.startsWith("⚠ WITHDRAWN") ? true : false}
+            work={work}
+            openNullWindow={() => setNullWindow(true)}
           />
         ) : status.startsWith("⌛ REQUEST SENT") ? (
           <CancelRequestButton
@@ -112,6 +122,7 @@ export default function ManageWorksPage({
             refresh={refresh}
             withdrawn={status.startsWith("⚠ WITHDRAWN") ? true : false}
             work={work}
+            openNullWindow={() => setNullWindow(true)}
           />
         ) : status.startsWith("🔍 FOR REVIEW") ? (
           <MarkCompleteWorkButton
@@ -120,7 +131,14 @@ export default function ManageWorksPage({
             work={work}
             refresh={refresh}
           />
-        ) : null}
+        ) : (
+          <UndoMarkCompleteButton 
+            label={printedAction}
+            tone={actionTone}
+            work={work}
+            refresh={refresh}
+          />
+        )}
       </div>
     );
   };
@@ -151,6 +169,8 @@ export default function ManageWorksPage({
   const [nullWindow, setNullWindow] = useState(false);
   const [activeWindow, setActiveWindow] = useState(false);
   const [worksWindow, setWorksWindow] = useState(false);
+  const [deadlineWindow, setDeadlineWindow] = useState(false);
+  const [roleWindow, setRoleWindow] = useState(false);
 
   const [remainingDays, setRemainingDays] = useState(initialRemainingDays);
   const [missingWorks, setMissingWorks] = useState(initialMissingWorks);
@@ -295,8 +315,10 @@ export default function ManageWorksPage({
                         row.assignment,
                       )}
                       <WorkRowActions
-                        workId={row.work.work_id}
                         projectId={row.work.project_id}
+                        workId={row.work.work_id}
+                        workRole={row.work.project_role}
+                        workStatus={row.work.work_status}
                         oldDescription={row.work.work_description}
                         oldDate={row.work.work_start_date!}
                         oldSalary={row.work.expected_salary}
@@ -309,6 +331,8 @@ export default function ManageWorksPage({
                         oldPublishToOpenPool={row.work.is_open_pool}
                         openNullWindow={() => setNullWindow(true)}
                         openActiveWindow={() => setActiveWindow(true)}
+                        openDeadlineWindow={() => setDeadlineWindow(true)}
+                        openRoleWindow={() => setRoleWindow(true)}
                         refresh={refresh}
                       />
                     </div>
@@ -330,8 +354,10 @@ export default function ManageWorksPage({
                   {row.work.project_role}
                 </h3>
                 <WorkRowActions
-                  workId={row.work.work_id}
                   projectId={row.work.project_id}
+                  workId={row.work.work_id}
+                  workRole={row.work.project_role}
+                  workStatus={row.work.work_status}
                   oldDescription={row.work.work_description}
                   oldDate={row.work.work_start_date!}
                   oldSalary={row.work.expected_salary}
@@ -344,6 +370,8 @@ export default function ManageWorksPage({
                   oldPublishToOpenPool={row.work.is_open_pool}
                   openNullWindow={() => setNullWindow(true)}
                   openActiveWindow={() => setActiveWindow(true)}
+                  openDeadlineWindow={() => setDeadlineWindow(true)}
+                  openRoleWindow={() => setRoleWindow(true)}
                   refresh={refresh}
                 />
               </div>
@@ -388,6 +416,8 @@ export default function ManageWorksPage({
           projectId={project.project_id}
           refresh={refresh}
           openNullWindow={() => setNullWindow(true)}
+          openDeadlineWindow={() => setDeadlineWindow(true)}
+          openRoleWindow={() => setRoleWindow(true)}
         />
 
         <ProjectNullValuesWindow
@@ -403,6 +433,16 @@ export default function ManageWorksPage({
         <ProjectWorksExistWindow
           open={worksWindow}
           onClose={() => setWorksWindow(false)}
+        />
+
+        <ProjectInvalidDeadlineWindow
+          open={deadlineWindow}
+          onClose={() => setDeadlineWindow(false)}
+        />
+
+        <ProjectInvalidRoleWindow
+          open={roleWindow}
+          onClose={() => setRoleWindow(false)}
         />
       </div>
     </div>

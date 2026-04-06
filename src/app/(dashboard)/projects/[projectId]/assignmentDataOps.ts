@@ -118,6 +118,9 @@ export async function getAvailableAssignees(work: Work) {
 }
 
 export async function getRecommendedAssignees(work: Work, role: string) {
+  
+
+
   const label = getRole(role);
 
   //scheduling conflict checks
@@ -200,6 +203,11 @@ export async function assignPerson(assignmentId: number, user: User) {
     data: {
       user_id: user.user_id,
     }
+  })
+
+  await db.work.update({
+    where: { work_id: work!.work_id },
+    data: { work_status: "PENDING" }
   })
 }
 

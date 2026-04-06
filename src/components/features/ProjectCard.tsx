@@ -134,7 +134,7 @@ export function ProjectCard({
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
 
-    const project = await getProjectWorks(name);
+    const project = await getProjectActiveWorks(projectId as number);
 
     //Cannot delete project if it has active works
     if (project != null) {
@@ -205,7 +205,7 @@ export function ProjectCard({
       return "bg-yellow-500";
     }
 
-    return "bg-blue-800 = chill";
+    return "bg-blue-500 = chill";
   }
 
   //Occurs when the user chooses to override the conflicting project with their current
@@ -267,7 +267,7 @@ export function ProjectCard({
           <svg
             viewBox="0 0 24 24"
             className="h-4 w-4"
-            fill="currentColor"
+            fill="slate-900"
             aria-hidden="true"
           >
             <circle cx="12" cy="5" r="2" />

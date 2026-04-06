@@ -224,13 +224,13 @@ export function WorkCard({
           {/* Action buttons */}
           {status === "OPEN" && (
             <div className="mt-3 flex flex-wrap justify-start gap-2 md:justify-end">
-              <button
+              {/*<button
                 type="button"
                 onClick={() => onDecline?.(work.work_id)}
                 className="h-8 min-w-24 rounded-md border border-rose-300 px-4 text-xs text-rose-600 hover:bg-rose-50 sm:text-sm"
               >
                 Decline
-              </button>
+              </button>*/}
               <button
                 type="button"
                 onClick={() => onApply?.(work.work_id)}

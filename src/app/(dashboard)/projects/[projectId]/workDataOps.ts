@@ -8,6 +8,8 @@ import { printAssignee, printStatus }
   from "@/app/(dashboard)/projects/[projectId]/workMiscOps";
 import { getAvailableAssignees, getRecommendedAssignees, getAssignment, getApplications } 
   from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
+import { da } from "date-fns/locale";
+import { availableMemory } from "process";
 
 type category = "PHOTO" | "VIDEO" | "EDITOR" | "ASSISTANT" | "ANY"; 
 
@@ -86,9 +88,11 @@ export async function editWork(work_id: number, new_project_id: number,
     const convertSalary = Decimal(new_expected_salary);
     const work = await getWork(work_id);
 
-    const status = (work?.work_status != "ASSIGNED" && 
-      work?.work_status != "COMPLETED" && 
-      new_is_open_pool == true) ? "OPEN" : "PENDING";
+    const status = (work!.work_status == "ASSIGNED" ||
+      work!.work_status == "REVIEW" ||
+      work!.work_status == "COMPLETED"
+    ) ? work!.work_status :
+      (new_is_open_pool) ? "OPEN" : "PENDING"
 
     
     await db.work.update({
@@ -199,6 +203,14 @@ export async function cancelRequest(work_id: number) {
     where: { work_id: work_id },
   });
 
+  await db.work.updateMany({
+    where: { 
+      work_id: work_id,
+      is_open_pool: true
+    },
+    data: { work_status: "OPEN" }
+  })
+
   await db.assignment.update({
     where: { assignment_id: assignment!.assignment_id },
     data: { user_id: null }
@@ -224,4 +236,92 @@ export async function getFreelancer(work_id: number) {
   });
 
   return assignment?.outsider_name;
+}
+
+export async function isValidWorkDeadline(project_id: number, date: Date) {
+  const project = await db.project.findFirst({where: {project_id: project_id}});
+
+  const d1 = project!.project_start_date.setHours(0, 0, 0, 0);
+  const d2 = date.setHours(0, 0, 0, 0);
+
+  const check = d1 > d2;
+  
+  return (check) ? 1 : 0;
+}
+
+export async function isValidWithdraw(work_id: number) {
+  const work = await db.work.findFirst({where: {work_id: work_id}});
+  work!.work_start_date.setHours(0,0,0,0)
+  const currentDate = new Date();
+
+  const d1 = work!.work_start_date.setDate(work!.work_start_date.getDate() - 7);
+  const d2 = currentDate.setHours(0,0,0,0);
+
+  const check = (d1 < d2) ? 1 : 0;
+  return check;
+}
+
+export async function isValidRole(role: string, date: Date, projectId: number) {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const works = await db.work.findMany({
+    where: {
+      work_start_date: {
+        gte: startOfDay,
+        lte: endOfDay
+      },
+      project_role: role,
+      project_id: projectId
+    }
+  })
+
+  return works.length;
+}
+
+export async function markWorkAsNotComplete(work_id: number) {
+    const assignment = await db.assignment.findFirst({where: {work_id: work_id}})
+    const status = (assignment!.user_id != undefined) ? "ASSIGNED" : "REVIEW"
+
+    if(assignment!.user_id != undefined) {
+      await db.workapplication.create({
+      data: {
+        work_id: work_id,
+        user_id: assignment!.user_id!,
+        application_status: "APPROVED"
+      }
+      })
+    }
+
+    await db.work.update({
+    where: {work_id: work_id},
+    data: {
+      work_status: status
+    }
+  })
+}
+
+export async function isValidRoleEdit(work_id: number, date: Date, projectId: number, role: string) {
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(date);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const works = await db.work.findMany({
+    where: {
+      work_start_date: {
+        gte: startOfDay,
+        lte: endOfDay
+      },
+      project_id: projectId,
+      project_role: role,
+      NOT: { work_id: work_id }
+    }
+  })
+
+  return works.length;
 }

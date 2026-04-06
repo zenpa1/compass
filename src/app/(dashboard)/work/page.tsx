@@ -8,6 +8,10 @@ import {
   employeeWithdraw
  } from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 import { Button } from "@/components/ui/button";
+import ProjectNullValuesWindow from "@/components/features/ProjectAlerts";
+import { SimpleDialogProps } from "@/app/(dashboard)/projects/projectDataOps";
+import { Dialog, DialogTitle, DialogContent } from "@mui/material";
+import { isValidWithdraw } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 
 //console.log("params.id:", params.id)
 
@@ -19,6 +23,9 @@ export default function WorksPage() {
   const [withdrawModal, setWithdrawModal] = useState(false);
   const [withdrawDescription, setWithdrawDescription] = useState("");
   const [currentWork, setCurrentWork] = useState(1);
+
+  const [nullValueWindow, setNullValueWindow] = useState(false);
+  const [invalidWithdrawWindow, setInvalidWithdrawWindow] = useState(false);
 
   const fetchWorks = async () => {
     setLoading(true);
@@ -74,10 +81,23 @@ export default function WorksPage() {
   }
 
   const handleWithdraw = async () => {
-    employeeWithdraw(currentWork, withdrawDescription);
-    setWithdrawModal(false);
-    setSelectedTab("ACTIVE");
-    setTimeout(() => {fetchWorks();}, 500)
+    if(withdrawDescription == "") {
+      setNullValueWindow(true);
+    }
+    else {
+      const deadline_check = await isValidWithdraw(currentWork);
+
+      if(deadline_check == 1) {
+        setInvalidWithdrawWindow(true);
+      }
+      else {
+        employeeWithdraw(currentWork, withdrawDescription);
+        setWithdrawModal(false);
+        setSelectedTab("ACTIVE");
+        setWithdrawDescription("");
+        setTimeout(() => {fetchWorks();}, 500)
+      }
+    }
   };
 
   const handleMarkDone = async (workId: number) => {
@@ -133,7 +153,7 @@ export default function WorksPage() {
               </h3>
               <button
                 type="button"
-                onClick={() => {setWithdrawModal(false)}}
+                onClick={() => {setWithdrawModal(false); setWithdrawDescription("")}}
                 className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                 aria-label="Close edit work modal"
               >
@@ -171,10 +191,37 @@ export default function WorksPage() {
               </div>
             </div>
           </div>
+
+          <ProjectNullValuesWindow
+            open={nullValueWindow}
+            onClose={() => setNullValueWindow(false)}
+          />
+
+          <ProjectInvalidDeadlineWindow
+            open={invalidWithdrawWindow}
+            onClose={() => setInvalidWithdrawWindow(false)}
+          />
         </div>
       ) : null
 
       }
     </div>
+  );
+}
+
+export function ProjectInvalidDeadlineWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Cannot Withdraw</DialogTitle>
+      <DialogContent>
+        <p>Unable to withdraw due to the work being close to its deadline.</p>
+      </DialogContent>
+    </Dialog>
   );
 }

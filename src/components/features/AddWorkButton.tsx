@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createWork } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
+import { 
+  createWork, 
+  isValidWorkDeadline,
+  isValidRole } 
+  from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
 import DatePicker from "react-datepicker";
 
@@ -11,6 +15,8 @@ interface AddWorkButtonProps {
   projectId: number;
   refresh: () => void;
   openNullWindow: () => void;
+  openDeadlineWindow: () => void;
+  openRoleWindow: () => void;
 }
 
 const roleOptions = [
@@ -27,6 +33,8 @@ export function AddWorkButton({
   projectId,
   refresh,
   openNullWindow,
+  openDeadlineWindow,
+  openRoleWindow
 }: AddWorkButtonProps) {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState(roleOptions[0]);
@@ -54,30 +62,44 @@ export function AddWorkButton({
     setSetToTba(false);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (description == "" || date == null) {
       // Notifies the user of unfilled form values via a new window
       openNullWindow();
     } else {
-      createWork(
-        projectId,
-        role,
-        getCategory(),
-        salary,
-        publishToOpenPool,
-        description,
-        date,
-        startTime,
-        endTime,
-        publishToOpenPool ? "OPEN" : "PENDING",
-      );
+      const deadlineCheck = await isValidWorkDeadline(projectId, date);
 
-      //Resets the values in the form so that they are empty when the user
-      //opens it again
-      resetValues();
+      if(deadlineCheck == 1) {
+        openDeadlineWindow();
+      }
+      else {
+        const roleCheck = await isValidRole(role, date, projectId);
 
-      refresh();
-      closeModal();
+        if(roleCheck != 0) {
+          openRoleWindow();
+        }
+        else {
+          createWork(
+            projectId,
+            role,
+            getCategory(),
+            salary,
+            publishToOpenPool,
+            description,
+            date,
+            startTime,
+            endTime,
+            publishToOpenPool ? "OPEN" : "PENDING",
+          );
+
+          //Resets the values in the form so that they are empty when the user
+          //opens it again
+          resetValues();
+
+          refresh();
+          closeModal();
+        }
+      }
     }
   };
 

@@ -103,3 +103,20 @@ export function ProjectInvalidDeadlineWindow(props: SimpleDialogProps) {
     </Dialog>
   );
 }
+
+export function ProjectInvalidRoleWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Invalid Role</DialogTitle>
+      <DialogContent>
+        <p>You cannot have more than one work with the same role on the same day.</p>
+      </DialogContent>
+    </Dialog>
+  );
+}

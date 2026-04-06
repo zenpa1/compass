@@ -15,21 +15,18 @@ export async function POST(
 
   try {
     await db.$transaction(async (tx) => {
-      await tx.workapplication.updateMany({
+      await tx.workapplication.deleteMany({
         where: {
           work_id: workId,
           user_id: userId,
           application_status: "PENDING",
-        },
-        data: {
-          application_status: "REJECTED",
-        },
+        }
       });
 
-      const updatework = await db.work.update({
+      const updatework = await db.assignment.updateMany({
         where: { work_id: workId },
         data: {
-          work_status: "OPEN",
+          user_id: null
         },
       });
     });

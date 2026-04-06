@@ -37,10 +37,26 @@ export async function GET(req: Request) {
   let works;
 
   if (tab === "OPEN") {
+    const projectConflict = await db.project.findMany({
+      where: {
+        work: {
+          some: {
+            assignment: {
+              some: { user_id: userId }
+            }
+          }
+        }
+      },
+      select: { project_id: true }
+    })
+
+    const projectConflictIds = projectConflict.map(p => p.project_id);
+
     works = await db.work.findMany({
       where: {
         is_open_pool: true,
         work_status: "OPEN",
+        project_id: { notIn: projectConflictIds },
         // Logic: Exclude works where the current user already has an active application
         workapplication: {
           none: {
@@ -50,6 +66,7 @@ export async function GET(req: Request) {
             },
           },
         },
+        
       },
       include: {
         project: true,
