@@ -3,8 +3,9 @@
 import { db } from "@/lib/prisma"; // Direct DB access
 import { Work } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import { sendEmail } from "@/lib/email";
+import { getSession } from "@/lib/session";
 import { release } from "os";
-import { workapplication_application_status } from "@/generated/client";
+import { assignment_assignment_status, workapplication_application_status } from "@/generated/client";
 
 export interface UserProfile {
   profile_id: number;
@@ -200,6 +201,13 @@ export async function assignPerson(assignmentId: number, user: User) {
       },  
     });
   }
+
+  await db.workapplication.deleteMany({
+    where: {
+      work_id: work!.work_id,
+      application_status: "APPROVAL"
+    }
+  })
 
   await db.assignment.update({
     where: { assignment_id: assignmentId },
@@ -422,18 +430,37 @@ export async function employeeWithdraw(workId: number) {
 }
 
 export async function reassignPerson(assignmentId: number, user: User) {
-  const work = await db.assignment.findFirst({ where: { assignment_id: assignmentId } })
+  const assignment = await db.assignment.findFirst({ 
+    where: { 
+      assignment_id: assignmentId 
+    },
+    include: {
+      work: true
+    }
+  })
 
-  await db.workapplication.updateMany({
-    where: { work_id: work!.work_id },
+  if(assignment!.assignment_status == "CONFIRMED" && 
+    assignment?.work.work_status == "PENDING") {
+    await db.workapplication.create({
+      data: {
+        work_id: assignment!.work.work_id,
+        user_id: user.user_id,
+        application_status: "PENDING", 
+      },  
+    });
+  }
+  else {
+    await db.workapplication.updateMany({
+    where: { work_id: assignment?.work.work_id },
     data: {
       user_id: user.user_id,
       application_status: "PENDING",
     },
-  });
+    });
+  }
 
   await db.work.update({
-    where: { work_id: work!.work_id },
+    where: { work_id: assignment?.work.work_id },
     data: { work_status: "PENDING" }
   })
 
@@ -498,6 +525,18 @@ export async function employeeRemoveWork(workId: number) {
     where: {
       work_id: assignment!.work_id,
       user_id: assignment!.user_id!
+    }
+  });
+}
+
+export async function employeeDeclineOpen(workId: number) {
+  const session = await getSession();
+  const userId = session?.userId || 1;
+
+  await db.workapplication.deleteMany({
+    where: {
+      work_id: workId,
+      user_id: userId
     }
   });
 }

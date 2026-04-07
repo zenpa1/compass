@@ -58,6 +58,7 @@ export function WorkRowActions({
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [description, setDescription] = useState(oldDescription);
   const [date, setDate] = useState(oldDate);
   const [salary, setSalary] = useState(oldSalary);
@@ -141,6 +142,7 @@ export function WorkRowActions({
 
   const handleClearAssignee = async () => {
     clearAssignee(workId);
+    setShowClearConfirm(false);
     setMenuOpen(false);
     refresh();
   }
@@ -268,7 +270,7 @@ export function WorkRowActions({
                 <button
                   type="button"
                   className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
-                  onClick={handleClearAssignee}
+                  onClick={() => setShowClearConfirm(true)}
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -504,6 +506,40 @@ export function WorkRowActions({
           </div>
         </div>
       ) : null}
+
+      {showClearConfirm ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Clear assignees confirmation"
+          >
+            <div className="w-full max-w-sm rounded-xl bg-white p-5 text-center shadow-lg">
+              <h3 className="text-base font-semibold text-slate-900">
+                Clear Assignee on Work?
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">
+                The current user will be unassigned from the work.
+              </p>
+              <div className="mt-5 flex justify-center gap-3">
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  onClick={() => setShowClearConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md bg-slate-700 px-3 py-2 text-sm text-white hover:bg-slate-500"
+                 onClick={handleClearAssignee}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
     </>
   );
 }

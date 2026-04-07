@@ -118,12 +118,10 @@ export async function editWork(work_id: number, new_project_id: number,
     }
   })
 
-  if (!new_is_open_pool) {
-    await db.workapplication.updateMany({
-      where: { work_id: work_id },
-      data: { application_status: "REJECTED" }
-    })
-  }
+  await db.workapplication.deleteMany({
+    where: { work_id: work_id },
+  })
+  
 //--------EMAIL SENDING LOGIC DISABLE IF IT MESSES EVERYTHING UP
   if (work!.work_status === "ASSIGNED" || work!.work_status === "REVIEW") {
 
