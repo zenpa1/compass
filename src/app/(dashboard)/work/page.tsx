@@ -42,7 +42,7 @@ export default function WorksPage() {
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("API Error: uhhh", errorText);
+        console.error("API Error: error", errorText);
         throw new Error("Failed to fetch works");
       }
 

@@ -7,9 +7,6 @@ type TabType = "OPEN" | "PENDING" | "ACTIVE";
 type WorkStatus = "PENDING" | "OPEN" | "ASSIGNED" | "REVIEW" | "COMPLETED";
 const allowedTabs: TabType[] = ["OPEN", "PENDING", "ACTIVE"];
 
-//temporary auth, replace with actual auth/session logic
-let current_user: number = 1;
-
 const getUser = async (user_id: number) => {
   return await db.user.findUnique({ where: { user_id: user_id } });
 };

@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
+const toLocalTimeStr = (dt: Date) => {
+  const local = new Date(dt.getTime() + 8 * 60 * 60 * 1000);
+  return local.toISOString().split("T")[1];
+};
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const tab = searchParams.get("tab");
@@ -23,7 +28,8 @@ export async function GET(req: Request) {
       .filter((work) => work.work_start_date)
       .map((work) => ({
         title: work.project?.project_name ?? "Work",
-        date: work.work_start_date,
+        start: work.work_start_time?.toISOString() ?? work.work_start_date!.toISOString(),
+        end: work.work_end_time?.toISOString() ?? undefined,
         extendedProps: {
           role_category: work.role_category,
           description: work.work_description,
@@ -43,22 +49,15 @@ export async function GET(req: Request) {
   });
 
   const tasksUTC8 = tasks
-    .map((task) => {
-      if (!task.due_date) return null;
-
-      const date = new Date(task.due_date);
-      date.setHours(date.getHours() - 8);
-
-      return {
-        title: task.task_title,
-        date: date,
-        extendedProps: {
-          description: task.task_desc ?? undefined,
-          status: task.is_completed ? "COMPLETED" : "PENDING",
-        },
-      };
-    })
-    .filter(Boolean);
+    .filter((task) => task.due_date)
+    .map((task) => ({
+      title: task.task_title,
+      start: task.due_date!.toISOString(),
+      extendedProps: {
+        description: task.task_desc ?? undefined,
+        status: task.is_completed ? "COMPLETED" : "PENDING",
+      },
+    }));
 
   return NextResponse.json(tasksUTC8);
 }
