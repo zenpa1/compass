@@ -1,6 +1,6 @@
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { workapplication_application_status } from "@/generated/client";
+import { work_work_status, workapplication_application_status } from "@/generated/client";
 
 console.log(workapplication_application_status);
 type TabType = "OPEN" | "PENDING" | "ACTIVE";
@@ -42,9 +42,23 @@ export async function GET(req: Request) {
   if (tab === "OPEN") {
     const dateConflicts = await db.work.findMany({
       where: {
-        assignment: {
-          some: { user_id: userId }
-        }
+        OR: [
+          {
+            assignment: {
+              some: { user_id: userId }
+            },
+            work_status: "ASSIGNED"
+          },
+          {
+            workapplication: {
+              some: { 
+                user_id: userId, // CRITICAL: Scope this to the user
+                application_status: "APPROVAL" 
+              }
+            }
+          }
+        ]
+        
       },
       select: { work_start_date: true }
     })

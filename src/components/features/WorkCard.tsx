@@ -90,7 +90,7 @@ export function WorkCard({
     "en-US",
     { month: "short", day: "numeric", year: "numeric" }
   );
-  const start_time = new Date(work.work_start_date).toLocaleTimeString(
+  const start_time = new Date(work.work_start_time!).toLocaleTimeString(
     "en-US",
     { hour: "numeric", minute: "2-digit", hour12: true }
   );
