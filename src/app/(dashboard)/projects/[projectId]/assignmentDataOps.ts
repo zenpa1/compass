@@ -94,8 +94,13 @@ export async function getAvailableAssignees(work: Work) {
     where: {
       user: {
         assignment: {
-          none: {
-            work: { project_id: work.project_id }
+          none: { 
+            work: { 
+              AND: [
+                {work_start_date: work!.work_start_date! },
+                {work_id: { notIn: [work.work_id] }}
+              ]
+            }
           }
         }
       }
@@ -119,9 +124,6 @@ export async function getAvailableAssignees(work: Work) {
 }
 
 export async function getRecommendedAssignees(work: Work, role: string) {
-
-
-
   const label = getRole(role);
 
   //scheduling conflict checks
@@ -138,10 +140,7 @@ export async function getRecommendedAssignees(work: Work, role: string) {
   const recommended = await db.userprofile.findMany({
     where: {
       user: {
-        AND: [
-          { assignment: { none: { OR: conflictConditions } } },
-          { assignment: { none: { work: { project_id: work.project_id } } } }
-        ]
+        assignment: {none: {OR: conflictConditions}}
       },
       OR: [
         { primary_role: { in: label } },
@@ -189,15 +188,18 @@ export async function getRecommendedAssignees(work: Work, role: string) {
 }
 
 export async function assignPerson(assignmentId: number, user: User) {
-  const work = await db.assignment.findFirst({ where: { assignment_id: assignmentId } })
-
-  await db.workapplication.create({
-    data: {
-      work_id: work!.work_id,
-      user_id: user.user_id,
-      application_status: "PENDING",
-    },
-  });
+  const work = await db.assignment.findFirst({where: {assignment_id: assignmentId}})
+  const status = (user.user_type == "EMPLOYEE") ? "PENDING" : "REVIEW";
+  
+  if(user.user_type == "EMPLOYEE") {
+    await db.workapplication.create({
+      data: {
+        work_id: work!.work_id,
+        user_id: user.user_id,
+        application_status: "PENDING", 
+      },  
+    });
+  }
 
   await db.assignment.update({
     where: { assignment_id: assignmentId },
@@ -208,7 +210,7 @@ export async function assignPerson(assignmentId: number, user: User) {
 
   await db.work.update({
     where: { work_id: work!.work_id },
-    data: { work_status: "PENDING" }
+    data: { work_status: status }
   })
 }
 
@@ -342,12 +344,12 @@ export async function clearAssignee(workId: number) {
 export async function employeeMarkDone(workId: number) {
   const assignment = await db.assignment.findFirst({ where: { work_id: workId } });
 
-  await db.workapplication.deleteMany({
+  /*await db.workapplication.deleteMany({
     where: {
       work_id: assignment!.work_id,
       user_id: assignment!.user_id!
     }
-  });
+  });*/
 
   await db.work.update({
     where: { work_id: workId },
@@ -355,8 +357,9 @@ export async function employeeMarkDone(workId: number) {
   })
 }
 
-export async function employeeWithdraw(workId: number, withdrawalReason: string) {
-  const assignment = await db.assignment.findFirst({ where: { work_id: workId } })
+export async function employeeWithdraw(workId: number) {
+  const assignment = await db.assignment.findFirst({where: {work_id: workId}})
+  const withdrawalReason = "Employee has withdrawn!";
 
   await db.work.update({
     where: { work_id: workId },
@@ -460,4 +463,41 @@ export async function assignFreelancer(assignmentId: number, freelancer: string)
       assignment_status: "CONFIRMED"
     }
   })
+}
+
+export async function employeeMarkNotDone(workId: number) {
+  const assignment = await db.assignment.findFirst({where: {work_id: workId}});
+
+  const application = await db.workapplication.findFirst({
+    where: {
+      work_id: assignment!.work_id,
+      user_id: assignment!.user_id!
+    }
+  });
+
+  if(!application) {
+    await db.workapplication.create({
+    data: {
+      work_id: assignment!.work_id,
+      user_id: assignment!.user_id!,
+      application_status: "APPROVED"
+    }
+  });
+  }
+
+  await db.work.update({
+    where: {work_id: workId},
+    data: {work_status: "ASSIGNED"}
+  })
+}
+
+export async function employeeRemoveWork(workId: number) {
+  const assignment = await db.assignment.findFirst({where: {work_id: workId}});
+
+  await db.workapplication.deleteMany({
+    where: {
+      work_id: assignment!.work_id,
+      user_id: assignment!.user_id!
+    }
+  });
 }

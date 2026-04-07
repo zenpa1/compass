@@ -83,9 +83,8 @@ export function toISOTime(date: Date) {
  export function printAction(status: string) {
     switch(status) {
       case "⚠ UNASSIGNED":
-        return "Assign Employee";
       case "⚠ WITHDRAWN":
-        return "View and Assign";
+        return "Assign Employee";
       case "🌐 OPEN POOL":
         return "View Application [3]";
       case "⌛ REQUEST SENT":
