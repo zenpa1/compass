@@ -4,11 +4,15 @@ import { cookies } from 'next/headers';
 const SECRET = new TextEncoder().encode(process.env.SESSION_SECRET!);
 const COOKIE_NAME = 'auth_token';
 
-export async function createSession(payload: {
+// Create a single source of truth for your session data shape
+export type SessionPayload = {
   userId: number;
   email: string;
-  role: string;
-}) {
+  user_type: string;
+  primary_role?: string | null;
+};
+
+export async function createSession(payload: SessionPayload) {
   const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
@@ -29,7 +33,8 @@ export async function getSession() {
 
   try {
     const { payload } = await jwtVerify(token, SECRET);
-    return payload as { userId: number; email: string; role: string };
+    // <-- FIXED: Now uses the correct SessionPayload type
+    return payload as SessionPayload; 
   } catch {
     return null; // expired or tampered
   }

@@ -91,11 +91,16 @@ export default function WorksPage() {
         setInvalidWithdrawWindow(true);
       }
       else {
-        employeeWithdraw(currentWork, withdrawDescription);
+        // 1. Close the modal and reset UI IMMEDIATELY
         setWithdrawModal(false);
         setSelectedTab("ACTIVE");
         setWithdrawDescription("");
-        setTimeout(() => {fetchWorks();}, 500)
+
+        // 2. NOW let the server do its database and email work
+        await employeeWithdraw(currentWork, withdrawDescription);
+        
+        // 3. Refresh the data once the server is fully done
+        fetchWorks();
       }
     }
   };

@@ -4,33 +4,33 @@ import { prisma } from "@/lib/db";
 import { createSession } from "@/lib/session";
 
 const googleClientId =
-  process.env.GOOGLE_CLIENT_ID ?? process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    process.env.GOOGLE_CLIENT_ID ?? process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(googleClientId);
 
 // ==================================================================
 // HELPER: Dynamic CORS Headers
 // ==================================================================
 function corsHeaders() {
-  const origin = process.env.NODE_ENV === 'production'
-    ? 'https://compass-ten-kappa.vercel.app'
-    : 'http://127.0.0.1:5500';
+    const origin = process.env.NODE_ENV === 'production'
+        ? 'https://compass-ten-kappa.vercel.app'
+        : 'http://127.0.0.1:5500';
 
-  return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  };
+    return {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
+    };
 }
 
 // ==================================================================
 // 1. PREFLIGHT HANDLER (Required for CORS)
 // ==================================================================
 export async function OPTIONS() {
-  return NextResponse.json({}, {
-    status: 200,
-    headers: corsHeaders(),
-  });
+    return NextResponse.json({}, {
+        status: 200,
+        headers: corsHeaders(),
+    });
 }
 
 // ==================================================================
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         const payload = ticket.getPayload();
         if (!payload || !payload.email) {
             return NextResponse.json(
-                { message: "Invalid token" }, 
+                { message: "Invalid token" },
                 { status: 400, headers: corsHeaders() }
             );
         }
@@ -83,7 +83,8 @@ export async function POST(request: Request) {
             await createSession({
                 userId: user.user_id,
                 email: user.email,
-                role: 'OWNER',
+                user_type: user.user_type, // 'OWNER'
+                primary_role: null,        // Owners don't have a profile role
             });
 
             return NextResponse.json({
@@ -92,10 +93,10 @@ export async function POST(request: Request) {
                 user: {
                     id: user.user_id,
                     email: user.email,
-                    role: 'OWNER'
+                    user_type: 'OWNER'
                 }
             }, {
-                status: 200, 
+                status: 200,
                 headers: corsHeaders()
             });
         }
@@ -120,7 +121,8 @@ export async function POST(request: Request) {
             await createSession({
                 userId: user.user_id,
                 email: user.email,
-                role: 'EMPLOYEE',
+                user_type: user.user_type,          // 'EMPLOYEE'
+                primary_role: profile.primary_role, // 'PHOTO' (or whatever default is)
             });
 
             return NextResponse.json({
@@ -128,16 +130,17 @@ export async function POST(request: Request) {
                 redirect: "/setup",
                 user: { id: user.user_id, email: user.email }
             }, {
-                status: 200, 
+                status: 200,
                 headers: corsHeaders()
             });
         }
 
-        // Create cookie for employee
+        // Create cookie for returning employee
         await createSession({
             userId: user.user_id,
             email: user.email,
-            role: user.userprofile?.primary_role ?? 'EMPLOYEE',
+            user_type: user.user_type,                            // 'EMPLOYEE'
+            primary_role: user.userprofile?.primary_role ?? null, // e.g., 'PHOTO'
         });
 
         // Send to freelancers if profile already exists
@@ -149,7 +152,7 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error("Auth Error: ", error);
         return NextResponse.json(
-            { message: "Server Error" }, 
+            { message: "Server Error" },
             { status: 500, headers: corsHeaders() }
         );
     }
