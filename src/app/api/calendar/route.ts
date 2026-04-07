@@ -13,7 +13,7 @@ export async function GET(req: Request) {
 
   const session = await getSession();
   const current_user = session?.userId || 1;  
-  const user_type = session?.role || 1;  
+  const user_type = session?.user_type || 1;  
 
   // NORTH STUDIO WORKS
   if (tab === "works") {
