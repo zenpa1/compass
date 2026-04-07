@@ -123,7 +123,6 @@ export default function DashboardLayout({
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-        {/* ✅ Mobile top bar — hidden on md+ */}
         <header className="md:hidden flex items-center gap-3 px-4 py-3 bg-slate-900 text-slate-300">
           <button
             onClick={() => setSidebarOpen(true)}

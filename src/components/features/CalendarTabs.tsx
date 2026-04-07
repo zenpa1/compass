@@ -11,7 +11,7 @@ type CalendarTabsProps = {
 
 export default function CalendarTabs({ selected, onChange }: CalendarTabsProps) {
   return (
-    <div className="flex rounded-md border border-slate-600 overflow-hidden text-sm">
+    <div className="flex w-fit rounded-md border border-slate-600 overflow-hidden text-sm">
       {workStatuses.map((status, i) => (
         <button
           key={status}
