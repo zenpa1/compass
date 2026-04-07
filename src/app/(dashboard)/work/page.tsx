@@ -29,6 +29,7 @@ export default function WorksPage() {
   const [ confirmMarkNotDone, setConfirmMarkNotDone ] = useState(false);
   const [ confirmRemoveWork, setConfirmRemoveWork ] = useState(false);
   const [ hideCompleted, setHideCompleted ] = useState(false);
+  const [withdrawReason, setWithdrawReason] = useState("");
 
   const pageTitle = (selectedTab == "OPEN") ? "Open Works" :
     (selectedTab == "PENDING") ? "Pending Works" :

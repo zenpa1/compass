@@ -2,28 +2,61 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 
 export function SidebarLogoutButton() {
   const [showModal, setShowModal] = useState(false);
   const router = useRouter();
 
-  const handleLogout = async () => {
+  const handleLogout = async () => { 
     try {
-      //call API route
-      const response = await fetch('/api/auth/logout', { 
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
       });
 
       if (response.ok) {
-        //clear local navigation cache and redirect to login
         router.push("/login");
-        router.refresh(); 
+        router.refresh();
       }
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
+
+  const modal = (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Logout confirmation"
+    >
+      <div className="w-full max-w-sm rounded-xl bg-white p-5 text-center shadow-lg">
+        <h3 className="text-base font-semibold text-slate-900">Log out</h3>
+        <p className="mt-2 text-sm text-slate-600">
+          Are you sure you want to log out?
+        </p>
+        <div className="mt-5 flex justify-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="border-slate-300 text-slate-700 hover:bg-slate-50"
+            onClick={() => setShowModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleLogout}
+          >
+            Confirm
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -50,39 +83,8 @@ export function SidebarLogoutButton() {
         </svg>
       </Button>
 
-      {showModal ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Logout confirmation"
-        >
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 text-center shadow-lg">
-            <h3 className="text-base font-semibold text-slate-900">Log out</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Are you sure you want to log out?
-            </p>
-            <div className="mt-5 flex justify-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="border-slate-300 text-slate-700 hover:bg-slate-50"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleLogout}
-              >
-                Confirm
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {/* ✅ Portal renders the modal at document.body, outside the sidebar */}
+      {showModal && createPortal(modal, document.body)}
     </>
   );
 }
