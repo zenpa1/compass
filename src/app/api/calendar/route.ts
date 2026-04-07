@@ -13,6 +13,7 @@ export async function GET(req: Request) {
 
   const session = await getSession();
   const current_user = session?.userId || 1;  
+  const user_type = session?.role || 1;  
 
   // NORTH STUDIO WORKS
   if (tab === "works") {
@@ -24,7 +25,15 @@ export async function GET(req: Request) {
       include: { project: true, workapplication: true },
     });
 
-    const events = works
+    let filteredWorks = works;
+
+    if (user_type !== "OWNER") {
+      filteredWorks = works.filter((work) =>
+        work.workapplication.some((app) => app.user_id === current_user)
+      );
+    }
+
+    const events = filteredWorks
       .filter((work) => work.work_start_date)
       .map((work) => ({
         title: work.project?.project_name ?? "Work",

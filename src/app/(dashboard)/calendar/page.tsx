@@ -125,9 +125,7 @@ export default function CalendarPage() {
     if (left + popoverWidth > vw - 8) left = vw - popoverWidth - 8;
 
     let top = popover.y - window.scrollY;
-    // if it would go off the bottom, flip it above the event
     if (top + popoverHeight > vh - 8) top = top - popoverHeight - 16;
-    // if it somehow goes off the top, clamp it
     if (top < 8) top = 8;
 
     return { top, left };

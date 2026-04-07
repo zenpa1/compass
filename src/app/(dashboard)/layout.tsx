@@ -4,11 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { SidebarLogoutButton } from "@/components/features/SidebarLogoutButton";
-// 1. Import your new Check Button component!
-import { SidebarCheckButton } from "@/components/features/SidebarCheckButton"; 
+import { SidebarCheckButton } from "@/components/features/SidebarCheckButton";
 import { useState, useEffect } from "react";
-import { getProfilePicture, getSidebarUrl } 
-  from "@/app/(dashboard)/projects/projectDataOps";
+import { getProfilePicture, getSidebarUrl } from "@/app/(dashboard)/projects/projectDataOps";
 
 export default function DashboardLayout({
   children,
@@ -18,34 +16,48 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const projectsActive = pathname.startsWith("/projects");
   const calendarActive = pathname.startsWith("/calendar");
-  // 2. Add an active state check for your tasks route!
-  const tasksActive = pathname.startsWith("/tasks"); 
-  
-  // Fixed: Changed this to check for "/manageprofile" instead of "/settings"
+  const tasksActive = pathname.startsWith("/tasks");
   const settingsActive = pathname.startsWith("/manageprofile");
 
   const [avatarUrl, setAvatarUrl] = useState("");
   const [sidebarUrl, setSidebarUrl] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const fetchUrls = async () => { 
+    const fetchUrls = async () => {
       const url = await getProfilePicture();
       const sidebar = await getSidebarUrl();
-
       setAvatarUrl(url!);
-      setSidebarUrl(sidebar)
-    }
-
+      setSidebarUrl(sidebar);
+    };
     fetchUrls();
-  }, [])
+  }, []);
 
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   return (
     <div className="flex h-screen bg-slate-50">
-      
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR SECTION */}
-      <aside className="w-20 bg-slate-900 flex flex-col items-center py-6 h-full text-slate-300">
-        
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-30 w-20 bg-slate-900
+          flex flex-col items-center py-6 text-slate-300
+          transform transition-transform duration-200 ease-in-out
+          md:static md:translate-x-0 md:z-auto
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+      >
         {/* LOGO */}
         <div className="mb-8 h-10 w-10 rounded-full bg-slate-800 overflow-hidden">
           {avatarUrl ? <img src={avatarUrl} alt="Profile" /> : null}
@@ -53,8 +65,6 @@ export default function DashboardLayout({
 
         {/* NAVIGATION SECTION */}
         <nav className="flex-1 flex flex-col gap-6 w-full px-4">
-          
-          {/* Projects Link */}
           <Link href={sidebarUrl}>
             <Button
               variant="ghost"
@@ -70,7 +80,6 @@ export default function DashboardLayout({
             </Button>
           </Link>
 
-          {/* Calendar Link */}
           <Link href="/calendar">
             <Button
               variant="ghost"
@@ -87,10 +96,8 @@ export default function DashboardLayout({
             </Button>
           </Link>
 
-          {/* 3. Drop in your new Check Button and pass the active state! */}
           <SidebarCheckButton isActive={tasksActive} />
 
-          {/* Manage Profile Link (Swapped to Person Icon) */}
           <Link href="/manageprofile">
             <Button
               variant="ghost"
@@ -106,19 +113,37 @@ export default function DashboardLayout({
               </svg>
             </Button>
           </Link>
-
         </nav>
 
-        {/* LOGOUT BUTTON */}
         <div className="mt-auto px-4 w-full">
           <SidebarLogoutButton />
         </div>
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 overflow-y-auto bg-slate-50">
-        <div className="p-10 max-w-full">{children}</div>
-      </main>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* ✅ Mobile top bar — hidden on md+ */}
+        <header className="md:hidden flex items-center gap-3 px-4 py-3 bg-slate-900 text-slate-300">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
+            className="p-1"
+          >
+            <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12h18M3 6h18M3 18h18" />
+            </svg>
+          </button>
+          {/* <div className="h-7 w-7 rounded-full bg-slate-800 overflow-hidden">
+            {avatarUrl ? <img src={avatarUrl} alt="Profile" /> : null}
+          </div> */}
+        </header>
+
+        <main className="flex-1 overflow-y-auto bg-slate-50">
+          <div className="p-10 max-w-full">{children}</div>
+        </main>
+      </div>
+
     </div>
   );
 }
