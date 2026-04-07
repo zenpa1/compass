@@ -264,48 +264,51 @@ export function WorkRowActions({
         >
           {!(workStatus == "COMPLETED") ? (
             <div>
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
-                onClick={handleClearAssignee}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
+              {(workStatus == "ASSIGNED") ? (
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  onClick={handleClearAssignee}
                 >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
                   Clear Assignees
-              </button>
-          
-          
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
-                onClick={openEditModal}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
+                </button>
+              ) : null}
+
+              {(workStatus == "PENDING" || workStatus == "OPEN") ? (
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  onClick={openEditModal}
                 >
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                </svg>
-                Edit
-              </button>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  Edit
+                </button>
+              ) : null}
           </div>
           ) : null}
           <button

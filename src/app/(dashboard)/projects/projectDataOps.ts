@@ -287,3 +287,14 @@ export async function refreshProjectHeader(projectId: number) {
   revalidatePath(path)
   redirect(path)
 }
+
+export async function isCompleteProject(projectId: number) {
+  const works = await db.work.findMany({
+    where: {
+      project_id: projectId,
+      work_status: { notIn: ["COMPLETED"] }
+    }
+  })
+
+  return (works.length > 0) ? 1 : 0;
+}
