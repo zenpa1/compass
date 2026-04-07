@@ -139,12 +139,9 @@ export function AssignPersonButton({
   async function handleOpen() {
     setSearchTerm("."); //Refreshes list of available assignees
 
-    if(withdrawn) setWithdrawnModal(true);
-    else {
-      await refreshAssignees();
-      setShowModal(true)
-      setSearchTerm("");
-    }
+    await refreshAssignees();
+    setSearchTerm("");
+    setShowModal(true);
   }
 
   async function handleWithdrawClose() {

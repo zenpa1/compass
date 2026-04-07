@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { WorkStatus } from "./WorkTabs";
 import type { Work } from "@/type/work";
 
@@ -11,6 +12,8 @@ interface WorkCardProps {
   onDecline: (workId: number) => Promise<void>;
   onWithdraw: (workId: number) => Promise<void>;
   onMarkDone?: (workId: number) => Promise<void>;
+  onMarkNotDone?: (workId: number) => Promise<void>;
+  onRemoveWork?: (workId: number) => Promise<void>;
 }
 
 function activeBadgeClass(workStatus: string) {
@@ -25,7 +28,7 @@ function activeProgressLabel(workStatus: string) {
   return "ONGOING";
 }
 
-function activeMarkerIcon(workStatus: string) {
+/*function activeMarkerIcon(workStatus: string) {
   if (workStatus === "COMPLETED") {
     return (
       <svg
@@ -70,7 +73,7 @@ function activeMarkerIcon(workStatus: string) {
       <circle cx="12" cy="12" r="9" />
     </svg>
   );
-}
+}*/
 
 export function WorkCard({
   work,
@@ -79,6 +82,9 @@ export function WorkCard({
   onAccept,
   onDecline,
   onWithdraw,
+  onMarkDone,
+  onMarkNotDone,
+  onRemoveWork
 }: WorkCardProps) {
   const start_date = new Date(work.work_start_date).toLocaleDateString(
     "en-US",
@@ -101,15 +107,48 @@ export function WorkCard({
               {work.project.project_name}
             </h2>
             <div className="flex items-center gap-3">
-              {activeMarkerIcon(work.work_status)}
-              <button
-                type="button"
-                onClick={() => onWithdraw?.(work.work_id)}
-                className="h-8 rounded-md bg-slate-800 px-3 text-xs text-white hover:bg-slate-700 disabled:opacity-50"
-                disabled={work.work_status !== "ASSIGNED"}
-              >
-                Withdraw
-              </button>
+              {/*activeMarkerIcon(work.work_status)*/}
+              {(work.work_status != "COMPLETED") ? (
+                <button
+                  type="button"
+                  onClick={() => onWithdraw?.(work.work_id)}
+                  className="h-8 rounded-md bg-slate-800 px-3 text-xs text-white hover:bg-slate-700 disabled:opacity-50"
+                  disabled={work.work_status !== "ASSIGNED"}
+                >
+                  Withdraw
+                </button>
+              ) : null}
+              
+              {(work.work_status == "ASSIGNED") ? (
+                <button
+                  type="button"
+                  onClick={() => onMarkDone?.(work.work_id)}
+                  className="h-8 rounded-md bg-green-500 px-3 text-xs text-white hover:bg-green-700 disabled:opacity-50"
+                  disabled={work.work_status !== "ASSIGNED"}
+                >
+                  Mark as Done
+                </button>
+              ) : null}
+
+              {(work.work_status == "REVIEW") ? (
+                <button
+                  type="button"
+                  onClick={() => onMarkNotDone?.(work.work_id)}
+                  className="h-8 rounded-md bg-green-500 px-3 text-xs text-white hover:bg-green-700 disabled:opacity-50"
+                >
+                  Mark as Not Done
+                </button>
+              ) : null}
+
+              {(work.work_status == "COMPLETED") ? (
+                <button
+                  type="button"
+                  onClick={() => onRemoveWork?.(work.work_id)}
+                  className="h-8 rounded-md bg-slate-800 px-3 text-xs text-white hover:bg-slate-700 disabled:opacity-50"
+                >
+                  Remove Work
+                </button>
+              ) : null}
             </div>
           </div>
 

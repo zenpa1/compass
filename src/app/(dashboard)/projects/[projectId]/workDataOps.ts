@@ -10,6 +10,8 @@ import { getAvailableAssignees, getRecommendedAssignees, getAssignment, getAppli
   from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 import { da } from "date-fns/locale";
 import { availableMemory } from "process";
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 type category = "PHOTO" | "VIDEO" | "EDITOR" | "ASSISTANT" | "ANY"; 
 
@@ -94,7 +96,10 @@ export async function editWork(work_id: number, new_project_id: number,
     ) ? work!.work_status :
       (new_is_open_pool) ? "OPEN" : "PENDING"
 
-    
+    await db.workapplication.deleteMany({
+      where: { work_id: work_id }
+    })
+
     await db.work.update({
     where: {work_id: work_id},
     data: {
@@ -229,12 +234,18 @@ export async function cancelRequest(work_id: number) {
 }
 
 export async function markWorkAsComplete(work_id: number) {
-    await db.work.update({
+  await db.work.update({
     where: {work_id: work_id},
     data: {
       work_status: "COMPLETED"
     }
   })
+
+  const work = await db.work.findFirst({where: {work_id: work_id}});
+  const path = "/projects/" + work?.project_id;
+  
+  revalidatePath(path)
+  redirect(path)
 }
 
 export async function getFreelancer(work_id: number) {
@@ -291,7 +302,6 @@ export async function isValidRole(role: string, date: Date, projectId: number) {
 
 export async function markWorkAsNotComplete(work_id: number) {
     const assignment = await db.assignment.findFirst({where: {work_id: work_id}})
-    const status = (assignment!.user_id != undefined) ? "ASSIGNED" : "REVIEW"
 
     if(assignment!.user_id != undefined) {
       await db.workapplication.create({
@@ -306,9 +316,15 @@ export async function markWorkAsNotComplete(work_id: number) {
     await db.work.update({
     where: {work_id: work_id},
     data: {
-      work_status: status
+      work_status: "REVIEW"
     }
   })
+
+  const work = await db.work.findFirst({where: {work_id: work_id}});
+  const path = "/projects/" + work?.project_id;
+  
+  revalidatePath(path)
+  redirect(path)
 }
 
 export async function isValidRoleEdit(work_id: number, date: Date, projectId: number, role: string) {
