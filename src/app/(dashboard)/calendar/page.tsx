@@ -5,6 +5,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import CalendarTabs, { CalendarTab } from "@/components/features/CalendarTabs";
+import timeGridPlugin from "@fullcalendar/timegrid";
 
 interface EventPopover {
   title: string;
@@ -43,7 +44,9 @@ export default function CalendarPage() {
   const [selectedTab, setSelectedTab] = useState<CalendarTab>("personal tasks");
   const [isMobile, setIsMobile] = useState(false);
   const [popover, setPopover] = useState<EventPopover | null>(null);
+  const [calendarView, setCalendarView] = useState<"dayGridMonth" | "timeGridWeek">("dayGridMonth");
   const popoverRef = useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<FullCalendar>(null);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -63,6 +66,14 @@ export default function CalendarPage() {
   }, []);
 
   useEffect(() => {
+    const handleScroll = () => setPopover(null);
+    if (popover) {
+      window.addEventListener("scroll", handleScroll, true);
+      return () => window.removeEventListener("scroll", handleScroll, true);
+    }
+  }, [popover]);
+
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         setPopover(null);
@@ -77,7 +88,14 @@ export default function CalendarPage() {
     }
   }, [popover]);
 
+  const handleViewChange = (view: "dayGridMonth" | "timeGridWeek") => {
+    setCalendarView(view);
+    calendarRef.current?.getApi().changeView(view);
+  };
+  
   const handleEventClick = (info: any) => {
+    console.log("startStr:", info.event.startStr);
+    console.log("start:", info.event.start);
     const rect = info.el.getBoundingClientRect();
     const scrollY = window.scrollY;
     const scrollX = window.scrollX;
@@ -97,17 +115,21 @@ export default function CalendarPage() {
 
   const getPopoverStyle = (): React.CSSProperties => {
     if (!popover) return {};
-    const popoverWidth = 288; // w-72
+    const popoverWidth = 288;
+    const popoverHeight = 320; // approximate max height
     const vw = window.innerWidth;
-    // let left = popover.x - popoverWidth / 2;
-    // if (left < 8) left = 8;
-    // if (left + popoverWidth > vw - 8) left = vw - popoverWidth - 8;
-    // return { top: popover.y, left };
-    const rect = document.querySelector('.fc-view-harness')?.getBoundingClientRect();
-    let top = popover.y - window.scrollY;
+    const vh = window.innerHeight;
+
     let left = (popover.x - window.scrollX) - popoverWidth / 2;
     if (left < 8) left = 8;
     if (left + popoverWidth > vw - 8) left = vw - popoverWidth - 8;
+
+    let top = popover.y - window.scrollY;
+    // if it would go off the bottom, flip it above the event
+    if (top + popoverHeight > vh - 8) top = top - popoverHeight - 16;
+    // if it somehow goes off the top, clamp it
+    if (top < 8) top = 8;
+
     return { top, left };
   };
 
@@ -116,19 +138,47 @@ export default function CalendarPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* HEADER */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex w-full items-center gap-3 sm:flex-1">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Calendar</h2>
-          <div className="h-px flex-1 bg-gray-700"></div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex w-full items-center gap-3 sm:flex-1">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Calendar</h2>
+            <div className="h-px flex-1 bg-gray-700"></div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* View toggle buttons */}
+            <div className="flex rounded-md border border-slate-600 overflow-hidden text-sm">
+              <button
+                onClick={() => handleViewChange("dayGridMonth")}
+                className={`px-3 py-1.5 font-medium transition-colors ${
+                  calendarView === "dayGridMonth"
+                    ? "bg-slate-800 text-white"
+                    : "bg-transparent text-slate-400 hover:text-white hover:bg-slate-700"
+                }`}
+              >
+                Month
+              </button>
+              <button
+                onClick={() => handleViewChange("timeGridWeek")}
+                className={`px-3 py-1.5 font-medium transition-colors border-l border-slate-600 ${
+                  calendarView === "timeGridWeek"
+                    ? "bg-slate-800 text-white"
+                    : "bg-transparent text-slate-400 hover:text-white hover:bg-slate-700"
+                }`}
+              >
+                Week
+              </button>
+            </div>
+
+            <CalendarTabs selected={selectedTab} onChange={setSelectedTab} />
+          </div>
         </div>
-        <CalendarTabs selected={selectedTab} onChange={setSelectedTab} />
-      </div>
 
       {/* CALENDAR */}
       <div className="rounded-lg bg-white p-2 text-black shadow sm:p-4">
         <div className="compact-mobile-calendar">
           <FullCalendar
-            plugins={[dayGridPlugin, interactionPlugin]}
+            ref={calendarRef}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             events={events}
             height="auto"

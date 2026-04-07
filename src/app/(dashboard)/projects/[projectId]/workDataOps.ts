@@ -108,6 +108,13 @@ export async function editWork(work_id: number, new_project_id: number,
       work_status: status
     }
   })
+
+    if(!new_is_open_pool) {
+      await db.workapplication.updateMany({
+        where: { work_id: work_id },
+        data: { application_status: "REJECTED" }
+      })
+    }
 }
 
 export async function checkDeleteWorkConflict(work_id: number) {
