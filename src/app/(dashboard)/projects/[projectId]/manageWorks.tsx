@@ -55,6 +55,7 @@ interface ManageWorksProps {
   enrichedWorks: enrichedWorks[];
   initialRemainingDays: number;
   initialMissingWorks: number;
+  isCompleteProject: number;
 }
 
 type Assignee = {
@@ -77,6 +78,7 @@ export default function ManageWorksPage({
   enrichedWorks,
   initialRemainingDays,
   initialMissingWorks,
+  isCompleteProject
 }: ManageWorksProps) {
   const printActionButton = (
     work: Work,
@@ -180,6 +182,16 @@ export default function ManageWorksPage({
     project?.project_description ??
     "Coverage for AdHoc Co.'s Annual Christmas Party at The Blue Leaf. Focus on candid moments, the awards ceremony, and the SDE presentation. Client wants a fun, energetic vibe. Call time is 4 PM for setup. Formal attire required for all crew members.";
 
+  const timeStatusMark = remainingDays == 1 ? " " : "S "
+  const timeStatusTone = (isCompleteProject) ? "green-500" : "bg-red-600"
+
+  const timeStatus = (remainingDays >= 1) ? 
+    (remainingDays + " DAY" + timeStatusMark + "LEFT") :
+    (remainingDays == 0) ? "ONGOING" :
+    (isCompleteProject) ? "OVERDUE" :
+    "COMPLETED"
+  const timeStatusClass =  + timeStatusTone;
+
   return (
     <div className="space-y-5">
       <div className="space-y-3">
@@ -199,8 +211,10 @@ export default function ManageWorksPage({
 
         <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-4">
           <div className="w-full space-y-2 lg:w-auto lg:min-w-[170px]">
-            <span className="flex h-8 items-center justify-center rounded-full bg-red-600 px-3 text-sm font-bold text-white">
-              {remainingDays} DAY{remainingDays == 1 ? " " : "S "}LEFT
+            <span className={(isCompleteProject) ? 
+              "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-red-600" :
+              "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-green-500"}>
+              {timeStatus}
             </span>
             <span className="flex h-8 items-center justify-center rounded-full bg-amber-500 px-3 text-sm font-bold text-white">
               {works.length - missingWorks}/{works.length} ROLES
@@ -252,7 +266,8 @@ export default function ManageWorksPage({
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3 2" />
                 </svg>
-                {project.project_end_date.toLocaleString()}
+                {project.project_start_date.toLocaleDateString() + 
+                " - " + project.project_end_date.toLocaleDateString()}
               </span>
             </div>
             <p className="max-w-5xl text-sm leading-relaxed text-slate-700">
