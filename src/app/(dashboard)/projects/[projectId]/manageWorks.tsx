@@ -9,7 +9,10 @@ import { AssignPersonButton } from "@/components/features/AssignPersonButton";
 import { MarkCompleteWorkButton } from "@/components/features/MarkCompleteWorkButton";
 import { UndoMarkCompleteButton } from "@/components/features/UndoMarkCompleteButton";
 import { CancelRequestButton } from "@/components/features/CancelRequestButton";
-import { Project } from "@/app/(dashboard)/projects/projectDataOps";
+import { Project, 
+  refreshProjectHeader, 
+  isCompleteProject } 
+  from "@/app/(dashboard)/projects/projectDataOps";
 import {
   Work,
   getEnrichedWorks,
@@ -56,7 +59,7 @@ interface ManageWorksProps {
   enrichedWorks: enrichedWorks[];
   initialRemainingDays: number;
   initialMissingWorks: number;
-  isCompleteProject: number;
+  isComplete: number;
 }
 
 type Assignee = {
@@ -79,7 +82,7 @@ export default function ManageWorksPage({
   enrichedWorks,
   initialRemainingDays,
   initialMissingWorks,
-  isCompleteProject,
+  isComplete,
 }: ManageWorksProps) {
   const router = useRouter();
 
@@ -173,10 +176,22 @@ export default function ManageWorksPage({
     const newWorks = await getEnrichedWorks(project.project_id);
     const newRemainingDays = await getRemainingDays(project.project_id);
     const newMissingWorks = await getProjectMissingWorks(project.project_id);
+    const newIsComplete = await isCompleteProject(project.project_id);
+    
+    const timeStatusMarkStart = newRemainingDays == 1 ? " " : "S ";
+    const timeStatusStart =
+      remainingDays >= 1
+        ? newRemainingDays + " DAY" + timeStatusMarkStart + "LEFT"
+        : newRemainingDays == 0
+          ? "ONGOING"
+          : newIsComplete
+            ? "OVERDUE"
+            : "COMPLETED";
 
     setWorks(() => newWorks);
     setRemainingDays(newRemainingDays);
     setMissingWorks(newMissingWorks);
+    setTimeStatus(timeStatusStart);
   }
 
   const [works, setWorks] = useState<enrichedWorks[]>(enrichedWorks);
@@ -194,18 +209,22 @@ export default function ManageWorksPage({
     project?.project_description ??
     "Coverage for AdHoc Co.'s Annual Christmas Party at The Blue Leaf. Focus on candid moments, the awards ceremony, and the SDE presentation. Client wants a fun, energetic vibe. Call time is 4 PM for setup. Formal attire required for all crew members.";
 
-  const timeStatusMark = remainingDays == 1 ? " " : "S ";
-  const timeStatusTone = isCompleteProject ? "green-500" : "bg-red-600";
-
-  const timeStatus =
+  const timeStatusMarkStart = remainingDays == 1 ? " " : "S ";
+  const timeStatusStart =
     remainingDays >= 1
-      ? remainingDays + " DAY" + timeStatusMark + "LEFT"
+      ? remainingDays + " DAY" + timeStatusMarkStart + "LEFT"
       : remainingDays == 0
         ? "ONGOING"
-        : isCompleteProject
+        : isComplete
           ? "OVERDUE"
           : "COMPLETED";
-  const timeStatusClass = +timeStatusTone;
+
+  /*const timeStatusToneStart = 
+    isComplete
+      ? "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-red-600"
+      : "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-green-500"*/
+
+  const [timeStatus, setTimeStatus] = useState(timeStatusStart)
 
   return (
     <div className="space-y-5">
@@ -248,11 +267,7 @@ export default function ManageWorksPage({
         <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-4">
           <div className="w-full space-y-2 lg:w-auto lg:min-w-[170px]">
             <span
-              className={
-                isCompleteProject
-                  ? "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-red-600"
-                  : "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-green-500"
-              }
+              className="flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-red-600"
             >
               {timeStatus}
             </span>

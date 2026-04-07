@@ -62,6 +62,8 @@ export async function createWork(new_project_id: number, new_project_role: strin
   new_expected_salary: number, new_is_open_pool: boolean, new_work_description: string,
   new_work_start_date: Date, new_work_start_time: Date, new_work_end_time: Date,
   new_work_status: "PENDING" | "OPEN" | "ASSIGNED" | "REVIEW" | "COMPLETED") {
+  
+  new_work_start_date.setHours(0,0,0,0);
 
   const convertSalary = Decimal(new_expected_salary);
   await db.work.create({
@@ -93,6 +95,8 @@ export async function editWork(work_id: number, new_project_id: number,
   const convertSalary = Decimal(new_expected_salary);
   const work = await getWork(work_id);
 
+    new_work_start_date.setHours(0,0,0,0);
+
   const status = (work!.work_status == "ASSIGNED" ||
     work!.work_status == "REVIEW" ||
     work!.work_status == "COMPLETED"
@@ -114,12 +118,10 @@ export async function editWork(work_id: number, new_project_id: number,
     }
   })
 
-  if (!new_is_open_pool) {
-    await db.workapplication.updateMany({
-      where: { work_id: work_id },
-      data: { application_status: "REJECTED" }
-    })
-  }
+  await db.workapplication.deleteMany({
+    where: { work_id: work_id },
+  })
+  
 //--------EMAIL SENDING LOGIC DISABLE IF IT MESSES EVERYTHING UP
   if (work!.work_status === "ASSIGNED" || work!.work_status === "REVIEW") {
 

@@ -30,6 +30,6 @@ export default async function ProjectDetailPage({
   return (
     <ManageWorksPage project={project!} enrichedWorks={enrichedWorks}
     initialRemainingDays={remainingDays} initialMissingWorks={missingWorks}
-    isCompleteProject={isComplete}/>
+    isComplete={isComplete}/>
   );
 }

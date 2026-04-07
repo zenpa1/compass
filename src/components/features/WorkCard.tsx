@@ -14,6 +14,7 @@ interface WorkCardProps {
   onMarkDone?: (workId: number) => Promise<void>;
   onMarkNotDone?: (workId: number) => Promise<void>;
   onRemoveWork?: (workId: number) => Promise<void>;
+  onDeclineOpen?: (workId: number) => Promise<void>;
 }
 
 function activeBadgeClass(workStatus: string) {
@@ -84,13 +85,14 @@ export function WorkCard({
   onWithdraw,
   onMarkDone,
   onMarkNotDone,
-  onRemoveWork
+  onRemoveWork,
+  onDeclineOpen
 }: WorkCardProps) {
   const start_date = new Date(work.work_start_date).toLocaleDateString(
     "en-US",
     { month: "short", day: "numeric", year: "numeric" }
   );
-  const start_time = new Date(work.work_start_date).toLocaleTimeString(
+  const start_time = new Date(work.work_start_time!).toLocaleTimeString(
     "en-US",
     { hour: "numeric", minute: "2-digit", hour12: true }
   );
@@ -300,9 +302,18 @@ export function WorkCard({
           )}
 
           {status === "PENDING" && applicationStatus === "APPROVAL" && (
-            <p className="mt-3 h-8 min-w-24 self-start rounded-md border border-slate-300 px-4 py-1 text-center text-xs text-slate-500 sm:self-end sm:text-sm">
-              Awaiting Approval
-            </p>
+            <div className="mt-3 flex flex-wrap justify-start gap-2 md:justify-end">
+              <p className="mt-3 h-8 min-w-24 self-start rounded-md border border-slate-300 px-4 py-1 text-center text-xs text-slate-500 sm:text-sm">
+                Pending
+              </p>
+              <button
+                type="button"
+                onClick={() => onDeclineOpen?.(work.work_id)}
+                className="mt-3 h-8 min-w-24 rounded-md border border-rose-300 px-4 text-xs text-rose-600 hover:bg-rose-50 sm:text-sm"
+              >
+                Decline
+              </button>
+            </div>
           )}
         </div>
 {/* 
