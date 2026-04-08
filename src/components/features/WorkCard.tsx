@@ -303,7 +303,7 @@ export function WorkCard({
 
           {status === "PENDING" && applicationStatus === "APPROVAL" && (
             <div className="mt-3 flex flex-wrap justify-start gap-2 md:justify-end">
-              <p className="mt-3 h-8 min-w-24 self-start rounded-md border border-slate-300 px-4 py-1 text-center text-xs text-slate-500 sm:text-sm">
+              <p className="mt-3 h-8 min-w-24 flex items-center justify-center rounded-md border border-slate-300 px-4 text-xs text-slate-500 sm:text-sm">
                 Pending
               </p>
               <button
