@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AddWorkButton } from "@/components/features/AddWorkButton";
 import { ProjectHeaderActions } from "@/components/features/ProjectHeaderActions";
 import { ViewApplicationsButton } from "@/components/features/ViewApplicationsButton";
@@ -8,7 +9,10 @@ import { AssignPersonButton } from "@/components/features/AssignPersonButton";
 import { MarkCompleteWorkButton } from "@/components/features/MarkCompleteWorkButton";
 import { UndoMarkCompleteButton } from "@/components/features/UndoMarkCompleteButton";
 import { CancelRequestButton } from "@/components/features/CancelRequestButton";
-import { Project } from "@/app/(dashboard)/projects/projectDataOps";
+import { Project, 
+  refreshProjectHeader, 
+  isCompleteProject } 
+  from "@/app/(dashboard)/projects/projectDataOps";
 import {
   Work,
   getEnrichedWorks,
@@ -20,7 +24,7 @@ import toShortHours, {
 import ProjectNullValuesWindow, {
   IsActiveWorkWindow,
   ProjectWorksExistWindow,
-  ProjectInvalidRoleWindow
+  ProjectInvalidRoleWindow,
 } from "@/components/features/ProjectAlerts";
 import { WorkRowActions } from "@/components/features/WorkRowActions";
 import {
@@ -55,7 +59,7 @@ interface ManageWorksProps {
   enrichedWorks: enrichedWorks[];
   initialRemainingDays: number;
   initialMissingWorks: number;
-  isCompleteProject: number;
+  isComplete: number;
 }
 
 type Assignee = {
@@ -78,8 +82,19 @@ export default function ManageWorksPage({
   enrichedWorks,
   initialRemainingDays,
   initialMissingWorks,
-  isCompleteProject
+  isComplete,
 }: ManageWorksProps) {
+  const router = useRouter();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push("/projects");
+  };
+
   const printActionButton = (
     work: Work,
     status: string,
@@ -134,7 +149,7 @@ export default function ManageWorksPage({
             refresh={refresh}
           />
         ) : (
-          <UndoMarkCompleteButton 
+          <UndoMarkCompleteButton
             label={printedAction}
             tone={actionTone}
             work={work}
@@ -161,10 +176,22 @@ export default function ManageWorksPage({
     const newWorks = await getEnrichedWorks(project.project_id);
     const newRemainingDays = await getRemainingDays(project.project_id);
     const newMissingWorks = await getProjectMissingWorks(project.project_id);
+    const newIsComplete = await isCompleteProject(project.project_id);
+    
+    const timeStatusMarkStart = newRemainingDays == 1 ? " " : "S ";
+    const timeStatusStart =
+      remainingDays >= 1
+        ? newRemainingDays + " DAY" + timeStatusMarkStart + "LEFT"
+        : newRemainingDays == 0
+          ? "ONGOING"
+          : newIsComplete
+            ? "OVERDUE"
+            : "COMPLETED";
 
     setWorks(() => newWorks);
     setRemainingDays(newRemainingDays);
     setMissingWorks(newMissingWorks);
+    setTimeStatus(timeStatusStart);
   }
 
   const [works, setWorks] = useState<enrichedWorks[]>(enrichedWorks);
@@ -182,19 +209,47 @@ export default function ManageWorksPage({
     project?.project_description ??
     "Coverage for AdHoc Co.'s Annual Christmas Party at The Blue Leaf. Focus on candid moments, the awards ceremony, and the SDE presentation. Client wants a fun, energetic vibe. Call time is 4 PM for setup. Formal attire required for all crew members.";
 
-  const timeStatusMark = remainingDays == 1 ? " " : "S "
-  const timeStatusTone = (isCompleteProject) ? "green-500" : "bg-red-600"
+  const timeStatusMarkStart = remainingDays == 1 ? " " : "S ";
+  const timeStatusStart =
+    remainingDays >= 1
+      ? remainingDays + " DAY" + timeStatusMarkStart + "LEFT"
+      : remainingDays == 0
+        ? "ONGOING"
+        : isComplete
+          ? "OVERDUE"
+          : "COMPLETED";
 
-  const timeStatus = (remainingDays >= 1) ? 
-    (remainingDays + " DAY" + timeStatusMark + "LEFT") :
-    (remainingDays == 0) ? "ONGOING" :
-    (isCompleteProject) ? "OVERDUE" :
-    "COMPLETED"
-  const timeStatusClass =  + timeStatusTone;
+  /*const timeStatusToneStart = 
+    isComplete
+      ? "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-red-600"
+      : "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-green-500"*/
+
+  const [timeStatus, setTimeStatus] = useState(timeStatusStart)
 
   return (
     <div className="space-y-5">
       <div className="space-y-3">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          aria-label="Go back to projects"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Back
+        </button>
+
         <div className="flex items-center justify-between gap-3 sm:gap-4">
           <h2 className="min-w-0 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             {title}
@@ -211,9 +266,9 @@ export default function ManageWorksPage({
 
         <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-4">
           <div className="w-full space-y-2 lg:w-auto lg:min-w-[170px]">
-            <span className={(isCompleteProject) ? 
-              "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-red-600" :
-              "flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-green-500"}>
+            <span
+              className="flex h-8 items-center justify-center rounded-full px-3 text-sm font-bold text-white bg-red-600"
+            >
               {timeStatus}
             </span>
             <span className="flex h-8 items-center justify-center rounded-full bg-amber-500 px-3 text-sm font-bold text-white">
@@ -266,8 +321,9 @@ export default function ManageWorksPage({
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3 2" />
                 </svg>
-                {project.project_start_date.toLocaleDateString() + 
-                " - " + project.project_end_date.toLocaleDateString()}
+                {project.project_start_date.toLocaleDateString() +
+                  " - " +
+                  project.project_end_date.toLocaleDateString()}
               </span>
             </div>
             <p className="max-w-5xl text-sm leading-relaxed text-slate-700">

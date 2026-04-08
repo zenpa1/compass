@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { sendEmail } from "@/lib/email"; // <-- 1. Import the email function
 
 export async function POST(
   req: Request,
@@ -15,6 +16,7 @@ export async function POST(
   if (!workId) return new NextResponse("Invalid work ID", { status: 400 });
 
   try {
+    // 2. The Database Transaction
     await db.$transaction(async (tx) => {
       await tx.workapplication.updateMany({
         where: {
@@ -49,6 +51,44 @@ export async function POST(
         });
       }
     });
+
+    // --- 3. NEW NOTIFICATION LOGIC STARTS HERE ---
+    
+    // A. Fetch Employee Details
+    const employee = await db.user.findUnique({
+      where: { user_id: userId },
+      select: { full_name: true, email: true }
+    });
+
+    // B. Fetch Work and Project Details
+    const workDetails = await db.work.findUnique({
+      where: { work_id: workId },
+      include: { project: true }
+    });
+
+    // C. Fetch all Owner accounts
+    const owners = await db.user.findMany({
+      where: { user_type: "OWNER" },
+      select: { email: true }
+    });
+
+    // D. Construct and send the Urgent email
+    if (employee && workDetails && owners.length > 0) {
+      const employeeName = employee.full_name || employee.email || "An employee"; 
+      const projectName = workDetails.project?.project_name || "Unknown Project";
+      const roleName = workDetails.project_role;
+
+      // Make the subject line stand out since a withdrawal means an empty slot!
+      const subject = `URGENT: Work Withdrawal - ${employeeName}`;
+      const message = `${employeeName} has just withdrawn from their confirmed ${roleName} role for ${projectName}.\n\nThis work has been automatically moved back to the OPEN pool and currently has no assignee.`;
+
+      for (const owner of owners) {
+        if (owner.email) {
+          await sendEmail(owner.email, subject, message);
+        }
+      }
+    }
+    // --- NEW NOTIFICATION LOGIC ENDS HERE ---
 
     return NextResponse.json({ message: "Work withdrawn successfully" });
   } catch (err) {

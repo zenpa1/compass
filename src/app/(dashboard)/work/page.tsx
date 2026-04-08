@@ -7,7 +7,8 @@ import {
   employeeMarkDone,
   employeeWithdraw,
   employeeMarkNotDone,
-  employeeRemoveWork
+  employeeRemoveWork,
+  employeeDeclineOpen
  } from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
 import { Button } from "@/components/ui/button";
 import ProjectNullValuesWindow from "@/components/features/ProjectAlerts";
@@ -28,11 +29,9 @@ export default function WorksPage() {
   const [ confirmMarkDone, setConfirmMarkDone ] = useState(false);
   const [ confirmMarkNotDone, setConfirmMarkNotDone ] = useState(false);
   const [ confirmRemoveWork, setConfirmRemoveWork ] = useState(false);
+  const [ confirmDeclineOpen, setConfirmDeclineOpen ] = useState(false);
   const [ hideCompleted, setHideCompleted ] = useState(false);
-
-  const pageTitle = (selectedTab == "OPEN") ? "Open Works" :
-    (selectedTab == "PENDING") ? "Pending Works" :
-    "Active Works"
+  const [withdrawReason, setWithdrawReason] = useState("");
 
   const fetchWorks = async () => {
     setLoading(true);
@@ -102,6 +101,11 @@ export default function WorksPage() {
     setConfirmRemoveWork(true);
   }
 
+  const openDeclineOpen = async (workId: number) => {
+    setCurrentWork(workId);
+    setConfirmDeclineOpen(true);
+  }
+
   const handleWithdraw = async () => {
     employeeWithdraw(currentWork);
     setWithdrawModal(false);
@@ -113,6 +117,13 @@ export default function WorksPage() {
     await employeeMarkDone(currentWork);
     setSelectedTab("ACTIVE");
     setConfirmMarkDone(false);
+    setTimeout(() => {fetchWorks();}, 500)
+  }
+
+  const handleDeclineOpen = async () => {
+    await employeeDeclineOpen(currentWork);
+    setSelectedTab("PENDING");
+    setConfirmDeclineOpen(false);
     setTimeout(() => {fetchWorks();}, 500)
   }
 
@@ -144,7 +155,7 @@ export default function WorksPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex w-full items-center gap-3 sm:w-auto">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            {pageTitle}
+            Works
           </h2>
           <div className="h-px flex-1 bg-gray-700"></div>
           {(selectedTab == "ACTIVE") ? (
@@ -377,6 +388,40 @@ export default function WorksPage() {
                   type="button"
                   className="rounded-md bg-slate-700 px-3 py-2 text-sm text-white hover:bg-slate-500"
                   onClick={handleRemoveWork}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {confirmDeclineOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Decline open work confirmation"
+          >
+            <div className="w-full max-w-sm rounded-xl bg-white p-5 text-center shadow-lg">
+              <h3 className="text-base font-semibold text-slate-900">
+                Decline Open Work?
+              </h3>
+              <p className="mt-2 text-sm text-slate-600">
+                You will still be able to apply to this work afterwards.
+              </p>
+              <div className="mt-5 flex justify-center gap-3">
+                <button
+                  type="button"
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  onClick={() => setConfirmDeclineOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md bg-slate-700 px-3 py-2 text-sm text-white hover:bg-slate-500"
+                  onClick={handleDeclineOpen}
                 >
                   Continue
                 </button>

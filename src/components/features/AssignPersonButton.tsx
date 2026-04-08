@@ -75,7 +75,6 @@ export function AssignPersonButton({
   const [isManualMode, setIsManualMode] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [hiredFreelancer, setHiredFreelancer] = useState(false);
-  const [withdrawnModal, setWithdrawnModal] = useState(false);
 
   const [updatedAvailableAssignees, setUpdatedAvailableAssignees] = 
     useState<Assignee[]>(availableAssignees);
@@ -144,7 +143,7 @@ export function AssignPersonButton({
     setShowModal(true);
   }
 
-  async function handleWithdrawClose() {
+  /*async function handleWithdrawClose() {
     await removeWithdrawal(assignment.assignment_id);
     setSearchTerm(".");
     setWithdrawnModal(false);
@@ -152,7 +151,7 @@ export function AssignPersonButton({
 
     refreshAssignees();
     setTimeout(() => {setShowModal(true); setSearchTerm("");}, 500);
-  }
+  }*/
 
   async function handleFreelancerAssign() {
     if(searchTerm == "") {
@@ -358,7 +357,7 @@ export function AssignPersonButton({
         </div>
       ) : null}
 
-      {withdrawnModal ? 
+      {/*withdrawnModal ? 
         (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/15 p-4"
@@ -384,7 +383,7 @@ export function AssignPersonButton({
             </div>
           </div>
         )
-      : null}
+      : null*/}
 
       {showChangeAssigneeConfirm ? (
         <div
