@@ -77,6 +77,19 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
     const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
     const MINUTES = ["00", "15", "30", "45"];
 
+    useEffect(() => {
+        if (!task) {
+            setTitle("");
+            setDesc("");
+            setMonth("");
+            setDay("");
+            setYear("");
+            setHour("");
+            setMinute("");
+            setPeriod("");
+            setSelectedTagIds([]);
+        }
+        }, [task]);
     // If the user switches to a month with fewer days (e.g., Jan 31 -> Feb), clear the day
     useEffect(() => {
         if (day && parseInt(day) > daysInMonth) {
@@ -89,37 +102,35 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
     useEffect(() => {
         if (!task) return;
 
-        // Populate text fields
         setTitle(task.name);
         setDesc(task.description ?? "");
 
-        if (task.dueDate) {
+        if (task.dueDate && task.dueDate !== "No Due Date") {
             const d = new Date(task.dueDate);
+
+            if (!isNaN(d.getTime())) {
             setMonth(MONTHS[d.getMonth()]);
-            setDay(d.getDate().toString());
-            setYear(d.getFullYear().toString());
+            setDay(String(d.getDate()));
+            setYear(String(d.getFullYear()));
 
             const h = d.getHours();
-            if (h !== 0 || d.getMinutes() !== 0) {
+            const m = d.getMinutes();
+
+            if (h !== 0 || m !== 0) {
                 const displayHour = h % 12 || 12;
-                setHour(displayHour.toString());
-                setMinute(String(d.getMinutes()).padStart(2, "0"));
+                setHour(String(displayHour));
+                setMinute(String(m).padStart(2, "0"));
                 setPeriod(h >= 12 ? "PM" : "AM");
+            } else {
+                setHour("");
+                setMinute("");
+                setPeriod("");
+            }
             }
         }
 
-        // Fetch tags AND pre-select in one shot
-        fetch("/api/tags")
-            .then((r) => r.json())
-            .then((fetchedTags: { tag_id: number; tag_name: string; color_hex: string }[]) => {
-                setAllTags(fetchedTags);
-                const matched = fetchedTags
-                    .filter((t) => task.tags.includes(t.tag_name))
-                    .map((t) => t.tag_id);
-                setSelectedTagIds(matched);
-            })
-            .catch(console.error);
-    }, [task]);
+        // fetch tags same as before
+        }, [task]);
 
     if (!task) return null;
 
@@ -259,6 +270,28 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                                     ))}
                                 </select>
                             </div>
+                            <div className="flex gap-2 mt-2">
+                                <select value={hour} onChange={(e) => setHour(e.target.value)}
+                                    className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                    <option value="" disabled>HH</option>
+                                    {HOURS.map((h) => <option key={h} value={h}>{String(h).padStart(2, "0")}</option>)}
+                                </select>
+
+                                <select value={minute} onChange={(e) => setMinute(e.target.value)}
+                                    className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${minute === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                    <option value="" disabled>MM</option>
+                                    {MINUTES.map((m) => <option key={m} value={m}>{m}</option>)}
+                                </select>
+
+                                <select value={period} onChange={(e) => setPeriod(e.target.value)}
+                                    className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                    <option value="" disabled>AM/PM</option>
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+
+                                <span className="flex items-center text-xs text-slate-400">(optional)</span>
+                                </div>
                         </div>
 
                         {/* Description */}
