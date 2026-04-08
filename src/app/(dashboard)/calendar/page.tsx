@@ -321,6 +321,9 @@ export default function CalendarPage() {
               meridiem: "short",
             }}
             eventInteractive={true}
+            buttonText={{
+              today: "Today"
+            }}
           />
         </div>
       </div>
