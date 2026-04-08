@@ -27,6 +27,20 @@ export async function POST(
       },
     });
 
+    const work = await db.work.findFirst({where: {work_id: workId}})
+
+    await db.assignment.updateMany({
+      where: { work: { work_start_date: work!.work_start_date }},
+      data: { user_id: null }
+    })
+
+    await db.workapplication.deleteMany({
+      where: { 
+        work: { work_start_date: work!.work_start_date },
+        application_status: "PENDING"
+      }
+    })
+
     // --- 3. NEW NOTIFICATION LOGIC STARTS HERE ---
     
     // A. Fetch Employee Details
