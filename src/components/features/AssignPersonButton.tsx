@@ -238,8 +238,13 @@ export function AssignPersonButton({
               </div>) : null }
             </div>
 
+            {hiredFreelancer ? (
+                    <p className="text-xs font-medium text-slate-400 mt-2">
+                      Enter Freelancer Name
+                    </p>) : null}
+
             {isManualMode ? (
-              <div className="mt-4 grid gap-2.5 md:grid-cols-[1fr_auto] md:items-center">
+              <div className="mt-2 grid gap-2.5 md:grid-cols-[1fr_auto] md:items-center">
                 <label className="flex h-10 items-center gap-2 rounded-lg border border-slate-400 bg-slate-50 px-3">
                   {!(hiredFreelancer) ? (
                     <svg
@@ -291,7 +296,7 @@ export function AssignPersonButton({
             <p className="text-xs font-medium text-slate-400 m-0">
               {isManualMode
                 ? hiredFreelancer
-                  ? "Enter Freelancer Name"
+                  ? ""
                   : "Showing Available Employees"
                 : "Showing Recommended Employees"}
             </p>
