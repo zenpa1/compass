@@ -9,9 +9,20 @@ import {
   archiveProject, 
   getProjectActiveWorks,
   activateProject,
-  refreshProjectHeader } 
+  refreshProjectHeader,
+  checkEditProjectConflict,
+  editProject,
+  deleteProject,
+  isValidDeadline, } 
   from "@/app/(dashboard)/projects/projectDataOps";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
+import ProjectNullValuesWindow, 
+  { ProjectOverrideWindow, 
+  ProjectInvalidDeadlineWindow } 
+  from "@/components/features/ProjectAlerts";
 
 interface ProjectHeaderActionsProps {
   project: Project;
@@ -32,6 +43,32 @@ export function ProjectHeaderActions({
   const [showActiveConfirm, setShowActiveConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState(project.project_name);
+  const [editClient, setEditClient] = useState(project.client_name);
+  const [editStartDate, setEditStartDate] = useState(project.project_start_date);
+  const [editEndDate, setEditEndDate] = useState(project.project_end_date);
+  const [editLocation, setEditLocation] = useState(project.project_location);
+  const [editDescription, setEditDescription] = useState(project.project_description); 
+
+  const [overrideWindow, setOverrideWindow] = useState(false);
+  const [nullWindow, setNullWindow] = useState(false);
+  const [invalidWindow, setInvalidWindow] = useState(false);
+
+  const handleStartDateChange = (event: any) => {
+    const dateString = event.target.value;
+    if (dateString) {
+      setEditStartDate(new Date(dateString));
+    }
+  };
+
+  const handleEndDateChange = (event: any) => {
+    const dateString = event.target.value;
+    if (dateString) {
+      setEditEndDate(new Date(dateString));
+    }
+  };
+
   const openMarkCompleteConfirm = () => {
     detailsRef.current?.removeAttribute("open");
     setShowMarkCompleteConfirm(true);
@@ -51,6 +88,88 @@ export function ProjectHeaderActions({
     detailsRef.current?.removeAttribute("open");
     setShowDeleteConfirm(true);
   };
+
+  const handleEditConfirm = async () => {
+      if (
+        editName == "" ||
+        editClient == "" ||
+        editStartDate == null ||
+        editEndDate == null ||
+        editLocation == ""
+      ) {
+        // Notifies the user of unfilled form values via a new window
+        setNullWindow(true);
+      } else {
+        //Opens the override window if the inputted name already exists in the database
+        //(and that name is not the original name of the project)
+        const name_conflict = await checkEditProjectConflict(
+          project.project_id,
+          editName,
+        );
+  
+        if (name_conflict != null) {
+          setOverrideWindow(true);
+        } else {
+          const deadline_conflict = await isValidDeadline(editEndDate);
+  
+          if(deadline_conflict == 1) {
+            setInvalidWindow(true);
+          }
+          else {
+            editProject(
+              project.project_id,
+              editName,
+              editClient,
+              editStartDate,
+              editEndDate,
+              editLocation,
+              editDescription,
+            );
+  
+          resetValues();
+          refresh();
+          refreshProjectHeader(project.project_id);
+          setShowEditModal(false);
+          }
+        }
+      }
+    };
+
+  async function overrideProject() {
+      const existingWorks = await getProjectWorks(editName);
+      if (existingWorks != null) {
+        openWorkConflictWindow();
+      } else {
+        //Deletes old project
+        deleteProject(project.project_id);
+  
+        //Changes details based on user's inputs
+        editProject(
+          project.project_id,
+          editName,
+          editClient,
+          editStartDate,
+          editEndDate,
+          editLocation,
+          editDescription,
+        );
+  
+        resetValues();
+        refresh();
+        refreshProjectHeader(project.project_id);
+        setOverrideWindow(false);
+        setShowEditModal(false);
+      }
+    }
+
+  const resetValues = () => {
+    setEditName(project.project_name);
+    setEditClient(project.client_name);
+    setEditStartDate(project.project_start_date);
+    setEditEndDate(project.project_end_date);
+    setEditLocation(project.project_location);
+    setEditDescription(project.project_description); 
+  }
 
   const handleMarkCompleteConfirm = () => {
     // Frontend-only interaction for now; backend status update will be added later.
@@ -122,6 +241,29 @@ export function ProjectHeaderActions({
             </svg>
             Mark Complete
           </button>*/}
+
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-slate-700 hover:bg-slate-100"
+            aria-label={`Edit ${name}`}
+            onClick={() => setShowEditModal(true)}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              style={{ pointerEvents: "none" }}
+            >
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+            Edit
+          </button>
 
           {(project.project_status == "ACTIVE") ? (
             <button
@@ -326,6 +468,118 @@ export function ProjectHeaderActions({
               </button>
             </div>
           </div>
+        </div>
+      ) : null}
+
+      {showEditModal ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit project"
+        >
+          <div className="w-full max-w-lg rounded-xl bg-white p-4 shadow-lg sm:p-5">
+            <h3 className="text-base font-semibold text-slate-900">
+              Edit Project
+            </h3>
+            <div className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor={`project-name-${project.project_id}`}>
+                  Project Name
+                </Label>
+                <Input
+                  id={`project-name-${project.project_id}`}
+                  placeholder="Enter Project Name ..."
+                  value={editName}
+                  onChange={(event) => setEditName(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`client-name-${project.project_id}`}>
+                  Customer Name
+                </Label>
+                <Input
+                  id={`client-name-${project.project_id}`}
+                  placeholder="Enter Customer Name ..."
+                  value={editClient}
+                  onChange={(event) => setEditClient(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Duration</Label>
+                <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_auto_1fr]">
+                  <Input
+                    placeholder="Start"
+                    type="Date"
+                    value={toISODate(editStartDate)}
+                    onChange={handleStartDateChange}
+                  />
+                  <span className="hidden text-xs text-slate-500 sm:block">
+                    to
+                  </span>
+                  <Input
+                    placeholder="End"
+                    type="Date"
+                    value={toISODate(editEndDate)}
+                    onChange={handleEndDateChange}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`location-name-${project.project_id}`}>Location</Label>
+                <Input
+                  id={`location-name-${project.project_id}`}
+                  placeholder="Enter Location ..."
+                  value={editLocation}
+                  onChange={(event) => setEditLocation(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`project-description-${project.project_id}`}>
+                  Description
+                </Label>
+                <textarea
+                  id={`project-description-${project.project_id}`}
+                  className="min-h-[100px] w-full resize-none rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none focus-visible:border-slate-400"
+                  placeholder="Add a short description..."
+                  value={editDescription}
+                  onChange={(event) => setEditDescription(event.target.value)}
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                onClick={() => {setShowEditModal(false); resetValues();}}
+              >
+                Cancel
+              </Button>
+              <Button type="button" size="sm" onClick={handleEditConfirm}>
+                Confirm
+              </Button>
+            </div>
+          </div>
+
+          {/*Override window for if there are conflicting names during editProject*/}
+          <ProjectOverrideWindow
+            onClose={() => setOverrideWindow(false)}
+            open={overrideWindow}
+            override={overrideProject}
+          />
+
+          <ProjectNullValuesWindow
+            open={nullWindow}
+            onClose={() => setNullWindow(false)}
+          />
+          
+          {/* Window that appears if project has active works */}
+          <ProjectInvalidDeadlineWindow
+            open={invalidWindow}
+            onClose={() => setInvalidWindow(false)}
+          />
         </div>
       ) : null}
     </>
