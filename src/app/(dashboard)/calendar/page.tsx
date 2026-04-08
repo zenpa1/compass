@@ -270,12 +270,10 @@ export default function CalendarPage() {
       }
     `}</style>
       {/* HEADER */}
-      <div className="flex flex-col gap-3">
-        <div className="flex w-full items-center gap-3">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Calendar</h2>
-          <div className="h-px flex-1 bg-gray-700"></div>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Calendar</h2>
+        
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="flex w-fit self-start rounded-md border border-slate-600 overflow-hidden text-sm">
             <button
               onClick={() => handleViewChange("dayGridMonth")}

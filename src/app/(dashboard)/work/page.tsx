@@ -152,25 +152,30 @@ export default function WorksPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* HEADER */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex w-full items-center gap-3 sm:w-auto">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Works
-          </h2>
-          <div className="h-px flex-1 bg-gray-700"></div>
-          {(selectedTab == "ACTIVE") ? (
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Works</h2>
+
+          {/* LINE */}
+          <div className="h-px bg-gray-700 flex-1"></div> {/* remove hidden sm:block */}
+
+          {(selectedTab === "ACTIVE") && (
             <label className="inline-flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={hideCompleted}
-                onChange={(event) => setHideCompleted(event.target.checked)}
+                onChange={(e) => setHideCompleted(e.target.checked)}
                 className="h-4 w-4 rounded border-slate-300"
               />
-                Hide Completed Works
+              Hide Completed Works
             </label>
-          ) : null}
+          )}
         </div>
-        <WorkTabs selected={selectedTab} onChange={setSelectedTab} />
+
+        {/* TABS */}
+        <div className="flex w-full sm:w-auto">
+          <WorkTabs selected={selectedTab} onChange={setSelectedTab} />
+        </div>
       </div>
 
       {/* GRID */}
@@ -185,12 +190,16 @@ export default function WorksPage() {
                 <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
                   Incoming Requests
                 </h3>
-                {works.filter((w) => w.workapplication?.some((a) => a.application_status === "PENDING")).length === 0 ? (
+                {works.filter((w) =>
+                  w.workapplication?.some((a) => a.application_status === "PENDING")
+                ).length === 0 ? (
                   <p className="text-slate-500 text-sm">No pending requests</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {works
-                      .filter((w) => w.workapplication?.some((a) => a.application_status === "PENDING"))
+                      .filter((w) =>
+                        w.workapplication?.some((a) => a.application_status === "PENDING")
+                      )
                       .map((work) => (
                         <WorkCard
                           key={work.work_id}
@@ -200,7 +209,10 @@ export default function WorksPage() {
                           onAccept={handleAccept}
                           onDecline={handleDecline}
                           onWithdraw={openWithdraw}
-                          onMarkDone={handleMarkDone}
+                          onMarkDone={openMarkDone}
+                          onMarkNotDone={openMarkNotDone}
+                          onRemoveWork={openRemoveWork}
+                          onDeclineOpen={openDeclineOpen}
                         />
                       ))}
                   </div>
@@ -212,12 +224,16 @@ export default function WorksPage() {
                 <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
                   Awaiting Approval
                 </h3>
-                {works.filter((w) => w.workapplication?.some((a) => a.application_status === "APPROVAL")).length === 0 ? (
+                {works.filter((w) =>
+                  w.workapplication?.some((a) => a.application_status === "APPROVAL")
+                ).length === 0 ? (
                   <p className="text-slate-500 text-sm">No approvals pending</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {works
-                      .filter((w) => w.workapplication?.some((a) => a.application_status === "APPROVAL"))
+                      .filter((w) =>
+                        w.workapplication?.some((a) => a.application_status === "APPROVAL")
+                      )
                       .map((work) => (
                         <WorkCard
                           key={work.work_id}
@@ -227,7 +243,10 @@ export default function WorksPage() {
                           onAccept={handleAccept}
                           onDecline={handleDecline}
                           onWithdraw={openWithdraw}
-                          onMarkDone={handleMarkDone}
+                          onMarkDone={openMarkDone}
+                          onMarkNotDone={openMarkNotDone}
+                          onRemoveWork={openRemoveWork}
+                          onDeclineOpen={openDeclineOpen}
                         />
                       ))}
                   </div>
@@ -252,7 +271,10 @@ export default function WorksPage() {
                 onAccept={handleAccept}
                 onDecline={handleDecline}
                 onWithdraw={openWithdraw}
-                onMarkDone={handleMarkDone}
+                onMarkDone={openMarkDone}
+                onMarkNotDone={openMarkNotDone}
+                onRemoveWork={openRemoveWork}
+                onDeclineOpen={openDeclineOpen}
               />
             ))
           )}

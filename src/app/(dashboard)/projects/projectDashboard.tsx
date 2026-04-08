@@ -42,7 +42,7 @@ export default function ProjectDashboard({
     <div className="space-y-5 sm:space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
             Project Dashboard
           </h2>
         </div>
