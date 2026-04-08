@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -53,21 +52,20 @@ export default function LoginPage() {
       {/* 1. Reduced space-y-6 to space-y-4 to tighten the gap between elements */}
       <div className="w-full max-w-md space-y-4 rounded-lg border border-[#d4af37] bg-[#152842] p-4 shadow-lg sm:p-6">
         <div className="text-center">
-
           {/* JUST THE IMAGE START */}
           {/* 2. Removed 'mb-6' from this div so it doesn't force extra space below the image */}
           <div className="flex justify-center">
-            <Image
-              src="/TNS Logo Events White and Gold Transparent.png"
+            <img
+              src="/tns-logo-white-gold-transparent.png"
               alt="The North Studio Logo"
-              width={500} 
-              height={500} 
-              className="object-contain"
-              priority 
+              width={460}
+              height={160}
+              className="h-auto w-full max-w-[460px] object-contain"
+              loading="eager"
+              decoding="async"
             />
           </div>
           {/* JUST THE IMAGE END */}
-
         </div>
 
         {/*ERROR MESSAGE DISPLAY*/}
@@ -85,8 +83,11 @@ export default function LoginPage() {
           {googleClientId ? (
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setErrorMessage("Google Sign-In Failed")}
-              useOneTap
+              onError={() =>
+                setErrorMessage(
+                  "Google Sign-In is not configured for this domain. Add this origin in Google Cloud Console (OAuth 2.0 Client ID).",
+                )
+              }
               size="large"
             />
           ) : (
