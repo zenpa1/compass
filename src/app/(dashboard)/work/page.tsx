@@ -159,7 +159,11 @@ export default function WorksPage() {
       {/* HEADER */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Works</h2>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {(selectedTab == "PENDING") ? "Pending Works"
+              : (selectedTab == "ACTIVE") ? "Active Works"
+              : "Open Works"}
+          </h2>
 
           {/* LINE */}
           <div className="h-px bg-gray-700 flex-1"></div> {/* remove hidden sm:block */}
