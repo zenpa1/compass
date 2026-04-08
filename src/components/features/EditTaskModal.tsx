@@ -54,6 +54,9 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
     const [allTags, setAllTags] = useState<Tag[]>([]);
     const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
     const [isSaving, setIsSaving] = useState(false);
+    const [hour, setHour] = useState("");
+    const [minute, setMinute] = useState("");
+    const [period, setPeriod] = useState("");
 
     // State for teammate's modals
     const [isInvalidDateModalOpen, setIsInvalidDateModalOpen] = useState(false);
@@ -70,6 +73,9 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
         : 31;
 
     const validDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+    const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
+    const MINUTES = ["00", "15", "30", "45"];
 
     // If the user switches to a month with fewer days (e.g., Jan 31 -> Feb), clear the day
     useEffect(() => {
@@ -92,6 +98,14 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
             setMonth(MONTHS[d.getMonth()]);
             setDay(d.getDate().toString());
             setYear(d.getFullYear().toString());
+
+            const h = d.getHours();
+            if (h !== 0 || d.getMinutes() !== 0) {
+                const displayHour = h % 12 || 12;
+                setHour(displayHour.toString());
+                setMinute(String(d.getMinutes()).padStart(2, "0"));
+                setPeriod(h >= 12 ? "PM" : "AM");
+            }
         }
 
         // Fetch tags AND pre-select in one shot
@@ -136,7 +150,11 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
 
         setIsSaving(true);
         try {
-            const isoDate = `${year}-${String(mIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const isoDate = `${year}-${String(mIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}${
+                hour && minute && period
+                    ? `T${String(period === "PM" ? (parseInt(hour) === 12 ? 12 : parseInt(hour) + 12) : (parseInt(hour) === 12 ? 0 : parseInt(hour))).padStart(2, "0")}:${minute}:00`
+                    : ""
+                }`;
 
             const res = await fetch(`/api/tasks/${task.id}`, {
                 method: "PATCH",

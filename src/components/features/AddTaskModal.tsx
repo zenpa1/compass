@@ -46,6 +46,9 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
   const [description, setDescription] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hour, setHour] = useState("");
+  const [minute, setMinute] = useState("");
+  const [period, setPeriod] = useState("");
   
   // State for teammate's modals
   const [isInvalidDateModalOpen, setIsInvalidDateModalOpen] = useState(false);
@@ -55,7 +58,9 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
   const monthIndex = MONTHS.indexOf(month);
   // Fallback to current year if year isn't selected so leap year math doesn't break
   const selectedYear = year ? parseInt(year) : CURRENT_YEAR; 
-  
+  const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
+  const MINUTES = ["00", "15", "30", "45"];
+
   // JavaScript date trick: getting the 0th day of the NEXT month gives the last day of the CURRENT month
   const daysInMonth = monthIndex !== -1 
     ? new Date(selectedYear, monthIndex + 1, 0).getDate() 
@@ -80,6 +85,9 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
     setYear("");
     setDescription("");
     setSelectedTags([]);
+    setHour("");
+    setMinute("");
+    setPeriod("");
   };
 
   const handleCancel = () => {
@@ -112,7 +120,11 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
       return;
     }
 
-    const isoDate = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const isoDate = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}${
+      hour && minute && period
+        ? `T${String(period === "PM" ? (parseInt(hour) === 12 ? 12 : parseInt(hour) + 12) : (parseInt(hour) === 12 ? 0 : parseInt(hour))).padStart(2, "0")}:${minute}:00`
+        : ""
+    }`;
 
     setIsSubmitting(true);
     try {
@@ -167,45 +179,44 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
             <div>
               <label className="block text-sm font-medium text-slate-800 mb-2">Deadline</label>
               <div className="flex gap-2">
-                <select
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  className={`flex-1 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${
-                    month === "" ? "text-slate-400" : "text-slate-700"
-                  }`}
-                >
+                <select value={month} onChange={(e) => setMonth(e.target.value)}
+                  className={`flex-1 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${month === "" ? "text-slate-400" : "text-slate-700"}`}>
                   <option value="" disabled>Month</option>
-                  {MONTHS.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
+                  {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
-                <select
-                  value={day}
-                  onChange={(e) => setDay(e.target.value)}
-                  className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${
-                    day === "" ? "text-slate-400" : "text-slate-700"
-                  }`}
-                >
+                <select value={day} onChange={(e) => setDay(e.target.value)}
+                  className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${day === "" ? "text-slate-400" : "text-slate-700"}`}>
                   <option value="" disabled>Day</option>
-                  {validDays.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
+                  {validDays.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
-                <select
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  className={`w-24 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${
-                    year === "" ? "text-slate-400" : "text-slate-700"
-                  }`}
-                >
+                <select value={year} onChange={(e) => setYear(e.target.value)}
+                  className={`w-24 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${year === "" ? "text-slate-400" : "text-slate-700"}`}>
                   <option value="" disabled>Year</option>
-                  {YEARS.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
+                  {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
-            </div>
 
+              {/* Time row */}
+              <div className="flex gap-2 mt-2">
+                <select value={hour} onChange={(e) => setHour(e.target.value)}
+                  className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
+                  <option value="" disabled>HH</option>
+                  {HOURS.map((h) => <option key={h} value={h}>{String(h).padStart(2, "0")}</option>)}
+                </select>
+                <select value={minute} onChange={(e) => setMinute(e.target.value)}
+                  className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${minute === "" ? "text-slate-400" : "text-slate-700"}`}>
+                  <option value="" disabled>MM</option>
+                  {MINUTES.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <select value={period} onChange={(e) => setPeriod(e.target.value)}
+                  className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
+                  <option value="" disabled>AM/PM</option>
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+                <span className="flex items-center text-xs text-slate-400">(optional)</span>
+              </div>
+            </div>
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-slate-800 mb-2">Description</label>
