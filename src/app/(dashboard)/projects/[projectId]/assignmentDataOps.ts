@@ -387,7 +387,8 @@ export async function employeeWithdraw(workId: number) {
     },
     data: {
       withdrawal_reason: withdrawalReason,
-      user_id: null // bug fix for employee withdraw -> change roles
+      user_id: null, // bug fix for employee withdraw -> change roles
+      assignment_status: "PENDING"
     }
   })
 

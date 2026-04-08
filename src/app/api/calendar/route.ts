@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
-const toUTC8ISOString = (dt: Date) => {
-  const local = new Date(dt.getTime() + 8 * 60 * 60 * 1000);
-  return local.toISOString().replace("Z", "+08:00");
+const toLocalISOString = (dt: Date) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}:00`;
 };
 
 export async function GET(req: Request) {
@@ -37,9 +38,9 @@ export async function GET(req: Request) {
       .map((work) => ({
         title: work.project?.project_name ?? "Work",
         start: work.work_start_time
-          ? toUTC8ISOString(work.work_start_time)
-          : toUTC8ISOString(work.work_start_date!),
-        end: work.work_end_time ? toUTC8ISOString(work.work_end_time) : undefined,
+          ? toLocalISOString(work.work_start_time)
+          : toLocalISOString(work.work_start_date!),
+        end: work.work_end_time ? toLocalISOString(work.work_end_time) : undefined,
         extendedProps: {
           role_category: work.role_category,
           description: work.work_description,
@@ -62,7 +63,7 @@ export async function GET(req: Request) {
     .filter((task) => task.due_date)
     .map((task) => ({
       title: task.task_title,
-      start: toUTC8ISOString(task.due_date!),
+      start: toLocalISOString(task.due_date!),
       extendedProps: {
         description: task.task_desc ?? undefined,
         status: task.is_completed ? "COMPLETED" : "PENDING",
