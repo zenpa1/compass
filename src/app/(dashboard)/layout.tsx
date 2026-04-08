@@ -16,6 +16,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const projectsActive = pathname.startsWith("/projects");
   const calendarActive = pathname.startsWith("/calendar");
+  const workActive = pathname.startsWith("/work");
   const tasksActive = pathname.startsWith("/tasks");
   const settingsActive = pathname.startsWith("/manageprofile");
 
@@ -70,7 +71,7 @@ export default function DashboardLayout({
               variant="ghost"
               size="icon"
               className={`h-12 w-full hover:bg-slate-800 hover:text-white ${
-                projectsActive ? "text-amber-500" : "text-slate-300"
+                (projectsActive || workActive) ? "text-amber-500" : "text-slate-300"
               }`}
               aria-label="Projects"
             >

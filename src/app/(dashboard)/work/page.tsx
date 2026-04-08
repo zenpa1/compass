@@ -72,8 +72,13 @@ export default function WorksPage() {
   };
 
   const handleAccept = async (workId: number) => {
-    await fetch(`/api/work/${workId}/accept`, { method: "POST" });
-    fetchWorks();
+    setSelectedTab("PENDING");
+
+    fetch(`/api/work/${workId}/accept`, { method: "POST" });
+
+    setTimeout(() => {
+      fetchWorks();
+    }, 500);
   };
 
   const handleDecline = async (workId: number) => {

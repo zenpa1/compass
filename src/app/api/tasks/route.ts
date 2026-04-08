@@ -1,6 +1,14 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+  import { NextResponse } from "next/server";
+  import { db } from "@/lib/prisma";
   import { getSession } from "@/lib/session";
+
+  const formatTaskDate = (date: Date) => {
+      const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
+      const datePart = date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+      if (!hasTime) return datePart;
+      const timePart = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+      return `${datePart} at ${timePart}`;
+    };
 
 export async function GET(request: Request) {
   try {
@@ -24,6 +32,7 @@ export async function GET(request: Request) {
       },
     });
 
+
     // Map the data for the frontend
     const formattedTasks = tasks.map((dbTask) => {
       let longDate = "No Due Date";
@@ -41,7 +50,7 @@ export async function GET(request: Request) {
         description: dbTask.task_desc || "",
         isCompleted: dbTask.is_completed,
         inProgress: false,
-        dueDate: longDate,
+        dueDate: dbTask.due_date ? formatTaskDate(new Date(dbTask.due_date)) : "No Due Date",
         dueDateBadge: shortDate,
         // Extract just the tag_name string from the nested relationship
         tags: dbTask.tasktag.map((tt) => tt.tag.tag_name), 
@@ -77,7 +86,7 @@ export async function POST(request: Request) {
       data: {
         user_id: userId,
         task_title: title,
-        task_desc: description || null, // This correctly saves to the DB
+        task_desc: description || null,
         due_date: dueDate ? new Date(dueDate) : null,
         is_completed: false,
         tasktag: {
@@ -86,12 +95,11 @@ export async function POST(request: Request) {
           })),
         },
       },
-      // Include tags so we can return the full object to the frontend immediately
       include: {
         tasktag: {
-          include: { tag: true }
-        }
-      }
+          include: { tag: true },
+        },
+      },
     });
 
     // 3. Format it so the frontend "Add Task" success handler gets what it expects
