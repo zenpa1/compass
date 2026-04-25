@@ -129,6 +129,16 @@ export async function getProjects(filterOptions: String[]) {
   if(completed && !notCompleted) {where.project_status = "ARCHIVED"}
   else if(!completed && notCompleted) {where.project_status = "ACTIVE"}
 
+  const archiveRange = new Date();
+  archiveRange.setMonth(archiveRange.getMonth() - 3);
+
+  await db.project.updateMany({
+    where: {project_end_date: {
+      lt: archiveRange
+    }},
+    data: { project_status: "ARCHIVED" }
+  })
+
   //Uses the initialized conditions to find the projects
   //If there were no filters, it just returns all projects without any organization
   const projects = await db.project.findMany({

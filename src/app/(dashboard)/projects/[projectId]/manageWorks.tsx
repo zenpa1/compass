@@ -88,6 +88,7 @@ export default function ManageWorksPage({
 
   const handleBack = () => {
     if (window.history.length > 1) {
+      router.refresh();
       router.back();
       return;
     }
@@ -272,7 +273,7 @@ export default function ManageWorksPage({
               {timeStatus}
             </span>
             <span className="flex h-8 items-center justify-center rounded-full bg-amber-500 px-3 text-sm font-bold text-white">
-              {works.length - missingWorks}/{works.length} ROLES
+              {works.length - missingWorks}/{works.length} ASSIGNMENTS
             </span>
           </div>
 
