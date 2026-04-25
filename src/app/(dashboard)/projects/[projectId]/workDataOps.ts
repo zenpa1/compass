@@ -60,7 +60,7 @@ export async function getProjectWorks(id: number) {
 export async function createWork(new_project_id: number, new_project_role: string,
   new_role_category: "PHOTO" | "VIDEO" | "EDITOR" | "ASSISTANT" | "ANY",
   new_expected_salary: number, new_is_open_pool: boolean, new_work_description: string,
-  new_work_start_date: Date, new_work_start_time: Date, new_work_end_time: Date,
+  new_work_start_date: Date, new_work_start_time: Date | null, new_work_end_time: Date | null,
   new_work_status: "PENDING" | "OPEN" | "ASSIGNED" | "REVIEW" | "COMPLETED") {
   
   new_work_start_date.setHours(0,0,0,0);

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
+import { Listbox } from '@headlessui/react'
 import DatePicker from "react-datepicker";
 import {
   editWork,
@@ -62,11 +63,46 @@ export function WorkRowActions({
   const [description, setDescription] = useState(oldDescription);
   const [date, setDate] = useState(oldDate);
   const [salary, setSalary] = useState(oldSalary);
-  const [startTime, setStartTime] = useState(oldStartTime);
-  const [endTime, setEndTime] = useState(oldEndTime);
+  const [startTime, setStartTime] = useState<Date | null>(oldStartTime);
+  const [endTime, setEndTime] = useState<Date | null>(oldEndTime);
   const [setToTba, setSetToTba] = useState(oldSetToTba);
   const [publishToOpenPool, setPublishToOpenPool] =
     useState(oldPublishToOpenPool);
+
+  const validTimes = ["TBA", 
+      ...Array.from({ length: 24 }, (_, i) => {
+          const hour = i % 12 || 12;
+          const suffix = i < 12 ? " AM" : " PM";
+          return hour + suffix;
+        })
+      ]
+  
+    const [startTimeForm, setStartTimeForm] = useState(
+      (oldStartTime) ? oldStartTime.getHours() + 1 :
+      0
+    );
+    const [endTimeForm, setEndTimeForm] = useState(
+      (oldEndTime) ? oldEndTime.getHours() + 1 :
+      0
+    );
+
+    const handleStartTimeChange = (newTime: string) => {
+    const timeString = newTime;
+
+    const time = validTimes.indexOf(timeString);
+    setStartTimeForm(time);
+    if(time == 0) setStartTime(null);
+    else setStartTime(new Date(0, 0, 0, time-1, 0));
+  }
+
+  const handleEndTimeChange = (newTime: string) => {
+    const timeString = newTime;
+
+    const time = validTimes.indexOf(timeString);
+
+    setEndTimeForm(time);
+    setEndTime(new Date(0, 0, 0, time-1, 0));
+  }
 
   const openEditModal = () => {
     setMenuOpen(false);
@@ -388,19 +424,40 @@ export function WorkRowActions({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-slate-900">
-                    Salary:
+                    Talent Fee:
                   </span>
-                  <Input
-                    type="number"
-                    min="0"
-                    step=".01"
-                    value={salary}
-                    onChange={(event) =>
-                      setSalary(parseFloat(event.target.value))
-                    }
-                    placeholder="Enter salary in pesos"
-                    className="h-8 border-slate-300 px-2 text-xs"
-                  />
+                  <div className="relative overflow-hidden">
+                    <Input
+                      type="number"
+                      min="0"
+                      value={salary}
+                      onChange={(event) =>
+                        setSalary(parseFloat(event.target.value))
+                      }
+                      placeholder="Enter fee in pesos"
+                      className="h-9 border-slate-300 px-3 text-sm  [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+
+                    <div className="absolute right-1 top-1.5 flex h-xs flex-col pl-1 gap-0.5">
+                      <button
+                        onClick={() => setSalary(salary + 500)}
+                        type="button"
+                        className="flex flex-1 items-center px-2 hover:bg-slate-100 text-slate-500 text-[10px] leading-none rounded-md"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        onClick={() => {
+                          if(salary - 500 < 0) setSalary(0);
+                          else setSalary(salary - 500);
+                        }}
+                        type="button"
+                        className="flex flex-1 items-center px-2 hover:bg-slate-100 text-slate-500 text-[10px]"
+                      >
+                        ▼
+                      </button>
+                    </div>
+                  </div> 
                 </div>
               </div>
 
@@ -409,29 +466,54 @@ export function WorkRowActions({
                   <span className="text-sm font-semibold text-slate-900">
                     Start Time:
                   </span>
-                  <DatePicker
-                    selected={startTime}
-                    onChange={(e: Date | null) => setStartTime(e!)}
-                    showTimeSelectOnly
-                    showPopperArrow={false}
-                    showTimeCaption={false}
-                    dateFormat="h:mm aa" // This enforces the "00:00 AM/PM" format
-                    className="border p-2 rounded-md w-full"
-                  />
+                  <div className="relative basis-128">
+                    <Listbox value={validTimes.at(startTimeForm)} onChange={handleStartTimeChange}>
+                      <Listbox.Button className={`flex-1 w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${(startTime == new Date()) ? "text-slate-400" : "text-slate-700"}`}>
+                        {validTimes.at(startTimeForm) || "Start Time"}
+                      </Listbox.Button>
+
+                      <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto bottom-full mb-1 bg-white border rounded-md shadow-lg">
+                        {validTimes.map((t) => (
+                          <Listbox.Option key={t} value={t}
+                            className={({ active }) =>
+                              `cursor-pointer px-4 py-2 ${
+                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                              }`
+                            }
+                          >
+                            {t}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Listbox>
+                  </div>
                 </div>
+
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-slate-900">
                     End Time:
                   </span>
-                  <DatePicker
-                    selected={endTime}
-                    onChange={(e: Date | null) => setEndTime(e!)}
-                    showTimeSelectOnly
-                    showPopperArrow={false}
-                    showTimeCaption={false}
-                    dateFormat="h:mm aa" // This enforces the "00:00 AM/PM" format
-                    className="border p-2 rounded-md w-full"
-                  />
+                  <div className="relative basis-128">
+                    <Listbox value={validTimes.at(endTimeForm)} onChange={handleEndTimeChange}>
+                      <Listbox.Button className={`flex-1 w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${(endTime == new Date()) ? "text-slate-400" : "text-slate-700"}`}>
+                        {validTimes.at(endTimeForm) || "End Time"}
+                      </Listbox.Button>
+
+                      <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto bottom-full mb-1 bg-white border rounded-md shadow-lg">
+                        {validTimes.map((t) => (
+                          <Listbox.Option key={t} value={t}
+                            className={({ active }) =>
+                              `cursor-pointer px-4 py-2 ${
+                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                              }`
+                            }
+                          >
+                            {t}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Listbox>
+                  </div>
                 </div>
               </div>
 

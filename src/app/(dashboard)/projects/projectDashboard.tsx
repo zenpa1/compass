@@ -8,20 +8,28 @@ import {
   Project,
   getProjects,
   getRemainingDays,
+  getProjectMissingWorks, 
+  getProjectWorks
 } from "@/app/(dashboard)/projects/projectDataOps";
 import ProjectNullValuesWindow, {
   ProjectWorksExistWindow,
   ProjectInvalidDeadlineWindow
 } from "@/components/features/ProjectAlerts";
 
+type enrichedProjects = {
+  project: Project;
+  activeWorks: number;
+  allWorks: number;
+}
+
 interface ProjectListProps {
-  initialProjects: Project[];
+  initialProjects: enrichedProjects[];
 }
 
 export default function ProjectDashboard({
   initialProjects,
 }: ProjectListProps) {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [projects, setProjects] = useState<enrichedProjects[]>(initialProjects);
 
   //Variables for alert windows
   const [nullWindow, setNullWindow] = useState(false);
@@ -33,7 +41,21 @@ export default function ProjectDashboard({
   //the dashboard at will after performing CRUD
   async function refresh(filters: string[] = []) {
     const newProjects = await getProjects(filters);
-    setProjects(() => newProjects);
+
+    const enrichedProjects = await Promise.all(newProjects.map(async (project) => {
+          const projectData = project;
+          const activeWorks = await getProjectMissingWorks(project.project_id);
+          const allWorks = await getProjectWorks(project.project_name)!;
+          const allWorksLength = allWorks?.length || 0;
+      
+          return {
+            project: projectData,
+            activeWorks: allWorksLength - activeWorks,
+            allWorks: allWorksLength,
+          };
+        }));
+
+    setProjects(() => enrichedProjects);
   }
 
   const hasProjects = projects.length > 0;
@@ -53,18 +75,20 @@ export default function ProjectDashboard({
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {projects.map((proj) => (
             <ProjectCard
-              key={proj.project_id}
-              projectId={proj.project_id}
+              key={proj.project.project_id}
+              projectId={proj.project.project_id}
               // --- MAPPING HAPPENS HERE ---
               // Left side = Component Prop | Right side = Database Column
-              name={proj.project_name}
-              client={proj.client_name}
-              startDate={proj.project_start_date}
-              endDate={proj.project_end_date}
-              location={proj.project_location}
-              description={proj.project_description}
+              name={proj.project.project_name}
+              client={proj.project.client_name}
+              startDate={proj.project.project_start_date}
+              endDate={proj.project.project_end_date}
+              location={proj.project.project_location}
+              description={proj.project.project_description}
               // Ensure the string matches the exact "ACTIVE" | "ARCHIVED" type
-              status={proj.project_status as "ACTIVE" | "ARCHIVED"}
+              status={proj.project.project_status as "ACTIVE" | "ARCHIVED"}
+              activeWorks={proj.activeWorks}
+              allWorks={proj.allWorks}
               //Passese some parameters of the alert windows so that they can be opened
               //from another component
               openNullWindow={() => setNullWindow(true)}

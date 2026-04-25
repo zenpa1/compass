@@ -16,6 +16,7 @@
     "@fullcalendar/interaction": "^6.1.20",
     "@fullcalendar/react": "^6.1.20",
     "@fullcalendar/timegrid": "^6.1.20",
+    "@headlessui/react": "^2.2.10",
     "@mui/material": "^7.3.8",
     "@prisma/adapter-mariadb": "^7.6.0",
     "@prisma/client": "^7.6.0",

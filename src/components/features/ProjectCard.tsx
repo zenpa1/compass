@@ -30,6 +30,8 @@ interface ProjectCardProps {
   location: string;
   description: string;
   status: "ACTIVE" | "ARCHIVED";
+  activeWorks: number;
+  allWorks: number;
   openNullWindow: () => void;
   openWorkConflictWindow: () => void;
   openInvalidDeadlineWindow: () => void;
@@ -46,6 +48,8 @@ export function ProjectCard({
   location,
   description,
   status,
+  activeWorks,
+  allWorks,
   openNullWindow,
   openWorkConflictWindow,
   openInvalidDeadlineWindow,
@@ -56,7 +60,7 @@ export function ProjectCard({
   //"bg-rose-600" = overdue
   //"bg-yellow-500" = urgent
 
-  const headerTone = status === "ARCHIVED" ? "bg-rose-300" : getHeaderTone();
+  const headerTone = status === "ARCHIVED" ? "bg-slate-500" : getHeaderTone();
   const router = useRouter();
   const detailsRef = useRef<HTMLDetailsElement | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -205,7 +209,7 @@ export function ProjectCard({
       return "bg-yellow-500";
     }
 
-    return "bg-blue-500 = chill";
+    return "bg-blue-600 = chill";
   }
 
   //Occurs when the user chooses to override the conflicting project with their current
@@ -257,8 +261,17 @@ export function ProjectCard({
   };
 
   return (
-    <Card className="relative overflow-hidden border border-slate-200 bg-white p-0 shadow-sm transition-shadow hover:shadow-md">
-      <div className={`h-32 ${headerTone}`} onClick={handleViewProject} />
+    <Card className={
+      status == "ACTIVE" ? 
+      "relative overflow-hidden border border-slate-200 bg-white p-0 shadow-sm transition-shadow hover:shadow-md" :
+      "relative overflow-hidden border border-slate-200 bg-slate-200 p-0 shadow-sm transition-shadow hover:shadow-md"
+    }>
+      <div className={`flex items-center ps-2 justify-center h-32 ${headerTone} text-5xl ${status == "ACTIVE" ? "text-white" : "text-slate-300"} font-semibold`} onClick={handleViewProject} >
+        <p className="truncate py-2">{name}</p>
+      </div>
+      <div className="absolute left-5 top-2 text-white">
+        <p className={status == "ACTIVE" ? "text-white" : "text-slate-300"}>{activeWorks} | {allWorks}</p>
+      </div>
       <details ref={detailsRef} className="group absolute right-2 top-2">
         <summary
           className="flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded-full text-amber-500 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -267,7 +280,7 @@ export function ProjectCard({
           <svg
             viewBox="0 0 24 24"
             className="h-4 w-4"
-            fill="slate-900"
+            fill={status == "ACTIVE" ? "white" : "darkgray"}
             aria-hidden="true"
           >
             <circle cx="12" cy="5" r="2" />
@@ -375,8 +388,11 @@ export function ProjectCard({
         </div>
       </details>
       <CardContent className="px-4 pb-4" onClick={handleViewProject}>
-        <CardTitle className="text-base font-semibold text-slate-900">
-          {name}
+        <CardTitle className="text-base font-normal text-slate-900">
+          <div className="flex justify-between">
+            <p className={status == "ACTIVE" ? "text-black" : "text-slate-600"}>{endDate.toDateString().substring(4)}</p>
+            <p className={status == "ACTIVE" ? "text-black" : "text-slate-600"}>{client}</p>
+          </div>
         </CardTitle>
         <div className="sr-only">
           <span>{client}</span>

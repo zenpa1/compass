@@ -6,6 +6,7 @@ import { type Task } from "@/app/(dashboard)/tasks/page";
 import { Button } from "@/components/ui/button";
 import { ProjectInvalidDeadlineWindow } from "./ProjectAlerts";
 import ProjectNullValuesWindow from "./ProjectAlerts";
+import { Listbox } from '@headlessui/react'
 
 // Match your real Prisma shape
 interface Tag {
@@ -231,8 +232,10 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
 
                         {/* Deadline */}
                         <div>
+                            
                             <label className="block text-sm font-medium text-slate-800 mb-2">Deadline</label>
                             <div className="flex gap-2">
+                                {/*
                                 <select
                                     value={month}
                                     onChange={(e) => setMonth(e.target.value)}
@@ -268,10 +271,77 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                                     {YEARS.map((y) => (
                                         <option key={y} value={y}>{y}</option>
                                     ))}
-                                </select>
+                                </select>*/}
+
+                                <div className="relative basis-128">
+                                    <Listbox value={month} onChange={setMonth}>
+                                    <Listbox.Button className={`flex-1 w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${month === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                        {month || "Month"}
+                                    </Listbox.Button>
+                
+                                    <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                        {MONTHS.map((m) => (
+                                        <Listbox.Option key={m} value={m}
+                                            className={({ active }) =>
+                                            `cursor-pointer px-4 py-2 ${
+                                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                                            }`
+                                            }
+                                        >
+                                            {m}
+                                        </Listbox.Option>
+                                        ))}
+                                    </Listbox.Options>
+                                    </Listbox>
+                                </div>
+                
+                                <div className="relative basis-64">
+                                    <Listbox value={day} onChange={setDay}>
+                                    <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${day === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                        {day || "Day"}
+                                    </Listbox.Button>
+                
+                                    <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                        {validDays.map((d) => (
+                                        <Listbox.Option key={d} value={d}
+                                            className={({ active }) =>
+                                            `cursor-pointer px-4 py-2 ${
+                                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                                            }`
+                                            }
+                                        >
+                                            {d}
+                                        </Listbox.Option>
+                                        ))}
+                                    </Listbox.Options>
+                                    </Listbox>
+                                </div>
+                
+                                <div className="relative basis-64">
+                                    <Listbox value={year} onChange={setYear}>
+                                    <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${year === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                        {year || "Year"}
+                                    </Listbox.Button>
+                
+                                    <Listbox.Options className="absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                        {YEARS.map((y) => (
+                                        <Listbox.Option key={y} value={y}
+                                            className={({ active }) =>
+                                            `cursor-pointer px-4 py-2 ${
+                                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                                            }`
+                                            }
+                                        >
+                                            {y}
+                                        </Listbox.Option>
+                                        ))}
+                                    </Listbox.Options>
+                                    </Listbox>
+                                </div>
                             </div>
+
                             <div className="flex gap-2 mt-2">
-                                <select value={hour} onChange={(e) => setHour(e.target.value)}
+                                {/*<select value={hour} onChange={(e) => setHour(e.target.value)}
                                     className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
                                     <option value="" disabled>HH</option>
                                     {HOURS.map((h) => <option key={h} value={h}>{String(h).padStart(2, "0")}</option>)}
@@ -288,10 +358,79 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                                     <option value="" disabled>AM/PM</option>
                                     <option value="AM">AM</option>
                                     <option value="PM">PM</option>
-                                </select>
+                                </select>*/}
+
+                                <div className="relative">
+                                    <Listbox value={hour} onChange={setHour}>
+                                        <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                        {hour || "Hour"}
+                                        </Listbox.Button>
+
+                                        <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                        {HOURS.map((h) => (
+                                            <Listbox.Option key={h} value={h}
+                                            className={({ active }) =>
+                                                `cursor-pointer px-4 py-2 ${
+                                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                                                }`
+                                            }
+                                            >
+                                            {h}
+                                            </Listbox.Option>
+                                        ))}
+                                        </Listbox.Options>
+                                    </Listbox>
+                                    </div>
+
+                                <div className="relative">
+                                    <Listbox value={minute} onChange={setMinute}>
+                                        <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                            {minute || "Minute"}
+                                        </Listbox.Button>
+
+                                        <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                            {MINUTES.map((m) => (
+                                                <Listbox.Option key={m} value={m}
+                                                className={({ active }) =>
+                                                    `cursor-pointer px-4 py-2 ${
+                                                    active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                                                    }`
+                                                }
+                                                >
+                                                {m}
+                                                </Listbox.Option>
+                                            ))}
+                                        </Listbox.Options>
+                                    </Listbox>
+                                </div>
+
+                                <div className="relative">
+                                    <Listbox value={period} onChange={setPeriod}>
+                                        <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                        {period || "Period"}
+                                        </Listbox.Button>
+
+                                        <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                            <Listbox.Option value="AM" className={({ active }) =>
+                                                    `cursor-pointer px-4 py-2 ${
+                                                    active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                                                    }`
+                                                }>
+                                                    AM
+                                            </Listbox.Option>
+                                            <Listbox.Option value="PM" className={({ active }) =>
+                                                    `cursor-pointer px-4 py-2 ${
+                                                    active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                                                    }`
+                                                }>
+                                                    PM
+                                            </Listbox.Option>
+                                        </Listbox.Options>
+                                    </Listbox>
+                                </div>
 
                                 <span className="flex items-center text-xs text-slate-400">(optional)</span>
-                                </div>
+                            </div>
                         </div>
 
                         {/* Description */}

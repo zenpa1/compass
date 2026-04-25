@@ -1,5 +1,7 @@
 import { db } from "@/lib/prisma"; // Your real DB connection
 import ProjectDashboard from "@/app/(dashboard)/projects/projectDashboard";
+import { getRemainingDays, getProjectMissingWorks, getProjectWorks } 
+  from "@/app/(dashboard)/projects/projectDataOps";
 
 export const dynamic = 'force-dynamic';
 // async as it must wait for the database to reply
@@ -10,9 +12,22 @@ export default async function ProjectsPage() {
     take: 10, // Limit for now
   });
 
+  const enrichedProjects = await Promise.all(projects.map(async (project) => {
+      const projectData = project;
+      const activeWorks = await getProjectMissingWorks(project.project_id);
+      const allWorks = await getProjectWorks(project.project_name)!;
+      const allWorksLength = allWorks?.length || 0;
+  
+      return {
+        project: projectData,
+        activeWorks: allWorksLength - activeWorks,
+        allWorks: allWorksLength,
+      };
+    }));
+
   return (
     // Houses the actual dashboard in a separate file
     // (cannot have a client component in a server file)
-    <ProjectDashboard initialProjects={projects} />
+    <ProjectDashboard initialProjects={enrichedProjects} />
   );
 }
