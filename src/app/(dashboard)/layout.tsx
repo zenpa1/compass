@@ -7,6 +7,8 @@ import { SidebarLogoutButton } from "@/components/features/SidebarLogoutButton";
 import { SidebarCheckButton } from "@/components/features/SidebarCheckButton";
 import { useState, useEffect } from "react";
 import { getProfilePicture, getSidebarUrl } from "@/app/(dashboard)/projects/projectDataOps";
+import { SidebarUserManagementButton } from "@/components/features/SidebarUserManagementButton";
+
 
 export default function DashboardLayout({
   children,
@@ -114,6 +116,8 @@ export default function DashboardLayout({
               </svg>
             </Button>
           </Link>
+
+          <SidebarUserManagementButton />
         </nav>
 
         <div className="mt-auto px-4 w-full">
