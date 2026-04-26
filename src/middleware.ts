@@ -6,7 +6,7 @@ const PUBLIC_FILE = /\.(.*)$/;
 
 const PUBLIC_ROUTES = ["/", "/login"];
 
-const OWNER_ROUTES = ["/projects", "/freelancers"];
+const OWNER_ROUTES = ["/projects", "/freelancers", "/user-management"];
 const EMPLOYEE_ROUTES = ["/work", "/setup", "/employee"];
 const SHARED_ROUTES = ["/calendar", "/tasks", "/manageprofile"];
 
