@@ -15,6 +15,8 @@ import ProjectNullValuesWindow, {
   ProjectWorksExistWindow,
   ProjectInvalidDeadlineWindow
 } from "@/components/features/ProjectAlerts";
+import PrintReportButton from "@/components/features/PrintReportButton";
+import dynamic from 'next/dynamic';
 
 type enrichedProjects = {
   project: Project;
@@ -26,6 +28,10 @@ interface ProjectListProps {
   initialProjects: enrichedProjects[];
 }
 
+interface PrintReportButtonProps {
+  openNullWindow: () => void;
+}
+
 export default function ProjectDashboard({
   initialProjects,
 }: ProjectListProps) {
@@ -35,6 +41,11 @@ export default function ProjectDashboard({
   const [nullWindow, setNullWindow] = useState(false);
   const [worksWindow, setWorksWindow] = useState(false);
   const [deadlineWindow, setDeadlineWindow] = useState(false);
+
+  const PrintComponent = dynamic<PrintReportButtonProps>(
+    () => import('@/components/features/PrintReportButton'), 
+    { ssr: false } // This tells Next.js: "Don't run this on the server!"
+  );
 
   //Gets the projects in the database and assigns them to the projects displayed in the
   //dashboard. The method is passed down to most child components so they can "refresh"
@@ -68,7 +79,10 @@ export default function ProjectDashboard({
             Project Dashboard
           </h2>
         </div>
-        <OrganizeButton refresh={refresh} />
+        <div className="flex gap-x-3">
+          <PrintComponent openNullWindow={() => setNullWindow(true)}/>
+          <OrganizeButton refresh={refresh} />
+        </div>
       </div>
 
       {hasProjects ? (

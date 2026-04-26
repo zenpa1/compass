@@ -6,6 +6,7 @@ import { db } from "@/lib/prisma"; // Direct DB access
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getSession } from "@/lib/session";
+import { getEnrichedWorks } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 
 export interface Project {
   project_id: number;
@@ -307,4 +308,26 @@ export async function isCompleteProject(projectId: number) {
   })
 
   return (works.length > 0) ? 1 : 0;
+}
+
+export async function getReportProjects(printStartDate: Date, printEndDate: Date) {
+  printStartDate.setHours(0,0,0,0)
+  printEndDate.setHours(23,59,59,999)
+
+  const projects = await db.project.findMany({
+    where: {
+      project_start_date: { gte: printStartDate, lte: printEndDate },
+    }
+  })
+
+  const reportProjects = await Promise.all(projects.map(async (project) => {
+    const enrichedWorks = await getEnrichedWorks(project.project_id);
+
+    return {
+      project: project,
+      works: enrichedWorks
+    }
+  }))
+
+  return reportProjects;
 }
