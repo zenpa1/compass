@@ -22,7 +22,7 @@ export async function PATCH(
       data: {
         ...(full_name && { full_name }),
         ...(email && { email }),
-        ...(permission && { user_type: permission === "Admin" ? "OWNER" : "EMPLOYEE" }),
+        ...(permission && { user_type: permission === "Admin" ? "ADMIN" : "EMPLOYEE" }),
       },
     });
     return NextResponse.json(updated);
