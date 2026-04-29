@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { user_user_type } from "@prisma/client";
+import { user_user_type } from "@/generated/client";
 
 export async function GET(req: Request) {
   const session = await getSession();
