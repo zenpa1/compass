@@ -405,7 +405,7 @@ export async function employeeWithdraw(workId: number) {
       });
 
       const owners = await db.user.findMany({
-        where: { user_type: "OWNER" },
+        where: { user_type: { in: ["OWNER", "ADMIN"] } },
         select: { email: true }
       });
 

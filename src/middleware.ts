@@ -6,7 +6,9 @@ const PUBLIC_FILE = /\.(.*)$/;
 
 const PUBLIC_ROUTES = ["/", "/login"];
 
-const OWNER_ROUTES = ["/projects", "/freelancers", "/user-management"];
+const OWNER_ONLY_ROUTES = ["/user-management"];
+const OWNER_OR_ADMIN_ROUTES = ["/projects", "/freelancers"];
+const OWNER_ROUTES = [...OWNER_OR_ADMIN_ROUTES, ...OWNER_ONLY_ROUTES];
 const EMPLOYEE_ROUTES = ["/work", "/setup", "/employee"];
 const SHARED_ROUTES = ["/calendar", "/tasks", "/manageprofile"];
 
@@ -27,7 +29,7 @@ export async function middleware(req: NextRequest) {
         const userType = payload.user_type as string; // <-- FIXED: Changed from role to user_type
 
         // Send them to their specific dashboard
-        if (userType === "OWNER")
+        if (userType === "OWNER" || userType === "ADMIN")
           return NextResponse.redirect(new URL("/projects", req.url));
         return NextResponse.redirect(new URL("/work", req.url));
       } catch (error) {
@@ -60,14 +62,22 @@ export async function middleware(req: NextRequest) {
         pathname.startsWith(route),
       );
 
-      // Prevent Owners from accessing Employee spaces
-      if (userType === "OWNER" && isEmployeeRoute) {
+      // Prevent Owners/Admins from accessing Employee spaces
+      if ((userType === "OWNER" || userType === "ADMIN") && isEmployeeRoute) {
         return NextResponse.redirect(new URL("/projects", req.url));
       }
 
-      // Prevent Employees from accessing Owner spaces
+      // Prevent Employees from accessing Owner/Admin spaces
       if (userType === "EMPLOYEE" && isOwnerRoute) {
         return NextResponse.redirect(new URL("/work", req.url));
+      }
+
+      // Prevent ADMIN from accessing user-management (OWNER only)
+      const isOwnerOnlyRoute = OWNER_ONLY_ROUTES.some((route) =>
+        pathname.startsWith(route)
+      );
+      if (userType === "ADMIN" && isOwnerOnlyRoute) {
+        return NextResponse.redirect(new URL("/projects", req.url));
       }
     }
 

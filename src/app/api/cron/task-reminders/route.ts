@@ -141,7 +141,7 @@ export async function GET(request: Request) {
       if (unassignedWork.length > 0) {
         // 1. Fetch all Owner emails from the database
         const owners = await db.user.findMany({
-          where: { user_type: "OWNER" },
+          where: { user_type: { in: ["OWNER", "ADMIN"] } },
           select: { email: true }
         });
 
