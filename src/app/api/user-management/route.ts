@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { user_user_type } from "@prisma/client";
 
 export async function GET(req: Request) {
   const session = await getSession();
@@ -11,7 +12,7 @@ export async function GET(req: Request) {
   const search = searchParams.get("search") ?? "";
   const permission = searchParams.get("permission");
   const sortBy = searchParams.get("sortBy") === "email" ? "email" : "full_name";
-  const status = searchParams.get("status"); // "active" | "inactive" | null (all)
+  const status = searchParams.get("status");
 
   const userTypeFilter =
     permission === "Admin" ? "ADMIN" :
@@ -22,21 +23,21 @@ export async function GET(req: Request) {
   const inactiveFilter =
     status === "inactive" ? true :
     status === "active" ? false :
-    undefined; // no filter = show all
+    undefined;
 
   const users = await db.user.findMany({
     where: {
       user_id: { not: session.userId },
-      ...(userTypeFilter && { user_type: userTypeFilter }),
+      ...(userTypeFilter && { user_type: userTypeFilter as user_user_type }),
       ...(inactiveFilter !== undefined && { inactive: inactiveFilter }),
       ...(search && {
         OR: [
-          { full_name: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
+          { full_name: { contains: search } },
+          { email: { contains: search } },
         ],
       }),
     },
-    select: { user_id: true, full_name: true, email: true, user_type: true, inactive: true },
+    select: { user_id: true, full_name: true, email: true, user_type: true },
     orderBy: { [sortBy]: "asc" },
   });
 
@@ -54,7 +55,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Email and permission are required" }, { status: 400 });
   }
 
-  // Owners can only create ADMIN or EMPLOYEE accounts
   if (!["Admin", "Employee"].includes(permission)) {
     return NextResponse.json({ error: "Invalid permission value" }, { status: 400 });
   }
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   const user_type = permission === "Admin" ? "ADMIN" : "EMPLOYEE";
 
   const newUser = await db.user.create({
-    data: { full_name: full_name ?? null, email, user_type },
+    data: { full_name: full_name ?? null, email, user_type: user_type as user_user_type },
     select: { user_id: true, full_name: true, email: true, user_type: true },
   });
 
