@@ -11,7 +11,10 @@ interface User {
   full_name: string | null;
   email: string;
   user_type: "OWNER" | "ADMIN" | "EMPLOYEE";
+  inactive: boolean;
 }
+
+type FilterStatus = "all" | "active" | "inactive";
 
 const toPermission = (user_type: "OWNER" | "ADMIN" | "EMPLOYEE"): string => {
   if (user_type === "OWNER") return "Owner";
@@ -29,6 +32,8 @@ export default function UserManagementPage() {
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [pendingFilter, setPendingFilter] = useState<FilterPermission>("All");
   const [pendingSortBy, setPendingSortBy] = useState<SortBy>("name");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("active"); 
+  const [pendingFilterStatus, setPendingFilterStatus] = useState<FilterStatus>("active");
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -50,7 +55,8 @@ export default function UserManagementPage() {
       if (search) params.set("search", search);
       if (filter !== "All") params.set("permission", filter);
       params.set("sortBy", sortBy);
-      const res = await fetch(`/api/users?${params.toString()}`);
+      if (filterStatus !== "all") params.set("status", filterStatus);
+      const res = await fetch(`/api/user-management?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch users");
       setUsers(await res.json());
     } catch (err: any) {
@@ -58,7 +64,7 @@ export default function UserManagementPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, filter, sortBy]);
+  }, [search, filter, sortBy, filterStatus]);
 
   useEffect(() => {
     const timer = setTimeout(fetchUsers, 300);
@@ -76,12 +82,14 @@ export default function UserManagementPage() {
   const openFilterModal = () => {
     setPendingFilter(filter);
     setPendingSortBy(sortBy);
+    setPendingFilterStatus(filterStatus);
     setFilterOpen(true);
   };
 
   const handleFilterConfirm = () => {
     setFilter(pendingFilter);
     setSortBy(pendingSortBy);
+    setFilterStatus(pendingFilterStatus);
     setFilterOpen(false);
   };
 
@@ -89,12 +97,12 @@ export default function UserManagementPage() {
     if (!deleteUser) return;
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/users/${deleteUser.user_id}`, { method: "DELETE" });
+      const res = await fetch(`/api/user-management/${deleteUser.user_id}`, { method: "DELETE" });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to delete user");
+        const data = res.status !== 204 ? await res.json() : {};
+        throw new Error(data.error || "Failed to deactivate user");
       }
-      setUsers((prev) => prev.filter((u) => u.user_id !== deleteUser.user_id));
+      await fetchUsers(); // refetch instead of local filter, so inactive state is accurate
       setDeleteUser(null);
     } catch (err: any) {
       alert(err.message);
@@ -114,7 +122,7 @@ export default function UserManagementPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/users/${editUser.user_id}`, {
+      const res = await fetch(`/api/user-management/${editUser.user_id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ permission: editPermission }),
@@ -136,7 +144,7 @@ export default function UserManagementPage() {
     if (!newUser.name || !newUser.email) return;
     setSubmitting(true);
     try {
-      const res = await fetch("/api/users", {
+      const res = await fetch("/api/user-management", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ full_name: newUser.name, email: newUser.email, permission: newUser.permission }),
@@ -155,9 +163,25 @@ export default function UserManagementPage() {
     }
   };
 
-  const isFilterActive = filter !== "All" || sortBy !== "name";
+  const handleRestore = async (user: User) => {
+    try {
+      const res = await fetch(`/api/user-management/${user.user_id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restore: true }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to restore user");
+      }
+      await fetchUsers();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
 
-  
+  const isFilterActive = filter !== "All" || sortBy !== "name" || filterStatus !== "active";
+
   return (
     <div className="min-h-full">
       {/* Header */}
@@ -225,74 +249,88 @@ export default function UserManagementPage() {
               users.map((user) => {
                 const isOwner = user.user_type === "OWNER";
                 return (
-                  <tr key={user.user_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-slate-800 font-medium">{user.full_name ?? "—"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{user.email}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        isOwner
-                          ? "bg-slate-100 text-slate-600"
-                          : user.user_type === "ADMIN"
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-slate-50 text-slate-500"
-                      }`}>
-                        {toPermission(user.user_type)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 relative">
-                      {isOwner ? (
-                        <button
-                          disabled
-                          title="Owner accounts cannot be modified"
-                          className="p-1 rounded text-slate-300 cursor-not-allowed"
-                        >
-                          <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
-                            <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
-                          </svg>
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => setOpenMenuId(openMenuId === user.user_id ? null : user.user_id)}
-                            className="p-1 rounded hover:bg-slate-100 transition text-slate-500 hover:text-slate-800"
-                          >
+                  <tr key={user.user_id} className={`border-b border-slate-100 last:border-0 transition-colors ${
+                      user.inactive ? "bg-slate-50 opacity-60" : "hover:bg-slate-50"
+                    }`}>
+                      <td className="px-6 py-4 text-sm text-slate-800 font-medium">{user.full_name ?? "—"}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{user.email}</td>
+                      <td className="px-6 py-4 text-sm">
+                        {user.inactive ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-400">
+                            Inactive
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            isOwner
+                              ? "bg-slate-100 text-slate-600"
+                              : user.user_type === "ADMIN"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-slate-50 text-slate-500"
+                          }`}>
+                            {toPermission(user.user_type)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 relative">
+                        {isOwner ? (
+                          <button disabled title="Owner accounts cannot be modified"
+                            className="p-1 rounded text-slate-300 cursor-not-allowed">
                             <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
                               <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
                             </svg>
                           </button>
-                          {openMenuId === user.user_id && (
-                            <div
-                              ref={menuRef}
-                              className="absolute right-0 mt-2 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden"
-                            >
-                              <button
-                                onClick={() => handleEditOpen(user)}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition"
-                              >
-                                <svg viewBox="0 0 24 24" className="size-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
-                                Edit Permission
-                              </button>
-                              <button
-                                onClick={() => { setDeleteUser(user); setOpenMenuId(null); }}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
-                              >
-                                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                  <path d="M10 11v6M14 11v6" />
-                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                </svg>
-                                Delete User
-                              </button>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </td>
-                  </tr>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => setOpenMenuId(openMenuId === user.user_id ? null : user.user_id)}
+                              className="p-1 rounded hover:bg-slate-100 transition text-slate-500 hover:text-slate-800">
+                              <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
+                                <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
+                              </svg>
+                            </button>
+                            {openMenuId === user.user_id && (
+                              <div ref={menuRef}
+                                className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                                {user.inactive ? (
+                                  <button
+                                    onClick={() => { handleRestore(user); setOpenMenuId(null); }}
+                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50 transition">
+                                    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                      <path d="M3 3v5h5" />
+                                    </svg>
+                                    Restore User
+                                  </button>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => handleEditOpen(user)}
+                                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
+                                      <svg viewBox="0 0 24 24" className="size-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                      </svg>
+                                      Edit Permission
+                                    </button>
+                                    <button
+                                      onClick={() => { setDeleteUser(user); setOpenMenuId(null); }}
+                                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
+                                      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="3 6 5 6 21 6" />
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                        <path d="M10 11v6M14 11v6" />
+                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                      </svg>
+                                      Deactivate User
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </td>
+                    </tr>
                 );
               })
             )}
@@ -326,22 +364,28 @@ export default function UserManagementPage() {
               </div>
             </div>
             <div className="h-px bg-slate-100" />
-            <div>
-              <p className="text-xs font-semibold text-slate-500 tracking-widest uppercase mb-3">Sort By</p>
-              <div className="flex flex-col gap-3">
-                {([{ value: "name", label: "Name (A-Z)" }, { value: "email", label: "Email (A-Z)" }] as { value: SortBy; label: string }[]).map((option) => (
-                  <button key={option.value} onClick={() => setPendingSortBy(option.value)}
-                    className="flex items-center gap-3 px-1 py-1 rounded-lg text-left transition hover:bg-slate-50">
-                    <span className={`flex-shrink-0 size-5 rounded-full border-2 flex items-center justify-center transition ${
-                      pendingSortBy === option.value ? "border-amber-500 bg-amber-500" : "border-slate-300"
-                    }`}>
-                      {pendingSortBy === option.value && <span className="size-2 rounded-full bg-white" />}
-                    </span>
-                    <span className={`text-sm transition ${pendingSortBy === option.value ? "text-slate-800 font-medium" : "text-slate-500"}`}>{option.label}</span>
-                  </button>
-                ))}
+              <div>
+                <p className="text-xs font-semibold text-slate-500 tracking-widest uppercase mb-3">Status</p>
+                <div className="flex flex-col gap-2">
+                  {([
+                    { value: "all", label: "All users" },
+                    { value: "active", label: "Active only" },
+                    { value: "inactive", label: "Inactive only" },
+                  ] as { value: FilterStatus; label: string }[]).map((option) => (
+                    <button key={option.value} onClick={() => setPendingFilterStatus(option.value)}
+                      className="flex items-center gap-3 px-1 py-1 rounded-lg text-left transition hover:bg-slate-50">
+                      <span className={`flex-shrink-0 size-5 rounded-full border-2 flex items-center justify-center transition ${
+                        pendingFilterStatus === option.value ? "border-amber-500 bg-amber-500" : "border-slate-300"
+                      }`}>
+                        {pendingFilterStatus === option.value && <span className="size-2 rounded-full bg-white" />}
+                      </span>
+                      <span className={`text-sm transition ${pendingFilterStatus === option.value ? "text-slate-800 font-medium" : "text-slate-500"}`}>
+                        {option.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
             <div className="flex justify-end gap-3 pt-1">
               <button onClick={() => setFilterOpen(false)}
                 className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition">Cancel</button>
@@ -435,10 +479,10 @@ export default function UserManagementPage() {
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-slate-800">
-                  Remove <span className="font-semibold">{deleteUser.full_name ?? deleteUser.email}</span>?
+                  Deactivate <span className="font-semibold">{deleteUser.full_name ?? deleteUser.email}</span>?
                 </p>
                 <p className="text-xs text-slate-400 mt-1">
-                  This action cannot be undone. The user will lose all access immediately.
+                  The user will lose access immediately. You can restore them later.
                 </p>
               </div>
             </div>

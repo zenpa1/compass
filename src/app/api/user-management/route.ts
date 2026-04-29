@@ -11,6 +11,7 @@ export async function GET(req: Request) {
   const search = searchParams.get("search") ?? "";
   const permission = searchParams.get("permission");
   const sortBy = searchParams.get("sortBy") === "email" ? "email" : "full_name";
+  const status = searchParams.get("status"); // "active" | "inactive" | null (all)
 
   const userTypeFilter =
     permission === "Admin" ? "ADMIN" :
@@ -18,10 +19,16 @@ export async function GET(req: Request) {
     permission === "Owner" ? "OWNER" :
     undefined;
 
+  const inactiveFilter =
+    status === "inactive" ? true :
+    status === "active" ? false :
+    undefined; // no filter = show all
+
   const users = await db.user.findMany({
     where: {
-      user_id: { not: session.userId }, // hide self
+      user_id: { not: session.userId },
       ...(userTypeFilter && { user_type: userTypeFilter }),
+      ...(inactiveFilter !== undefined && { inactive: inactiveFilter }),
       ...(search && {
         OR: [
           { full_name: { contains: search, mode: "insensitive" } },
@@ -29,7 +36,7 @@ export async function GET(req: Request) {
         ],
       }),
     },
-    select: { user_id: true, full_name: true, email: true, user_type: true },
+    select: { user_id: true, full_name: true, email: true, user_type: true, inactive: true },
     orderBy: { [sortBy]: "asc" },
   });
 

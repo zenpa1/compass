@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       data: {
         full_name,
         email,
-        user_type: permission === "Admin" ? "OWNER" : "EMPLOYEE",
+        user_type: permission === "Admin" ? "ADMIN" : "EMPLOYEE",
       },
     });
     return NextResponse.json(user, { status: 201 });
