@@ -73,6 +73,7 @@ model user {
   avatar_url      String?           @db.Text
   user_type       user_user_type    @default(EMPLOYEE)
   created_at      DateTime          @default(now())
+  inactive        Boolean           @default(false)
   assignment      assignment[]
   task            task[]
   userprofile     userprofile?
@@ -158,6 +159,7 @@ enum assignment_assignment_status {
 
 enum user_user_type {
   OWNER
+  ADMIN
   EMPLOYEE
 }
 

@@ -67,8 +67,9 @@ CREATE TABLE `user` (
     `google_id` VARCHAR(21) NULL,
     `full_name` VARCHAR(50) NULL,
     `avatar_url` TEXT NULL,
-    `user_type` ENUM('OWNER', 'EMPLOYEE') NOT NULL DEFAULT 'EMPLOYEE',
+    `user_type` ENUM('OWNER', 'ADMIN', 'EMPLOYEE') NOT NULL DEFAULT 'EMPLOYEE',
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `inactive` BOOLEAN NOT NULL DEFAULT false,
 
     UNIQUE INDEX `User_email_key`(`email`),
     UNIQUE INDEX `User_google_id_key`(`google_id`),

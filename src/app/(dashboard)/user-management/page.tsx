@@ -3,18 +3,21 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 type Permission = "Admin" | "Employee";
-type FilterPermission = "All" | "Admin" | "Employee";
+type FilterPermission = "All" | "Owner" | "Admin" | "Employee";
 type SortBy = "name" | "email";
 
 interface User {
   user_id: number;
   full_name: string | null;
   email: string;
-  user_type: "OWNER" | "EMPLOYEE";
+  user_type: "OWNER" | "ADMIN" | "EMPLOYEE";
 }
 
-const toPermission = (user_type: "OWNER" | "EMPLOYEE"): Permission =>
-  user_type === "OWNER" ? "Admin" : "Employee";
+const toPermission = (user_type: "OWNER" | "ADMIN" | "EMPLOYEE"): string => {
+  if (user_type === "OWNER") return "Owner";
+  if (user_type === "ADMIN") return "Admin";
+  return "Employee";
+};
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -87,7 +90,10 @@ export default function UserManagementPage() {
     setSubmitting(true);
     try {
       const res = await fetch(`/api/users/${deleteUser.user_id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete user");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete user");
+      }
       setUsers((prev) => prev.filter((u) => u.user_id !== deleteUser.user_id));
       setDeleteUser(null);
     } catch (err: any) {
@@ -99,12 +105,13 @@ export default function UserManagementPage() {
 
   const handleEditOpen = (user: User) => {
     setEditUser(user);
-    setEditPermission(toPermission(user.user_type));
+    setEditPermission(user.user_type === "ADMIN" ? "Admin" : "Employee");
     setOpenMenuId(null);
   };
 
   const handleEditSave = async () => {
     if (!editUser) return;
+
     setSubmitting(true);
     try {
       const res = await fetch(`/api/users/${editUser.user_id}`, {
@@ -150,6 +157,7 @@ export default function UserManagementPage() {
 
   const isFilterActive = filter !== "All" || sortBy !== "name";
 
+  
   return (
     <div className="min-h-full">
       {/* Header */}
@@ -186,15 +194,17 @@ export default function UserManagementPage() {
             Filter{isFilterActive ? " •" : ""}
           </button>
 
-          <button onClick={() => { setNewUser({ name: "", email: "", permission: "Admin" }); setAddModalOpen(true); }}
-            className="px-4 py-2 text-sm font-medium bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition">
+          <button
+            onClick={() => { setNewUser({ name: "", email: "", permission: "Admin" }); setAddModalOpen(true); }}
+            className="px-4 py-2 text-sm font-medium bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition"
+          >
             Add User
           </button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-visible">
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-100">
@@ -212,45 +222,79 @@ export default function UserManagementPage() {
             ) : users.length === 0 ? (
               <tr><td colSpan={4} className="text-center py-12 text-slate-400 text-sm">No users found.</td></tr>
             ) : (
-              users.map((user) => (
-                <tr key={user.user_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 text-sm text-slate-800 font-medium">{user.full_name ?? "—"}</td>
-                  <td className="px-6 py-4 text-sm text-slate-500">{user.email}</td>
-                  <td className="px-6 py-4 text-sm text-slate-700">{toPermission(user.user_type)}</td>
-                  <td className="px-6 py-4 relative">
-                    <button
-                      onClick={() => setOpenMenuId(openMenuId === user.user_id ? null : user.user_id)}
-                      className="p-1 rounded hover:bg-slate-100 transition text-slate-500 hover:text-slate-800"
-                    >
-                      <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
-                        <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
-                      </svg>
-                    </button>
-                    {openMenuId === user.user_id && (
-                      <div ref={menuRef} className="absolute right-6 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-10 overflow-hidden" style={{ top: "100%" }}>
-                        <button onClick={() => handleEditOpen(user)}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
-                          <svg viewBox="0 0 24 24" className="size-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              users.map((user) => {
+                const isOwner = user.user_type === "OWNER";
+                return (
+                  <tr key={user.user_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 text-sm text-slate-800 font-medium">{user.full_name ?? "—"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{user.email}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        isOwner
+                          ? "bg-slate-100 text-slate-600"
+                          : user.user_type === "ADMIN"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-slate-50 text-slate-500"
+                      }`}>
+                        {toPermission(user.user_type)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 relative">
+                      {isOwner ? (
+                        <button
+                          disabled
+                          title="Owner accounts cannot be modified"
+                          className="p-1 rounded text-slate-300 cursor-not-allowed"
+                        >
+                          <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
+                            <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
                           </svg>
-                          Edit Permission
                         </button>
-                        <button onClick={() => { setDeleteUser(user); setOpenMenuId(null); }}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
-                          <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            <path d="M10 11v6M14 11v6" />
-                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                          </svg>
-                          Delete User
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setOpenMenuId(openMenuId === user.user_id ? null : user.user_id)}
+                            className="p-1 rounded hover:bg-slate-100 transition text-slate-500 hover:text-slate-800"
+                          >
+                            <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
+                              <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
+                            </svg>
+                          </button>
+                          {openMenuId === user.user_id && (
+                            <div
+                              ref={menuRef}
+                              className="absolute right-0 mt-2 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden"
+                            >
+                              <button
+                                onClick={() => handleEditOpen(user)}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition"
+                              >
+                                <svg viewBox="0 0 24 24" className="size-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                                Edit Permission
+                              </button>
+                              <button
+                                onClick={() => { setDeleteUser(user); setOpenMenuId(null); }}
+                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
+                              >
+                                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                  <path d="M10 11v6M14 11v6" />
+                                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                                Delete User
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -263,10 +307,11 @@ export default function UserManagementPage() {
             <div>
               <p className="text-xs font-semibold text-slate-500 tracking-widest uppercase mb-3">Permission</p>
               <div className="flex flex-col gap-2">
-                {(["All", "Admin", "Employee"] as FilterPermission[]).map((option) => {
+                {(["All", "Owner", "Admin", "Employee"] as FilterPermission[]).map((option) => {
                   const colorMap: Record<FilterPermission, string> = {
                     All: "bg-amber-500",
-                    Admin: "bg-slate-400",
+                    Owner: "bg-slate-700",
+                    Admin: "bg-amber-400",
                     Employee: "bg-slate-300",
                   };
                   const isSelected = pendingFilter === option;
@@ -312,7 +357,6 @@ export default function UserManagementPage() {
         <Modal title="Add user" onClose={() => setAddModalOpen(false)}>
           <div className="flex flex-col gap-5">
             <div className="h-px bg-slate-200" />
-
             <div className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Fullname</label>
@@ -330,7 +374,7 @@ export default function UserManagementPage() {
                   type="email"
                   value={newUser.email}
                   onChange={(e) => setNewUser((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="e.g Juan Dela Cruz"
+                  placeholder="e.g juandelacruz@email.com"
                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition"
                 />
               </div>
@@ -352,14 +396,15 @@ export default function UserManagementPage() {
                       </span>
                       <span>
                         <span className="block text-sm font-semibold text-slate-800">{role}</span>
-                        <span className="block text-xs text-slate-400">{role === "Admin" ? "Full access" : "Standard access"}</span>
+                        <span className="block text-xs text-slate-400">
+                          {role === "Admin" ? "Full access" : "Standard access"}
+                        </span>
                       </span>
                     </button>
                   ))}
                 </div>
               </div>
             </div>
-
             <div className="flex justify-end gap-3 pt-1">
               <button onClick={() => setAddModalOpen(false)} disabled={submitting}
                 className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50">
@@ -379,8 +424,6 @@ export default function UserManagementPage() {
         <Modal title="Delete User" onClose={() => setDeleteUser(null)}>
           <div className="flex flex-col gap-5">
             <div className="h-px bg-slate-200" />
-
-            {/* Warning icon */}
             <div className="flex flex-col items-center gap-3 py-2">
               <div className="size-14 rounded-full bg-red-50 flex items-center justify-center">
                 <svg viewBox="0 0 24 24" className="size-7 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -399,7 +442,6 @@ export default function UserManagementPage() {
                 </p>
               </div>
             </div>
-
             <div className="flex justify-end gap-3">
               <button onClick={() => setDeleteUser(null)} disabled={submitting}
                 className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50">
