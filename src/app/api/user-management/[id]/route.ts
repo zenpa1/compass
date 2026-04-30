@@ -1,0 +1,96 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
+
+export async function PATCH(
+  req: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await context.params;
+    const targetId = parseInt(id);
+    const body = await req.json();
+    const session = await getSession();
+
+    if (!session || session.user_type !== "OWNER") {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    if (targetId === Number(session.userId)) {
+      return NextResponse.json({ error: "Cannot edit self" }, { status: 403 });
+    }
+
+    const targetUser = await db.user.findUnique({ where: { user_id: targetId } });
+    if (!targetUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (targetUser.user_type === "OWNER") {
+      return NextResponse.json({ error: "Cannot modify an Owner account" }, { status: 403 });
+    }
+
+    // RESTORE (undelete)
+    if (body.restore === true) {
+      const updated = await db.user.update({
+        where: { user_id: targetId },
+        data: { inactive: false },
+      });
+      return NextResponse.json(updated);
+    }
+
+    // PERMISSION CHANGE
+    let resolvedRole: "ADMIN" | "EMPLOYEE";
+    const input = String(body.permission).toUpperCase();
+    if (input === "ADMIN") {
+      resolvedRole = "ADMIN";
+    } else if (input === "EMPLOYEE") {
+      resolvedRole = "EMPLOYEE";
+    } else {
+      return NextResponse.json({ error: "Invalid role value" }, { status: 400 });
+    }
+
+    const updated = await db.user.update({
+      where: { user_id: targetId },
+      data: { user_type: resolvedRole },
+    });
+
+    return NextResponse.json(updated);
+  } catch (err) {
+    console.error("PATCH ERROR:", err);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await context.params;
+    const targetId = parseInt(id);
+    const session = await getSession();
+
+    if (!session || session.user_type !== "OWNER") {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    if (targetId === Number(session.userId)) {
+      return NextResponse.json({ error: "Cannot delete self" }, { status: 403 });
+    }
+
+    const targetUser = await db.user.findUnique({ where: { user_id: targetId } });
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    if (targetUser.user_type === "OWNER") {
+      return NextResponse.json({ error: "Cannot delete an Owner account" }, { status: 403 });
+    }
+
+    await db.user.update({
+      where: { user_id: targetId },
+      data: {inactive: true },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (err) {
+    console.error("DELETE ERROR:", err);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}

@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 
     let filteredWorks = works;
 
-    if (user_type !== "OWNER") {
+    if (user_type !== "OWNER" && user_type !== "ADMIN") {
       filteredWorks = works.filter((work) =>
         work.workapplication.some((app) => app.user_id === current_user)
       );

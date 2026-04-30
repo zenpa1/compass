@@ -24,7 +24,7 @@ export interface User {
   google_id: string | null;
   full_name: string | null;
   avatar_url: string | null;
-  user_type: "EMPLOYEE" | "OWNER"
+  user_type: "EMPLOYEE" | "ADMIN" | "OWNER"
   created_at: Date;
 }
 
@@ -405,7 +405,7 @@ export async function employeeWithdraw(workId: number) {
       });
 
       const owners = await db.user.findMany({
-        where: { user_type: "OWNER" },
+        where: { user_type: { in: ["OWNER", "ADMIN"] } },
         select: { email: true }
       });
 
