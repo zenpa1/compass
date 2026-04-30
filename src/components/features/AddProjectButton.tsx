@@ -21,6 +21,7 @@ interface AddProjectButtonProps {
   openNullWindow: () => void;
   openWorkConflictWindow: () => void;
   openInvalidDeadlineWindow: () => void;
+  openInvalidLengthWindow: () => void;
 }
 
 export function AddProjectButton({
@@ -28,7 +29,8 @@ export function AddProjectButton({
   refresh,
   openNullWindow,
   openWorkConflictWindow,
-  openInvalidDeadlineWindow
+  openInvalidDeadlineWindow,
+  openInvalidLengthWindow
 }: AddProjectButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [projectName, setProjectName] = useState("");
@@ -75,21 +77,26 @@ export function AddProjectButton({
           openInvalidDeadlineWindow();
         }
         else {
-          createProject(
-          projectName,
-          customerName,
-          startDate,
-          endDate,
-          location,
-          description,
-        );
+          if(projectName.length > 50) {
+            openInvalidLengthWindow();
+          }
+          else {
+            createProject(
+              projectName,
+              customerName,
+              startDate,
+              endDate,
+              location,
+              description,
+            );
 
-        //Resets the values in the form so that they are empty when the user
-        //opens it again
-        resetValues();
+            //Resets the values in the form so that they are empty when the user
+            //opens it again
+            resetValues();
 
-        refresh();
-        setShowModal(false);
+            refresh();
+            setShowModal(false);
+          }
         }
       }
     }

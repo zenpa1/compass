@@ -13,7 +13,8 @@ import {
 } from "@/app/(dashboard)/projects/projectDataOps";
 import ProjectNullValuesWindow, {
   ProjectWorksExistWindow,
-  ProjectInvalidDeadlineWindow
+  ProjectInvalidDeadlineWindow,
+  ProjectInvalidNameLengthWindow
 } from "@/components/features/ProjectAlerts";
 import PrintReportButton from "@/components/features/PrintReportButton";
 import dynamic from 'next/dynamic';
@@ -41,6 +42,7 @@ export default function ProjectDashboard({
   const [nullWindow, setNullWindow] = useState(false);
   const [worksWindow, setWorksWindow] = useState(false);
   const [deadlineWindow, setDeadlineWindow] = useState(false);
+  const [lengthWindow, setLengthWindow] = useState(false);
 
   const PrintComponent = dynamic<PrintReportButtonProps>(
     () => import('@/components/features/PrintReportButton'), 
@@ -108,6 +110,7 @@ export default function ProjectDashboard({
               openNullWindow={() => setNullWindow(true)}
               openWorkConflictWindow={() => setWorksWindow(true)}
               openInvalidDeadlineWindow={() => setDeadlineWindow(true)}
+              openInvalidLengthWindow={() => setLengthWindow(true)}
               refresh={refresh}
             />
           ))}
@@ -121,6 +124,7 @@ export default function ProjectDashboard({
             openNullWindow={() => setNullWindow(true)}
             openWorkConflictWindow={() => setWorksWindow(true)}
             openInvalidDeadlineWindow={() => setDeadlineWindow(true)}
+            openInvalidLengthWindow={() => setLengthWindow(true)}
           />
           <p className="mt-3 text-sm text-slate-500">Click to add</p>
         </div>
@@ -132,6 +136,7 @@ export default function ProjectDashboard({
           openNullWindow={() => setNullWindow(true)}
           openWorkConflictWindow={() => setWorksWindow(true)}
           openInvalidDeadlineWindow={() => setDeadlineWindow(true)}
+          openInvalidLengthWindow={() => setLengthWindow(true)}
         />
       ) : null}
 
@@ -151,6 +156,12 @@ export default function ProjectDashboard({
       <ProjectInvalidDeadlineWindow
         open={deadlineWindow}
         onClose={() => setDeadlineWindow(false)}
+      />
+
+      {/* Window that appears if entered project name is more than 50 characters */}
+      <ProjectInvalidNameLengthWindow
+        open={lengthWindow}
+        onClose={() => setLengthWindow(false)}
       />
     </div>
   );
