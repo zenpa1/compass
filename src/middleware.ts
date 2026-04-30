@@ -9,7 +9,8 @@ const PUBLIC_ROUTES = ["/", "/login"];
 const OWNER_ONLY_ROUTES = ["/user-management"];
 const OWNER_OR_ADMIN_ROUTES = ["/projects", "/freelancers"];
 const OWNER_ROUTES = [...OWNER_OR_ADMIN_ROUTES, ...OWNER_ONLY_ROUTES];
-const EMPLOYEE_ROUTES = ["/work", "/setup", "/employee"];
+const WORK_ROUTES = ["/work"];
+const EMPLOYEE_ONLY_ROUTES = ["/setup", "/employee"];
 const SHARED_ROUTES = ["/calendar", "/tasks", "/manageprofile"];
 
 export async function middleware(req: NextRequest) {
@@ -26,6 +27,7 @@ export async function middleware(req: NextRequest) {
     if (token) {
       try {
         const { payload } = await jwtVerify(token, SECRET);
+        console.log("JWT payload:", payload);
         const userType = payload.user_type as string; // <-- FIXED: Changed from role to user_type
 
         // Send them to their specific dashboard
@@ -58,12 +60,12 @@ export async function middleware(req: NextRequest) {
       const isOwnerRoute = OWNER_ROUTES.some((route) =>
         pathname.startsWith(route),
       );
-      const isEmployeeRoute = EMPLOYEE_ROUTES.some((route) =>
+      const isEmployeeOnlyRoute = EMPLOYEE_ONLY_ROUTES.some((route) =>
         pathname.startsWith(route),
       );
 
-      // Prevent Owners/Admins from accessing Employee spaces
-      if ((userType === "OWNER" || userType === "ADMIN") && isEmployeeRoute) {
+      // Prevent Owners/Admins from accessing employee-only spaces
+      if ((userType === "OWNER" || userType === "ADMIN") && isEmployeeOnlyRoute) {
         return NextResponse.redirect(new URL("/projects", req.url));
       }
 

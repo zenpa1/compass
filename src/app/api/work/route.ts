@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 
   const user = await getUser(userId);
 
-  if (!user || user.user_type !== "EMPLOYEE") {
+  if (!user || !["EMPLOYEE", "ADMIN", "OWNER"].includes(user.user_type)) {
     return new Response(JSON.stringify({ error: "Not authorized" }), {
       status: 403,
     });
