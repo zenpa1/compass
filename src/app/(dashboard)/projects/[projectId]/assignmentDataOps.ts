@@ -189,37 +189,71 @@ export async function getRecommendedAssignees(work: Work, role: string) {
 }
 
 export async function assignPerson(assignmentId: number, user: User) {
-  const work = await db.assignment.findFirst({where: {assignment_id: assignmentId}})
-  const status = (user.user_type == "EMPLOYEE") ? "PENDING" : "REVIEW";
-  
-  if(user.user_type == "EMPLOYEE") {
-    await db.workapplication.create({
-      data: {
-        work_id: work!.work_id,
-        user_id: user.user_id,
-        application_status: "PENDING", 
-      },  
-    });
+  const assignment = await db.assignment.findFirst({
+    where: { assignment_id: assignmentId },
+    include: { work: true },
+  });
+
+  if (!assignment || !assignment.work) {
+    throw new Error("Assignment not found");
   }
+
+  const session = await getSession();
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const assignerId = Number(session.userId);
+  const assignerType = session.user_type;
+  const assigneeType = user.user_type;
+  const selfAssign = assignerId === user.user_id;
+
+  const isAutoAccept =
+    selfAssign && (assignerType === "OWNER" || assignerType === "ADMIN") ||
+    (assignerType === "ADMIN" && assigneeType === "OWNER") ||
+    (assignerType === "OWNER" && assigneeType === "OWNER");
+
+  const applicationStatus = isAutoAccept ? "APPROVED" : "PENDING";
+  const workStatus = isAutoAccept ? "ASSIGNED" : "PENDING";
+  const assignmentStatus = isAutoAccept ? "CONFIRMED" : "PENDING";
 
   await db.workapplication.deleteMany({
     where: {
-      work_id: work!.work_id,
-      application_status: "APPROVAL"
-    }
-  })
+      work_id: assignment.work.work_id,
+      user_id: user.user_id,
+    },
+  });
+
+  await db.workapplication.create({
+    data: {
+      work_id: assignment.work.work_id,
+      user_id: user.user_id,
+      application_status: applicationStatus,
+    },
+  });
+
+  await db.workapplication.deleteMany({
+    where: {
+      work_id: assignment.work.work_id,
+      application_status: "APPROVAL",
+    },
+  });
 
   await db.assignment.update({
     where: { assignment_id: assignmentId },
     data: {
       user_id: user.user_id,
-    }
-  })
+      assignment_status: assignmentStatus,
+    },
+  });
 
   await db.work.update({
-    where: { work_id: work!.work_id },
-    data: { work_status: status }
-  })
+    where: { work_id: assignment.work.work_id },
+    data: {
+      work_status: workStatus,
+      is_open_pool: false,
+    },
+  });
 }
 
 export async function removeWithdrawal(assignmentId: number) {
@@ -433,46 +467,19 @@ export async function employeeWithdraw(workId: number) {
 
 export async function reassignPerson(assignmentId: number, user: User) {
   const assignment = await db.assignment.findFirst({ 
-    where: { 
-      assignment_id: assignmentId 
-    },
-    include: {
-      work: true
-    }
-  })
-
-  if(assignment!.assignment_status == "CONFIRMED" && 
-    assignment?.work.work_status == "PENDING") {
-    await db.workapplication.create({
-      data: {
-        work_id: assignment!.work.work_id,
-        user_id: user.user_id,
-        application_status: "PENDING", 
-      },  
-    });
-  }
-  else {
-    await db.workapplication.updateMany({
-    where: { work_id: assignment?.work.work_id },
-    data: {
-      user_id: user.user_id,
-      application_status: "PENDING",
-    },
-    });
-  }
-
-  await db.work.update({
-    where: { work_id: assignment?.work.work_id },
-    data: { work_status: "PENDING" }
-  })
-
-  await db.assignment.update({
     where: { assignment_id: assignmentId },
-    data: {
-      user_id: user.user_id,
-      assignment_status: "PENDING"
-    }
-  })
+    include: { work: true },
+  });
+
+  if (!assignment || !assignment.work) {
+    throw new Error("Assignment not found");
+  }
+
+  await db.workapplication.deleteMany({
+    where: { work_id: assignment.work.work_id },
+  });
+
+  await assignPerson(assignmentId, user);
 }
 
 export async function assignFreelancer(assignmentId: number, freelancer: string) {

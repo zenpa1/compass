@@ -278,13 +278,13 @@ export async function getProfilePicture() {
   return user?.avatar_url || null;
 }
 
-//Checks if a user is an employee or not
+//Checks if a user should land on /projects or /work
 export async function getSidebarUrl() {
   const session = await getSession();
   const userId = session?.userId || 1;
 
   const user = await db.user.findFirst({ where: { user_id: userId } });
-  return (user?.user_type == "OWNER") ? "/projects" : "/work";
+  return (user?.user_type === "OWNER" || user?.user_type === "ADMIN") ? "/projects" : "/work";
 }
 
 //Checks if a project's given deadline is past the current date

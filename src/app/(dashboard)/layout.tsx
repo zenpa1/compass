@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarLogoutButton } from "@/components/features/SidebarLogoutButton";
 import { SidebarCheckButton } from "@/components/features/SidebarCheckButton";
 import { useState, useEffect } from "react";
-import { getProfilePicture, getSidebarUrl } from "@/app/(dashboard)/projects/projectDataOps";
+import { getProfilePicture } from "@/app/(dashboard)/projects/projectDataOps";
 import { SidebarUserManagementButton } from "@/components/features/SidebarUserManagementButton";
 
 
@@ -23,15 +23,15 @@ export default function DashboardLayout({
   const settingsActive = pathname.startsWith("/manageprofile");
 
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [sidebarUrl, setSidebarUrl] = useState("");
+  const [userType, setUserType] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchUrls = async () => {
       const url = await getProfilePicture();
-      const sidebar = await getSidebarUrl();
+      const session = await fetch("/api/session").then(r => r.json());
       setAvatarUrl(url!);
-      setSidebarUrl(sidebar);
+      setUserType(session.user_type);
     };
     fetchUrls();
   }, []);
@@ -79,20 +79,36 @@ export default function DashboardLayout({
 
         {/* NAVIGATION SECTION */}
         <nav className="flex-1 flex flex-col gap-6 w-full px-4">
-          <Link href={sidebarUrl}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-12 w-full hover:bg-slate-800 hover:text-white ${
-                (projectsActive || workActive) ? "text-amber-500" : "text-slate-300"
-              }`}
-              aria-label="Projects"
-            >
-              <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 7h6l2 2h10v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
-              </svg>
-            </Button>
-          </Link>
+          {/* Projects icon — OWNER and ADMIN only */}
+          {(userType === "OWNER" || userType === "ADMIN") && (
+            <Link href="/projects">
+              <Button variant="ghost" size="icon"
+                className={`h-12 w-full hover:bg-slate-800 hover:text-white ${
+                  projectsActive ? "text-amber-500" : "text-slate-300"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7h6l2 2h10v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+                </svg>
+              </Button>
+            </Link>
+          )}
+
+          {/* Work icon — EMPLOYEE and ADMIN only */}
+          {(userType === "EMPLOYEE" || userType === "ADMIN") && (
+            <Link href="/work">
+              <Button variant="ghost" size="icon"
+                className={`h-12 w-full hover:bg-slate-800 hover:text-white ${
+                  workActive ? "text-amber-500" : "text-slate-300"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" />
+                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                </svg>
+              </Button>
+            </Link>
+          )}
 
           <Link href="/calendar">
             <Button
