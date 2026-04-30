@@ -120,3 +120,20 @@ export function ProjectInvalidRoleWindow(props: SimpleDialogProps) {
     </Dialog>
   );
 }
+
+export function ProjectInvalidNameLengthWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Invalid Name Length</DialogTitle>
+      <DialogContent>
+        <p>A project name can have a length of 50 characters at most.</p>
+      </DialogContent>
+    </Dialog>
+  );
+}

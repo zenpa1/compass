@@ -19,23 +19,24 @@ export function OrganizeButton(
     refresh: (value: string[]) => Promise<void> | void;
   }) {
   const [showModal, setShowModal] = useState(false);
-  const [selectedSort, setSelectedSort] = useState<string[]>([]);
-  const [selectedProgress, setSelectedProgress] = useState<string[]>([]);
+  const [selectedSort, setSelectedSort] = useState<string | null>(null);
+  const [selectedProgress, setSelectedProgress] = useState<string | null>(null);
   const { refresh } = props;
 
   const toggleItem = (
     id: string,
-    setFn: React.Dispatch<React.SetStateAction<string[]>>,
+    currentValue: string | null,
+    setFn: (val: string | null) => void
   ) => (
-    setFn((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-  ))
+    setFn(currentValue === id ? null : id)
+  )
 
   const handleFilter = () => {
-    //Buffer to make sure variables are up to date
+    /*Buffer to make sure variables are up to date
     setSelectedSort((prev) => prev);
-    setSelectedProgress((prev) => prev);
+    setSelectedProgress((prev) => prev);*/
 
-    const filters = [...selectedSort, ...selectedProgress];
+    const filters = [selectedSort, selectedProgress].filter(Boolean) as string[];
 
     //Uses the refresh method passed down from the parent
     //(with the optional filters parameter)
@@ -75,14 +76,14 @@ export function OrganizeButton(
                 </p>
                 <div className="mt-2 space-y-2">
                   {sortOptions.map((option) => {
-                    const isActive = selectedSort.includes(option.id);
+                    const isActive = selectedSort === option.id;
 
                     return (
                       <button
                         key={option.id}
                         type="button"
                         className="flex w-full items-center gap-2 text-left text-slate-700"
-                        onClick={() => toggleItem(option.id, setSelectedSort)}
+                        onClick={() => toggleItem(option.id, selectedSort, setSelectedSort)}
                       >
                         <span
                           className={cn(
@@ -111,16 +112,14 @@ export function OrganizeButton(
                 </p>
                 <div className="mt-2 space-y-2">
                   {progressOptions.map((option) => {
-                    const isActive = selectedProgress.includes(option.id);
+                    const isActive = selectedProgress === option.id;
 
                     return (
                       <button
                         key={option.id}
                         type="button"
                         className="flex w-full items-center gap-2 text-left text-slate-700"
-                        onClick={() =>
-                          toggleItem(option.id, setSelectedProgress)
-                        }
+                        onClick={() => toggleItem(option.id, selectedProgress, setSelectedProgress)}
                       >
                         <span
                           className={cn(

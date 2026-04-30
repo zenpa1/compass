@@ -9,7 +9,6 @@ export default async function ProjectsPage() {
   // FETCH REAL DATA
   const projects = await db.project.findMany({
     orderBy: { project_end_date: "asc" },
-    take: 10, // Limit for now
   });
 
   const enrichedProjects = await Promise.all(projects.map(async (project) => {

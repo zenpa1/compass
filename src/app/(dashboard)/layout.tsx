@@ -61,7 +61,18 @@ export default function DashboardLayout({
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        {/* LOGO */}
+        {/* NORTH STUDIOS' LOGO
+        <div className="mb-8 h-10 w-10 rounded-full bg-slate-800 overflow-hidden">
+          <img
+              src="/TNS Logo Events.png"
+              alt="The North Studio Logo"
+              className="h-auto w-full max-w-[460px] object-contain scale-125"
+              loading="eager"
+              decoding="async"
+            />
+        </div> */}
+
+        {/* PROFILE PIC */}
         <div className="mb-8 h-10 w-10 rounded-full bg-slate-800 overflow-hidden">
           {avatarUrl ? <img src={avatarUrl} alt="Profile" /> : null}
         </div>
