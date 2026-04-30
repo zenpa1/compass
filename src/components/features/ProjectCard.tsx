@@ -35,6 +35,7 @@ interface ProjectCardProps {
   openNullWindow: () => void;
   openWorkConflictWindow: () => void;
   openInvalidDeadlineWindow: () => void;
+  openInvalidLengthWindow: () => void;
   refresh: () => void;
 }
 
@@ -53,6 +54,7 @@ export function ProjectCard({
   openNullWindow,
   openWorkConflictWindow,
   openInvalidDeadlineWindow,
+  openInvalidLengthWindow,
   refresh,
 }: ProjectCardProps) {
   //bg-rose-300 = archived
@@ -179,18 +181,24 @@ export function ProjectCard({
           openInvalidDeadlineWindow();
         }
         else {
-          editProject(
-          projectId as number,
-          editName,
-          editClient,
-          editStartDate,
-          editEndDate,
-          editLocation,
-          editDescription,
-        );
+          if(editName.length > 50) {
+            openInvalidLengthWindow();
+          }
 
-        refresh();
-        setShowEditModal(false);
+          else {
+            editProject(
+            projectId as number,
+              editName,
+              editClient,
+              editStartDate,
+              editEndDate,
+              editLocation,
+              editDescription,
+            );
+
+            refresh();
+            setShowEditModal(false);
+          }
         }
       }
     }
@@ -266,8 +274,8 @@ export function ProjectCard({
       "relative overflow-hidden border border-slate-200 bg-white p-0 shadow-sm transition-shadow hover:shadow-md" :
       "relative overflow-hidden border border-slate-200 bg-slate-200 p-0 shadow-sm transition-shadow hover:shadow-md"
     }>
-      <div className={`flex items-center ps-2 justify-center h-32 ${headerTone} text-5xl ${status == "ACTIVE" ? "text-white" : "text-slate-300"} font-semibold`} onClick={handleViewProject} >
-        <p className="truncate py-2">{name}</p>
+      <div className={`flex items-center ps-2 justify-center h-32 ${headerTone} text-3xl ${status == "ACTIVE" ? "text-white" : "text-slate-300"} font-semibold`} onClick={handleViewProject} >
+        <p className="text-wrap truncate py-2 text-center">{name}</p>
       </div>
       <div className="absolute left-5 top-2 text-white">
         <p className={status == "ACTIVE" ? "text-white" : "text-slate-300"}>{activeWorks} | {allWorks}</p>

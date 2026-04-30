@@ -127,7 +127,14 @@ export async function getProjects(filterOptions: String[]) {
 
   //Initializes the 'where' part of the sql command (if filters were inputted)
   let where: Prisma.projectWhereInput = {}
-  if(completed && !notCompleted) {where.project_status = "ARCHIVED"}
+  if(completed && !notCompleted) {
+    
+    where.OR = [
+      { work: { every: { work_status: "COMPLETED" } } },
+      { project_status: "ARCHIVED" },
+      { work: { none: {} } }
+    ]
+  }
   else if(!completed && notCompleted) {where.project_status = "ACTIVE"}
 
   const archiveRange = new Date();
@@ -136,7 +143,8 @@ export async function getProjects(filterOptions: String[]) {
   await db.project.updateMany({
     where: {project_end_date: {
       lt: archiveRange
-    }},
+    },
+  },
     data: { project_status: "ARCHIVED" }
   })
 
@@ -145,7 +153,6 @@ export async function getProjects(filterOptions: String[]) {
   const projects = await db.project.findMany({
       where: where,
       orderBy: orderBy,
-      take: 10, // Limit for now
   });
 
   return projects;
