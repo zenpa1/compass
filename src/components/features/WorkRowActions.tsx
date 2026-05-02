@@ -15,6 +15,7 @@ import {
 } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import { clearAssignee
 } from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
+import { getProject } from "@/app/(dashboard)/projects/projectDataOps";
 
 interface WorkRowActionsProps {
   projectId: number;
@@ -32,6 +33,7 @@ interface WorkRowActionsProps {
   openActiveWindow: () => void;
   openDeadlineWindow: () => void;
   openRoleWindow: () => void;
+  openWorkDateWindow: () => void;
   refresh: () => void;
 }
 
@@ -51,6 +53,7 @@ export function WorkRowActions({
   openActiveWindow,
   openDeadlineWindow,
   openRoleWindow,
+  openWorkDateWindow,
   refresh,
 }: WorkRowActionsProps) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -90,6 +93,8 @@ export function WorkRowActions({
     const timeString = newTime;
 
     const time = validTimes.indexOf(timeString);
+    if(time != 0) setSetToTba(false);
+
     setStartTimeForm(time);
     if(time == 0) setStartTime(null);
     else setStartTime(new Date(0, 0, 0, time-1, 0));
@@ -99,9 +104,23 @@ export function WorkRowActions({
     const timeString = newTime;
 
     const time = validTimes.indexOf(timeString);
+    if(time != 0) setSetToTba(false);
 
     setEndTimeForm(time);
     setEndTime(new Date(0, 0, 0, time-1, 0));
+  }
+
+  const handleSetToTbaChange = () => {
+    if(setToTba) {
+      setSetToTba(false);
+    }
+    else {
+      setStartTimeForm(0);
+      setEndTimeForm(0);
+      setStartTime(null);
+      setEndTime(null);
+      setSetToTba(true);
+    }
   }
 
   const openEditModal = () => {
@@ -117,7 +136,7 @@ export function WorkRowActions({
       const deadlineCheck = await isValidWorkDeadline(projectId, date);
 
       if(deadlineCheck == 1) {
-        openDeadlineWindow();
+        openWorkDateWindow();
       }
       else {
         const roleCheck = await isValidRoleEdit(workId, date, projectId, workRole);
@@ -127,15 +146,15 @@ export function WorkRowActions({
         }
         else {
           editWork(
-          workId,
-          projectId,
-          salary,
-          publishToOpenPool,
-          description,
-          date,
-          startTime,
-          endTime,
-          );
+            workId,
+            projectId,
+            salary,
+            publishToOpenPool,
+            description,
+            date,
+            startTime,
+            endTime,
+            );
 
           refresh();
           closeEditModal();
@@ -144,7 +163,26 @@ export function WorkRowActions({
     }
   };
 
+  const resetValues = () => {
+    setDescription(oldDescription);
+    setDate(oldDate);
+    setSalary(oldSalary);
+    setStartTime(oldStartTime);
+    setEndTime(oldEndTime);
+    setPublishToOpenPool(oldPublishToOpenPool);
+    setSetToTba(oldSetToTba);
+    setStartTimeForm(
+      (oldStartTime) ? oldStartTime.getHours() + 1 :
+      0
+    );
+    setEndTimeForm(
+      (oldEndTime) ? oldEndTime.getHours() + 1 :
+      0
+    );
+  }
+
   const closeEditModal = () => {
+    resetValues();
     setShowEditModal(false);
   };
 
@@ -522,7 +560,7 @@ export function WorkRowActions({
                   <input
                     type="checkbox"
                     checked={setToTba}
-                    onChange={(event) => setSetToTba(event.target.checked)}
+                    onChange={handleSetToTbaChange}
                     className="h-4 w-4 rounded border-slate-300"
                   />
                   Set Time to TBA

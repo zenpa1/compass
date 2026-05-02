@@ -137,3 +137,20 @@ export function ProjectInvalidNameLengthWindow(props: SimpleDialogProps) {
     </Dialog>
   );
 }
+
+export function ProjectInvalidWorkDateWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Invalid Work Date</DialogTitle>
+      <DialogContent>
+        <p>A work cannot have a date before the project's start date.</p>
+      </DialogContent>
+    </Dialog>
+  );
+}

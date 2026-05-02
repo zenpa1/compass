@@ -9,15 +9,17 @@ import {
   isValidRole } 
   from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
+import { Project } from "@/app/(dashboard)/projects/projectDataOps";
 import DatePicker from "react-datepicker";
 import { Listbox } from '@headlessui/react'
 
 interface AddWorkButtonProps {
-  projectId: number;
+  project: Project;
   refresh: () => void;
   openNullWindow: () => void;
   openDeadlineWindow: () => void;
   openRoleWindow: () => void;
+  openWorkDateWindow: () => void;
 }
 
 const roleOptions = [
@@ -31,16 +33,17 @@ const roleOptions = [
 ];
 
 export function AddWorkButton({
-  projectId,
+  project,
   refresh,
   openNullWindow,
   openDeadlineWindow,
-  openRoleWindow
+  openRoleWindow,
+  openWorkDateWindow
 }: AddWorkButtonProps) {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState(roleOptions[0]);
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState(project.project_start_date);
   const [salary, setSalary] = useState(0.0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
@@ -66,7 +69,7 @@ export function AddWorkButton({
   const resetValues = () => {
     setRole(roleOptions[0]);
     setDescription("");
-    setDate(new Date());
+    setDate(project.project_start_date);
     setSalary(0.0);
     setStartTime(new Date());
     setEndTime(new Date());
@@ -81,20 +84,20 @@ export function AddWorkButton({
       // Notifies the user of unfilled form values via a new window
       openNullWindow();
     } else {
-      const deadlineCheck = await isValidWorkDeadline(projectId, date);
+      const deadlineCheck = await isValidWorkDeadline(project.project_id, date);
 
       if(deadlineCheck == 1) {
-        openDeadlineWindow();
+        openWorkDateWindow();
       }
       else {
-        const roleCheck = await isValidRole(role, date, projectId);
+        const roleCheck = await isValidRole(role, date, project.project_id);
 
         if(roleCheck != 0) {
           openRoleWindow();
         }
         else {
           createWork(
-            projectId,
+            project.project_id,
             role,
             getCategory(),
             salary,
@@ -128,6 +131,8 @@ export function AddWorkButton({
     const timeString = newTime;
 
     const time = validTimes.indexOf(timeString);
+    if(time != 0) setSetToTba(false);
+
     setStartTimeForm(time);
     if(time == 0) setStartTime(null);
     else setStartTime(new Date(0, 0, 0, time-1, 0));
@@ -137,9 +142,23 @@ export function AddWorkButton({
     const timeString = newTime;
 
     const time = validTimes.indexOf(timeString);
+    if(time != 0) setSetToTba(false);
 
     setEndTimeForm(time);
     setEndTime(new Date(0, 0, 0, time-1, 0));
+  }
+
+  const handleSetToTbaChange = () => {
+    if(setToTba) {
+      setSetToTba(false);
+    }
+    else {
+      setStartTimeForm(0);
+      setEndTimeForm(0);
+      setStartTime(null);
+      setEndTime(null);
+      setSetToTba(true);
+    }
   }
 
   const getCategory = () => {
@@ -355,7 +374,7 @@ export function AddWorkButton({
                   <input
                     type="checkbox"
                     checked={setToTba}
-                    onChange={(event) => setSetToTba(event.target.checked)}
+                    onChange={handleSetToTbaChange}
                     className="h-4 w-4 rounded border-slate-300"
                   />
                   Set Time to TBA
