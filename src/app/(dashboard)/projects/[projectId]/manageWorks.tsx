@@ -36,7 +36,10 @@ import {
   getRemainingDays,
   getProjectMissingWorks,
 } from "@/app/(dashboard)/projects/projectDataOps";
-import { ProjectInvalidDeadlineWindow } from "@/components/features/ProjectAlerts";
+import { 
+  ProjectInvalidDeadlineWindow,
+  ProjectInvalidWorkDateWindow
+} from "@/components/features/ProjectAlerts";
 
 function actionButtonClass(actionTone: "amber" | "blue" | "red" | "green") {
   if (actionTone === "amber") {
@@ -201,6 +204,7 @@ export default function ManageWorksPage({
   const [worksWindow, setWorksWindow] = useState(false);
   const [deadlineWindow, setDeadlineWindow] = useState(false);
   const [roleWindow, setRoleWindow] = useState(false);
+  const [workDateWindow, setWorkDateWindow] = useState(false);
 
   const [remainingDays, setRemainingDays] = useState(initialRemainingDays);
   const [missingWorks, setMissingWorks] = useState(initialMissingWorks);
@@ -405,6 +409,7 @@ export default function ManageWorksPage({
                         openActiveWindow={() => setActiveWindow(true)}
                         openDeadlineWindow={() => setDeadlineWindow(true)}
                         openRoleWindow={() => setRoleWindow(true)}
+                        openWorkDateWindow={() => setWorkDateWindow(true)}
                         refresh={refresh}
                       />
                     </div>
@@ -444,6 +449,7 @@ export default function ManageWorksPage({
                   openActiveWindow={() => setActiveWindow(true)}
                   openDeadlineWindow={() => setDeadlineWindow(true)}
                   openRoleWindow={() => setRoleWindow(true)}
+                  openWorkDateWindow={() => setWorkDateWindow(true)}
                   refresh={refresh}
                 />
               </div>
@@ -485,11 +491,12 @@ export default function ManageWorksPage({
         </div>
 
         <AddWorkButton
-          projectId={project.project_id}
+          project={project}
           refresh={refresh}
           openNullWindow={() => setNullWindow(true)}
           openDeadlineWindow={() => setDeadlineWindow(true)}
           openRoleWindow={() => setRoleWindow(true)}
+          openWorkDateWindow={() => setWorkDateWindow(true)}
         />
 
         <ProjectNullValuesWindow
@@ -515,6 +522,11 @@ export default function ManageWorksPage({
         <ProjectInvalidRoleWindow
           open={roleWindow}
           onClose={() => setRoleWindow(false)}
+        />
+
+        <ProjectInvalidWorkDateWindow
+          open={workDateWindow}
+          onClose={() => setWorkDateWindow(false)}
         />
       </div>
     </div>

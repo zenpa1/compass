@@ -47,6 +47,7 @@ export default function PrintReportButton({
 }: PrintReportButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showErrorProjects, setShowErrorProjectsModal] = useState(false);
 
   const [projects, setProjects] = useState<pdfWorks[]>([]);
   const [startDate, setStartDate] = useState(new Date());
@@ -92,7 +93,6 @@ export default function PrintReportButton({
   const handleDownload = async () => {
     const reportProjects = await getReportProjects(startDate, endDate);
     setProjects(() => reportProjects);
-    console.log(projects);
   };
 
   const resetValues = () => {
@@ -114,9 +114,16 @@ export default function PrintReportButton({
         if (startDate > endDate) {
             setShowErrorModal(true);
         } else {
-            handleDownload();
-            resetValues();
-            setShowModal(false);
+            const reports = await getReportProjects(startDate, endDate);
+
+            if(reports.length == 0) {
+              setShowErrorProjectsModal(true);
+            }
+            else {
+              handleDownload();
+              resetValues();
+              setShowModal(false);
+            }
         }
       }
   }
@@ -203,6 +210,11 @@ export default function PrintReportButton({
             onClose={() => setShowErrorModal(false)}
             open={showErrorModal}
           />
+
+          <NoProjectsWindow 
+            onClose={() => setShowErrorProjectsModal(false)}
+            open={showErrorProjects}
+          />
         </div>
       ) : null}
     </>
@@ -221,6 +233,23 @@ function InvalidDatesWindow(props: SimpleDialogProps) {
       <DialogTitle>Invalid Dates</DialogTitle>
       <DialogContent>
         <p>The end date cannot be earlier than the start date.</p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NoProjectsWindow(props: SimpleDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>No Projects</DialogTitle>
+      <DialogContent>
+        <p>There are no projects in the selected date range.</p>
       </DialogContent>
     </Dialog>
   );

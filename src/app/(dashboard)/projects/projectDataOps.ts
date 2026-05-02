@@ -61,6 +61,7 @@ export async function getProjectWorks(name: string) {
 
   const works = await db.work.findMany({
     where: { project_id: projectId },
+    include: { project: true }
   });
 
   const worksWithNumberSalary = works.map((work) => ({
@@ -135,7 +136,12 @@ export async function getProjects(filterOptions: String[]) {
       { work: { none: {} } }
     ]
   }
-  else if(!completed && notCompleted) {where.project_status = "ACTIVE"}
+  else if(!completed && notCompleted) {
+    where.AND = [
+      { project_status: "ACTIVE" },
+      { NOT: { work: { none: {} } } }
+    ]
+  }
 
   const archiveRange = new Date();
   archiveRange.setMonth(archiveRange.getMonth() - 3);
