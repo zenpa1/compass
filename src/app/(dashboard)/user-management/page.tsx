@@ -41,7 +41,8 @@ export default function UserManagementPage() {
   const [editUser, setEditUser] = useState<User | null>(null);
   const [editPermission, setEditPermission] = useState<Permission>("Employee");
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
-
+  const [restoreUser, setRestoreUser] = useState<User | null>(null);
+  
   const [newUser, setNewUser] = useState({ name: "", email: "", permission: "Admin" as Permission });
   const [submitting, setSubmitting] = useState(false);
 
@@ -67,13 +68,18 @@ export default function UserManagementPage() {
   }, [search, filter, sortBy, filterStatus]);
 
   useEffect(() => {
-    const timer = setTimeout(fetchUsers, 300);
-    return () => clearTimeout(timer);
-  }, [fetchUsers]);
+      const timer = setTimeout(fetchUsers, 300);
+      return () => clearTimeout(timer);
+    }, [fetchUsers]);
 
-  useEffect(() => {
+    useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpenMenuId(null);
+      const target = e.target as Node;
+      // Close if click is outside any menu trigger or dropdown
+      const menus = document.querySelectorAll("[data-menu]");
+      let inside = false;
+      menus.forEach((m) => { if (m.contains(target)) inside = true; });
+      if (!inside) setOpenMenuId(null);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -282,6 +288,7 @@ export default function UserManagementPage() {
                         ) : (
                           <>
                             <button
+                              data-menu
                               onClick={() => setOpenMenuId(openMenuId === user.user_id ? null : user.user_id)}
                               className="p-1 rounded hover:bg-slate-100 transition text-slate-500 hover:text-slate-800">
                               <svg viewBox="0 0 24 24" className="size-5" fill="currentColor">
@@ -289,44 +296,45 @@ export default function UserManagementPage() {
                               </svg>
                             </button>
                             {openMenuId === user.user_id && (
-                              <div ref={menuRef}
-                                className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden">
-                                {user.inactive ? (
+                            <div
+                              data-menu
+                              className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                              {user.inactive ? (
+                                <button
+                                  onClick={() => { setRestoreUser(user); setOpenMenuId(null); }}
+                                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50 transition">
+                                  <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                    <path d="M3 3v5h5" />
+                                  </svg>
+                                  Restore User
+                                </button>
+                              ) : (
+                                <>
                                   <button
-                                    onClick={() => { handleRestore(user); setOpenMenuId(null); }}
-                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-green-600 hover:bg-green-50 transition">
-                                    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                                      <path d="M3 3v5h5" />
+                                    onClick={() => handleEditOpen(user)}
+                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
+                                    <svg viewBox="0 0 24 24" className="size-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                                     </svg>
-                                    Restore User
+                                    Edit Permission
                                   </button>
-                                ) : (
-                                  <>
-                                    <button
-                                      onClick={() => handleEditOpen(user)}
-                                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
-                                      <svg viewBox="0 0 24 24" className="size-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                      </svg>
-                                      Edit Permission
-                                    </button>
-                                    <button
-                                      onClick={() => { setDeleteUser(user); setOpenMenuId(null); }}
-                                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
-                                      <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                        <path d="M10 11v6M14 11v6" />
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                      </svg>
-                                      Deactivate User
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )}
+                                  <button
+                                    onClick={() => { setDeleteUser(user); setOpenMenuId(null); }}
+                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
+                                    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="3 6 5 6 21 6" />
+                                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                      <path d="M10 11v6M14 11v6" />
+                                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                    Deactivate User
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
                           </>
                         )}
                       </td>
@@ -356,7 +364,7 @@ export default function UserManagementPage() {
                   return (
                     <button key={option} onClick={() => setPendingFilter(option)}
                       className="flex items-center gap-3 px-1 py-1 rounded-lg text-left transition hover:bg-slate-50">
-                      <span className={`size-5 rounded flex-shrink-0 ${isSelected ? colorMap[option] : "bg-slate-200"}`} />
+                      <span className={`size-5 rounded flex-shrink-0 ${isSelected ? "bg-amber-500" : "bg-slate-200"}`} />
                       <span className={`text-sm transition ${isSelected ? "text-slate-800 font-medium" : "text-slate-500"}`}>{option}</span>
                     </button>
                   );
@@ -537,6 +545,46 @@ export default function UserManagementPage() {
               <button onClick={handleEditSave} disabled={submitting}
                 className="px-5 py-2 text-sm font-medium bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition disabled:opacity-50">
                 {submitting ? "Saving..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Restore User Modal */}
+      {restoreUser && (
+        <Modal title="Restore User" onClose={() => setRestoreUser(null)}>
+          <div className="flex flex-col gap-5">
+            <div className="h-px bg-slate-200" />
+            <div className="flex flex-col items-center gap-3 py-2">
+              <div className="size-14 rounded-full bg-green-50 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="size-7 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium text-slate-800">
+                  Restore <span className="font-semibold">{restoreUser.full_name ?? restoreUser.email}</span>?
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  The user will regain access immediately.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setRestoreUser(null)} disabled={submitting}
+                className="px-4 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition disabled:opacity-50">
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await handleRestore(restoreUser);
+                  setRestoreUser(null);
+                }}
+                disabled={submitting}
+                className="px-5 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50">
+                {submitting ? "Restoring..." : "Restore User"}
               </button>
             </div>
           </div>
