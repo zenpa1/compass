@@ -37,7 +37,7 @@ export class AuthService {
       const { email, sub: googleId, name, picture } = payload;
 
       // 2. Check if user exists
-      // Note: We use include: { profile: true } because your schema says 'profile UserProfile?'
+      // Note: We use include: { userprofile: true } because your schema says 'userprofile UserProfile?'
       let user = await db.user.findUnique({
         where: { email },
         include: {
@@ -50,6 +50,14 @@ export class AuthService {
         return {
           success: false,
           message: 'Access Denied: You are not authorized to access this application'
+        };
+      }
+
+      // 4. Deny inactive accounts
+      if (user.inactive) {
+        return {
+          success: false,
+          message: 'Account inactive. Please contact an administrator.'
         };
       }
 

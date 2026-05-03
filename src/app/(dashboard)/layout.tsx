@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { SidebarLogoutButton } from "@/components/features/SidebarLogoutButton";
 import { SidebarCheckButton } from "@/components/features/SidebarCheckButton";
 import { useState, useEffect } from "react";
-import { getProfilePicture } from "@/app/(dashboard)/projects/projectDataOps";
 import { SidebarUserManagementButton } from "@/components/features/SidebarUserManagementButton";
 
 
@@ -22,18 +21,15 @@ export default function DashboardLayout({
   const tasksActive = pathname.startsWith("/tasks");
   const settingsActive = pathname.startsWith("/manageprofile");
 
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [userType, setUserType] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const fetchUrls = async () => {
-      const url = await getProfilePicture();
+    const fetchSession = async () => {
       const session = await fetch("/api/session").then(r => r.json());
-      setAvatarUrl(url!);
       setUserType(session.user_type);
     };
-    fetchUrls();
+    fetchSession();
   }, []);
 
   useEffect(() => {
@@ -55,7 +51,7 @@ export default function DashboardLayout({
       <aside
         className={`
           fixed inset-y-0 left-0 z-30 w-20 bg-slate-900
-          flex flex-col items-center py-6 text-slate-300
+          flex flex-col items-center pb-4 text-slate-300
           transform transition-transform duration-200 ease-in-out
           md:static md:translate-x-0 md:z-auto
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
@@ -72,10 +68,14 @@ export default function DashboardLayout({
             />
         </div> */}
 
-        {/* PROFILE PIC */}
-        <div className="mb-8 h-10 w-10 rounded-full bg-slate-800 overflow-hidden">
-          {avatarUrl ? <img src={avatarUrl} alt="Profile" /> : null}
-        </div>
+        {/* LOGO */}
+        <img
+          src="/TNS Logo Events.png"
+          alt="Compass logo"
+          className="h-20 w-20 object-contain"
+          loading="eager"
+          decoding="async"
+        />
 
         {/* NAVIGATION SECTION */}
         <nav className="flex-1 flex flex-col gap-6 w-full px-4">
