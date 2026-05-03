@@ -25,14 +25,14 @@ const AVAILABLE_TAGS = [
 ];
 
 const PASTEL_COLORS = [
-    "bg-[#fcd5ce] text-[#2a3f54]", // Pastel Pink
-    "bg-[#cddafd] text-[#2a3f54]", // Pastel Blue
-    "bg-[#ffecd1] text-[#2a3f54]", // Pastel Orange
-    "bg-[#d8e2dc] text-[#2a3f54]", // Pastel Green
-    "bg-[#e9edc9] text-[#2a3f54]", // Pastel Yellow-Green
-    "bg-[#f8edeb] text-[#2a3f54]", // Pastel Rose
-    "bg-[#e8e8e4] text-[#2a3f54]", // Pastel Gray
-    "bg-[#ffcad4] text-[#2a3f54]", // Pastel Red/Pink
+    "bg-[#fcd5ce] text-[#2a3f54] border-2", // Pastel Pink
+    "bg-[#cddafd] text-[#2a3f54] border-2", // Pastel Blue
+    "bg-[#ffecd1] text-[#2a3f54] border-2", // Pastel Orange
+    "bg-[#d8e2dc] text-[#2a3f54] border-2", // Pastel Green
+    "bg-[#e9edc9] text-[#2a3f54] border-2", // Pastel Yellow-Green
+    "bg-[#f8edeb] text-[#2a3f54] border-2", // Pastel Rose
+    "bg-[#e8e8e4] text-[#2a3f54] border-2", // Pastel Gray
+    "bg-[#ffcad4] text-[#2a3f54] border-2", // Pastel Red/Pink
 ];
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -365,7 +365,7 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                                             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                                                 isSelected
                                                     ? activeColorClass
-                                                    : "bg-slate-300 text-white hover:bg-slate-400"
+                                                    : "bg-white text-black border-2 hover:bg-slate-400"
                                             }`}
                                         >
                                             {tag}

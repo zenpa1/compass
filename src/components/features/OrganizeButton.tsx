@@ -17,11 +17,12 @@ const progressOptions = [
 export function OrganizeButton(
   props: {
     refresh: (value: string[]) => Promise<void> | void;
+    returnToPageOne: () => void;
   }) {
   const [showModal, setShowModal] = useState(false);
   const [selectedSort, setSelectedSort] = useState<string | null>(null);
   const [selectedProgress, setSelectedProgress] = useState<string | null>(null);
-  const { refresh } = props;
+  const { refresh, returnToPageOne } = props;
 
   const toggleItem = (
     id: string,
@@ -41,6 +42,7 @@ export function OrganizeButton(
     //Uses the refresh method passed down from the parent
     //(with the optional filters parameter)
     refresh(filters);
+    returnToPageOne();
     setShowModal(false);
   }
 

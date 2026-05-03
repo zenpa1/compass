@@ -38,6 +38,9 @@ export default function ProjectDashboard({
 }: ProjectListProps) {
   const [projects, setProjects] = useState<enrichedProjects[]>(initialProjects);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 8;
+
   //Variables for alert windows
   const [nullWindow, setNullWindow] = useState(false);
   const [worksWindow, setWorksWindow] = useState(false);
@@ -71,10 +74,17 @@ export default function ProjectDashboard({
     setProjects(() => enrichedProjects);
   }
 
+  const returnToPageOne = () => { setCurrentPage(1); }
+
+  const indexOfLastProject = currentPage * projectsPerPage;
+  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
+  const currentProjects = projects.slice(indexOfFirstProject, indexOfLastProject);
+  const totalPages = Math.ceil(projects.length / projectsPerPage);
+
   const hasProjects = projects.length > 0;
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="flex flex-col min-h-[80vh] space-y-5 sm:space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -83,13 +93,13 @@ export default function ProjectDashboard({
         </div>
         <div className="flex gap-x-3">
           <PrintComponent openNullWindow={() => setNullWindow(true)}/>
-          <OrganizeButton refresh={refresh} />
+          <OrganizeButton refresh={refresh} returnToPageOne={returnToPageOne} />
         </div>
       </div>
 
       {hasProjects ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {projects.map((proj) => (
+          {currentProjects.map((proj) => (
             <ProjectCard
               key={proj.project.project_id}
               projectId={proj.project.project_id}
@@ -129,6 +139,30 @@ export default function ProjectDashboard({
           <p className="mt-3 text-sm text-slate-500">Click to add</p>
         </div>
       )}
+
+      <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none">
+        <div className="flex items-center gap-4 py-3 px-6 bg-white shadow-lg border border-slate-200 rounded-full pointer-events-auto">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          
+          <span className="text-sm text-slate-600">
+            Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+          </span>
+
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      </div>
 
       {hasProjects ? (
         <AddProjectButton
