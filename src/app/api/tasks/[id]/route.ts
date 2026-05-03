@@ -36,9 +36,8 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { task_title, task_desc, due_date, tagIds, is_completed } = body;
+    const { task_title, task_desc, due_date, tags, is_completed } = body;
 
-    // Simple status toggle — only is_completed was sent
     if (is_completed !== undefined && !task_title) {
       const updated = await db.task.update({
         where: { task_id: taskId },
@@ -47,11 +46,15 @@ export async function PATCH(
       return NextResponse.json(updated, { status: 200 });
     }
 
-    // Full edit — task_title, tags, etc. were sent
+    // Full edit — resolve tag names to IDs first
+    const foundTags = await db.tag.findMany({
+      where: { tag_name: { in: tags as string[] } },
+    });
+
     const [, , updatedTask] = await db.$transaction([
       db.tasktag.deleteMany({ where: { task_id: taskId } }),
       db.tasktag.createMany({
-        data: (tagIds as number[]).map((tag_id) => ({ task_id: taskId, tag_id })),
+        data: foundTags.map((t) => ({ task_id: taskId, tag_id: t.tag_id })),
       }),
       db.task.update({
         where: { task_id: taskId },

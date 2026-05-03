@@ -35,21 +35,31 @@ export async function GET(req: Request) {
     }
     const events = filteredWorks
       .filter((work) => work.work_start_date)
-      .map((work) => ({
-        title: work.project?.project_name ?? "Work",
-        start: work.work_start_time
-          ? toLocalISOString(work.work_start_time)
-          : toLocalISOString(work.work_start_date!),
-        end: work.work_end_time ? toLocalISOString(work.work_end_time) : undefined,
-        extendedProps: {
-          role_category: work.role_category,
-          description: work.work_description,
-          location: work.project?.project_location,
-          client_name: work.project?.client_name,
-          expected_salary: work.expected_salary,
-          status: work.work_status,
-        },
-      }));
+      .map((work) => {
+        const hasStartTime = work.work_start_time !== null;
+        const hasEndTime = work.work_end_time !== null;
+
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const dateOnly = (dt: Date) =>
+          `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+
+        return {
+          title: work.project?.project_name ?? "Work",
+          start: hasStartTime
+            ? toLocalISOString(work.work_start_time!)
+            : dateOnly(work.work_start_date!),
+          end: hasEndTime ? toLocalISOString(work.work_end_time!) : undefined,
+          allDay: !hasStartTime,
+          extendedProps: {
+            role_category: work.role_category,
+            description: work.work_description,
+            location: work.project?.project_location,
+            client_name: work.project?.client_name,
+            expected_salary: work.expected_salary,
+            status: work.work_status,
+          },
+        };
+      });
 
     return NextResponse.json(events);
   }
