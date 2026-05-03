@@ -69,6 +69,13 @@ export async function POST(request: Request) {
             );
         }
 
+        if (user.inactive) {
+            return NextResponse.json(
+                { message: "Account inactive. Please contact an administrator.", errorType: "INACTIVE_ACCOUNT" },
+                { status: 403, headers: corsHeaders() }
+            );
+        }
+
         // Update google id if missing
         if (!user.google_id) {
             await prisma.user.update({
