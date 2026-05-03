@@ -11,6 +11,7 @@ interface EventPopover {
   title: string;
   start?: string;
   end?: string;
+  allDay?: boolean;
   extendedProps?: Record<string, any>;
   x: number;
   y: number;
@@ -20,6 +21,7 @@ interface CalendarEvent {
   title: string;
   start?: string;
   end?: string;
+  allDay?: boolean;
   extendedProps?: Record<string, any>;
 }
 
@@ -68,7 +70,8 @@ function EventDetail({ event }: { event: CalendarEvent }) {
           <span>{formatDate(event.start)}</span>
         </div>
       )}
-      {(formatTime(props.start_time) || formatTime(event.start)) && (
+      {/* Only show time row if NOT all-day */}
+      {!event.allDay && (formatTime(props.start_time) || formatTime(event.start)) && (
         <div className="flex items-start gap-2.5">
           <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
@@ -219,6 +222,7 @@ export default function CalendarPage() {
       title: info.event.title,
       start: info.event.startStr,
       end: info.event.endStr,
+      allDay: info.event.allDay,  // add this
       extendedProps: info.event.extendedProps,
       x,
       y,
@@ -261,12 +265,25 @@ export default function CalendarPage() {
           min-height: 6px;
           border-radius: 2px;
         }
-
         .fc .fc-daygrid-day-events {
           display: flex;
           flex-direction: column;
           align-items: center;
         }
+      }
+
+      /* Strikethrough for completed tasks */
+      .fc .event-completed .fc-event-title {
+        text-decoration: line-through;
+        opacity: 0.6; 
+      }
+
+      /* Make all-day events look like timed events */
+      .fc .fc-daygrid-block-event {
+        display: none !important;
+      }
+      .fc .fc-daygrid-dot-event {
+        display: flex !important;
       }
     `}</style>
       {/* HEADER */}
@@ -324,6 +341,8 @@ export default function CalendarPage() {
             buttonText={{
               today: "Today"
             }}
+            allDaySlot={false}      
+            eventDisplay="list-item"  
           />
         </div>
       </div>
@@ -388,7 +407,7 @@ export default function CalendarPage() {
             </button>
           </div>
           <div className="px-4 py-3">
-            <EventDetail event={{ title: popover.title, start: popover.start, end: popover.end, extendedProps: popover.extendedProps }} />
+            <EventDetail event={{ title: popover.title, start: popover.start, end: popover.end, allDay: popover.allDay, extendedProps: popover.extendedProps }} />
           </div>
         </div>
       )}
