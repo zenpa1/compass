@@ -344,3 +344,15 @@ export async function getReportProjects(printStartDate: Date, printEndDate: Date
 
   return reportProjects;
 }
+
+export async function isCompleteProject(projectId: number) {
+  const proj = await db.project.findFirst({
+    where: {
+      project_id: projectId,
+      { work: { every: { work_status: "COMPLETED" } } },
+    }
+  })
+
+  if(proj != null) return 1;
+  return null;
+}
