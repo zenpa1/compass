@@ -131,15 +131,22 @@ export async function getProjects(filterOptions: String[]) {
   if(completed && !notCompleted) {
     
     where.OR = [
-      { work: { every: { work_status: "COMPLETED" } } },
+      { work: { 
+        every: { work_status: "COMPLETED" },
+        some: {} 
+      } },
       { project_status: "ARCHIVED" },
-      { work: { none: {} } }
     ]
   }
   else if(!completed && notCompleted) {
     where.AND = [
       { project_status: "ACTIVE" },
-      { NOT: { work: { none: {} } } }
+      { NOT: {  
+        work: { 
+          every: { work_status: "COMPLETED" },
+          some: {} 
+        }
+      } }
     ]
   }
 
