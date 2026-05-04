@@ -345,14 +345,19 @@ export async function getReportProjects(printStartDate: Date, printEndDate: Date
   return reportProjects;
 }
 
-export async function isCompleteProject(projectId: number) {
-  const proj = await db.project.findFirst({
+export async function isCompleteProjectTone(projectId: number) {
+  const workCount = await db.work.count({
+    where: { project_id: projectId }
+  });
+
+  if (workCount === 0) return 1;
+
+  const works = await db.work.findMany({
     where: {
       project_id: projectId,
-      { work: { every: { work_status: "COMPLETED" } } },
+      work_status: { notIn: ["COMPLETED"] }
     }
   })
 
-  if(proj != null) return 1;
-  return null;
+  return (works.length > 0) ? 1 : 0;
 }

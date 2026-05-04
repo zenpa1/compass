@@ -10,7 +10,7 @@ import {
   getRemainingDays,
   getProjectMissingWorks, 
   getProjectWorks,
-  isCompleteProject
+  isCompleteProjectTone
 } from "@/app/(dashboard)/projects/projectDataOps";
 import ProjectNullValuesWindow, {
   ProjectWorksExistWindow,
@@ -24,7 +24,7 @@ type enrichedProjects = {
   project: Project;
   activeWorks: number;
   allWorks: number;
-  isComplete?: number;
+  isComplete: number;
 }
 
 interface ProjectListProps {
@@ -65,7 +65,7 @@ export default function ProjectDashboard({
           const activeWorks = await getProjectMissingWorks(project.project_id);
           const allWorks = await getProjectWorks(project.project_name)!;
           const allWorksLength = allWorks?.length || 0;
-          const isComplete = await isCompleteProject(project.project_id);
+          const isComplete = await isCompleteProjectTone(project.project_id);
       
           return {
             project: projectData,

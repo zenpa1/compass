@@ -176,6 +176,7 @@ export function AddWorkButton({
   const getCategory = () => {
     if (
       role == roleOptions[0] || 
+      role == roleOptions[3] ||
       role == roleOptions[6] ||
       role == roleOptions[9] ||
       role == roleOptions[10] ||
@@ -183,13 +184,12 @@ export function AddWorkButton({
     ) return "PHOTO";
     else if (
       role == roleOptions[1] ||
+      role == roleOptions[2] ||
       role == roleOptions[7] ||   
       role == roleOptions[8] ||
       role == roleOptions[14]
     ) return "VIDEO";
     else if (
-      role == roleOptions[2] ||
-      role == roleOptions[3] ||
       role == roleOptions[4] ||
       role == roleOptions[15] ||
       role == roleOptions[16] ||
@@ -198,9 +198,9 @@ export function AddWorkButton({
     )
       return "ASSISTANT";
     else if (
-      role == roleOptions[5]
+      role == roleOptions[5] ||
       role == roleOptions[11] ||
-      role == roleOptions[12] ||
+      role == roleOptions[12]
     ) return "EDITOR";
     return "ANY";
   };

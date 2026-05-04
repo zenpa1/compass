@@ -1,6 +1,6 @@
 import { db } from "@/lib/prisma"; // Your real DB connection
 import ProjectDashboard from "@/app/(dashboard)/projects/projectDashboard";
-import { getRemainingDays, getProjectMissingWorks, getProjectWorks } 
+import { getRemainingDays, getProjectMissingWorks, getProjectWorks, isCompleteProjectTone } 
   from "@/app/(dashboard)/projects/projectDataOps";
 
 export const dynamic = 'force-dynamic';
@@ -16,11 +16,13 @@ export default async function ProjectsPage() {
       const activeWorks = await getProjectMissingWorks(project.project_id);
       const allWorks = await getProjectWorks(project.project_name)!;
       const allWorksLength = allWorks?.length || 0;
+      const isComplete = await isCompleteProjectTone(project.project_id);
   
       return {
         project: projectData,
         activeWorks: allWorksLength - activeWorks,
         allWorks: allWorksLength,
+        isComplete: isComplete
       };
     }));
 
