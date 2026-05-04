@@ -30,6 +30,18 @@ const roleOptions = [
   "Booth Operator",
   "Same Day Video Editor",
   "Photoman",
+  "Creative Video",
+  "Candid Video",
+  "Creative Photo",
+  "3rd Photo",
+  "Onsite Editor",
+  "Shoot + Edit",
+  "Shoot Onsite",
+  "Drone Op",
+  "Shoot Assist (Video)",
+  "Shoot Assist (Photo)",
+  "Production Assistant",
+  "Driver Assist"
 ];
 
 export function AddWorkButton({
