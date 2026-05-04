@@ -32,6 +32,7 @@ interface ProjectCardProps {
   status: "ACTIVE" | "ARCHIVED";
   activeWorks: number;
   allWorks: number;
+  isComplete?: number;
   openNullWindow: () => void;
   openWorkConflictWindow: () => void;
   openInvalidDeadlineWindow: () => void;
@@ -51,6 +52,7 @@ export function ProjectCard({
   status,
   activeWorks,
   allWorks,
+  isComplete?,
   openNullWindow,
   openWorkConflictWindow,
   openInvalidDeadlineWindow,
@@ -206,6 +208,8 @@ export function ProjectCard({
 
   function getHeaderTone() {
     const currentDate = new Date();
+
+    if(isComplete != null) return "bg-green-500";
 
     if(currentDate > endDate) {
       return "bg-rose-600";
