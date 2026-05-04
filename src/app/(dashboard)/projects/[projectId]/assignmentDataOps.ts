@@ -225,7 +225,7 @@ export async function assignPerson(assignmentId: number, user: User) {
     (assignerType === "OWNER" && assigneeType === "OWNER");
 
   const applicationStatus = isAutoAccept ? "APPROVED" : "PENDING";
-  const workStatus = isAutoAccept ? "ASSIGNED" : "PENDING";
+  const workStatus = isAutoAccept ? "REVIEW" : "PENDING";
   const assignmentStatus = isAutoAccept ? "CONFIRMED" : "PENDING";
 
   await db.workapplication.deleteMany({
