@@ -6,7 +6,9 @@ import { type Task } from "@/app/(dashboard)/tasks/page";
 import { Button } from "@/components/ui/button";
 import { ProjectInvalidDeadlineWindow } from "./ProjectAlerts";
 import ProjectNullValuesWindow from "./ProjectAlerts";
-import { Listbox } from '@headlessui/react'
+import { Listbox } from '@headlessui/react';
+import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
+import { Input } from "@/components/ui/input";
 
 interface EditTaskModalProps {
     task: Task | null;
@@ -50,6 +52,8 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
     const [minute, setMinute] = useState("");
     const [period, setPeriod] = useState("");
 
+    const [date, setDate] = useState(new Date);
+
     const [isInvalidDateModalOpen, setIsInvalidDateModalOpen] = useState(false);
     const [isNullModalOpen, setIsNullModalOpen] = useState(false);
 
@@ -75,6 +79,7 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
             setHour("");
             setMinute("");
             setPeriod("");
+            setDate(new Date);
             setSelectedTags([]);
         }
     }, [task]);
@@ -125,8 +130,15 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
         );
     };
 
+    const handleDateChange = (event: any) => {
+        const dateString = event.target.value;
+        if (dateString) {
+        setDate(new Date(dateString));
+        }
+    };
+
     const handleConfirm = async () => {
-        if (!title.trim() || !month || !day || !year) {
+        if (!title.trim() || !date) {
             setIsNullModalOpen(true);
             return;
         }
@@ -143,7 +155,7 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
 
         setIsSaving(true);
         try {
-            const isoDate = `${year}-${String(mIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}${
+            const isoDate = toISODate(date) + `${
                 hour && minute && period
                     ? `T${String(period === "PM" ? (parseInt(hour) === 12 ? 12 : parseInt(hour) + 12) : (parseInt(hour) === 12 ? 0 : parseInt(hour))).padStart(2, "0")}:${minute}:00`
                     : ""
@@ -206,14 +218,15 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                                 placeholder="Enter Task Name ..."
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="w-full rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
+                                className="w-full rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
                             />
                         </div>
 
                         {/* Deadline */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-800 mb-2">Deadline</label>
-                            <div className="flex gap-2">
+                            <label className="block text-sm font-semibold text-slate-800 mb-2">Deadline</label>
+                            <div className="flex gap-2 flex-row flex-wrap sm:flex-nowrap">
+                                {/*
                                 <div className="relative basis-128">
                                     <Listbox value={month} onChange={setMonth}>
                                         <Listbox.Button className={`flex-1 w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${month === "" ? "text-slate-400" : "text-slate-700"}`}>
@@ -270,16 +283,31 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                                         </Listbox.Options>
                                     </Listbox>
                                 </div>
-                            </div>
+                            </div>*/}
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-semibold text-slate-900">
+                                        Date:
+                                    </p>
+                                    <Input
+                                        type="date"
+                                        value={toISODate(date)}
+                                        onChange={handleDateChange}
+                                        placeholder="dd/mm/yy"
+                                        className="h-8 border-slate-300 px-2 text-xs"
+                                    />
+                                </div>
 
-                            {/* Time row */}
-                            <div className="flex gap-2 mt-2">
+                            {/* Time row*/}
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-slate-900">
+                                    Time:
+                                </p>
                                 <div className="relative">
                                     <Listbox value={hour} onChange={setHour}>
-                                        <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                        <Listbox.Button className={`min-w-[4rem] px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
                                             {hour || "Hour"}
                                         </Listbox.Button>
-                                        <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                        <Listbox.Options className="absolute min-w-[4rem] max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
                                             {HOURS.map((h) => (
                                                 <Listbox.Option key={h} value={h}
                                                     className={({ active }) =>
@@ -295,10 +323,10 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
 
                                 <div className="relative">
                                     <Listbox value={minute} onChange={setMinute}>
-                                        <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${minute === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                        <Listbox.Button className={`min-w-[4rem] px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${minute === "" ? "text-slate-400" : "text-slate-700"}`}>
                                             {minute || "Minute"}
                                         </Listbox.Button>
-                                        <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                        <Listbox.Options className="absolute min-w-[4rem] max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
                                             {MINUTES.map((m) => (
                                                 <Listbox.Option key={m} value={m}
                                                     className={({ active }) =>
@@ -314,10 +342,10 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
 
                                 <div className="relative">
                                     <Listbox value={period} onChange={setPeriod}>
-                                        <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                        <Listbox.Button className={`min-w-[4rem] px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
                                             {period || "Period"}
                                         </Listbox.Button>
-                                        <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                        <Listbox.Options className="absolute min-w-[4rem] max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
                                             <Listbox.Option value="AM"
                                                 className={({ active }) =>
                                                     `cursor-pointer px-4 py-2 ${active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'}`
@@ -335,8 +363,7 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                                         </Listbox.Options>
                                     </Listbox>
                                 </div>
-
-                                <span className="flex items-center text-xs text-slate-400">(optional)</span>
+                            </div>
                             </div>
                         </div>
 
@@ -347,7 +374,7 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                                 placeholder="Enter Description"
                                 value={desc}
                                 onChange={(e) => setDesc(e.target.value)}
-                                className="w-full h-32 resize-none rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
+                                className="w-full h-32 resize-none rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
                             />
                         </div>
 
