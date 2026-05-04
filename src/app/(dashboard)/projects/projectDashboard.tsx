@@ -9,7 +9,8 @@ import {
   getProjects,
   getRemainingDays,
   getProjectMissingWorks, 
-  getProjectWorks
+  getProjectWorks,
+  isCompleteProjectTone
 } from "@/app/(dashboard)/projects/projectDataOps";
 import ProjectNullValuesWindow, {
   ProjectWorksExistWindow,
@@ -23,6 +24,7 @@ type enrichedProjects = {
   project: Project;
   activeWorks: number;
   allWorks: number;
+  isComplete: number;
 }
 
 interface ProjectListProps {
@@ -63,11 +65,13 @@ export default function ProjectDashboard({
           const activeWorks = await getProjectMissingWorks(project.project_id);
           const allWorks = await getProjectWorks(project.project_name)!;
           const allWorksLength = allWorks?.length || 0;
+          const isComplete = await isCompleteProjectTone(project.project_id);
       
           return {
             project: projectData,
             activeWorks: allWorksLength - activeWorks,
             allWorks: allWorksLength,
+            isComplete: isComplete
           };
         }));
 
@@ -115,6 +119,7 @@ export default function ProjectDashboard({
               status={proj.project.project_status as "ACTIVE" | "ARCHIVED"}
               activeWorks={proj.activeWorks}
               allWorks={proj.allWorks}
+              isComplete={proj.isComplete}
               //Passese some parameters of the alert windows so that they can be opened
               //from another component
               openNullWindow={() => setNullWindow(true)}
