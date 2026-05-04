@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ProjectInvalidDeadlineWindow } from "./ProjectAlerts"; 
 import ProjectNullValuesWindow from "./ProjectAlerts";
 import { Listbox } from '@headlessui/react'
+import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
+import { Input } from "@/components/ui/input";
 
 type AddTaskModalProps = {
   isOpen: boolean;
@@ -50,6 +52,8 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
   const [hour, setHour] = useState("");
   const [minute, setMinute] = useState("");
   const [period, setPeriod] = useState("");
+
+  const [date, setDate] = useState(new Date);
   
   // State for teammate's modals
   const [isInvalidDateModalOpen, setIsInvalidDateModalOpen] = useState(false);
@@ -84,6 +88,7 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
     setMonth("");
     setDay("");
     setYear(new Date().getFullYear().toString());
+    setDate(new Date);
     setDescription("");
     setSelectedTags([]);
     setHour("");
@@ -102,9 +107,16 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
     );
   };
 
+  const handleDateChange = (event: any) => {
+    const dateString = event.target.value;
+    if (dateString) {
+      setDate(new Date(dateString));
+    }
+  };
+
   const handleConfirm = async () => {
     // Check for empty fields and trigger the null values window
-    if (!title.trim() || !month || !day || !year) {
+    if (!title.trim() || !date) {
       setIsNullModalOpen(true);
       return;
     }
@@ -112,7 +124,8 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
     const monthIndex = MONTHS.indexOf(month);
     
     // Check if the selected date is in the past
-    const selectedDate = new Date(Number(year), monthIndex, Number(day));
+    //const selectedDate = new Date(Number(year), monthIndex, Number(day));
+    const selectedDate = date;
     const midnightToday = new Date();
     midnightToday.setHours(0, 0, 0, 0);
 
@@ -121,10 +134,16 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
       return;
     }
 
-    const isoDate = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}${
-      hour && minute && period
-        ? `T${String(period === "PM" ? (parseInt(hour) === 12 ? 12 : parseInt(hour) + 12) : (parseInt(hour) === 12 ? 0 : parseInt(hour))).padStart(2, "0")}:${minute}:00`
-        : ""
+    //const isoDate = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}${
+    //  hour && minute && period
+    //    ? `T${String(period === "PM" ? (parseInt(hour) === 12 ? 12 : parseInt(hour) + 12) : (parseInt(hour) === 12 ? 0 : parseInt(hour))).padStart(2, "0")}:${minute}:00`
+    //    : ""
+    //}`;
+
+    const isoDate = toISODate(date) + `${
+        hour && minute && period
+            ? `T${String(period === "PM" ? (parseInt(hour) === 12 ? 12 : parseInt(hour) + 12) : (parseInt(hour) === 12 ? 0 : parseInt(hour))).padStart(2, "0")}:${minute}:00`
+            : ""
     }`;
 
     setIsSubmitting(true);
@@ -172,14 +191,14 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
                 placeholder="Enter Task Name ..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
+                className="w-full rounded-md bg-white-100 border border-slate-300 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-800 outline-none transition-all"
               />
             </div>
 
             {/* Deadline */}
             <div>
-              <label className="block text-sm font-medium text-slate-800 mb-2">Deadline</label>
-              <div className="flex gap-2 flex-row">
+              <label className="block text-sm font-semibold text-slate-800 mb-2">Deadline</label>
+              <div className="flex gap-2 flex-row flex-wrap sm:flex-nowrap">
                 {/*<select value={month} onChange={(e) => setMonth(e.target.value)}
                   className={`flex-1 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${month === "" ? "text-slate-400" : "text-slate-700"}`}>
                   <option value="" disabled>Month</option>
@@ -199,75 +218,73 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
                 </select>
                 */}
 
-                <div className="relative basis-128">
-                  <Listbox value={month} onChange={setMonth}>
-                    <Listbox.Button className={`flex-1 w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${month === "" ? "text-slate-400" : "text-slate-700"}`}>
-                      {month || "Month"}
-                    </Listbox.Button>
 
-                    <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                      {MONTHS.map((m) => (
-                        <Listbox.Option key={m} value={m}
-                          className={({ active }) =>
-                            `cursor-pointer px-4 py-2 ${
-                              active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                            }`
-                          }
-                        >
-                          {m}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Listbox>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-slate-900">
+                    Date:
+                  </p>
+                  <Input
+                    type="date"
+                    value={toISODate(date)}
+                    onChange={handleDateChange}
+                    placeholder="dd/mm/yy"
+                    className="h-8 border-slate-300 px-2 text-xs"
+                  />
                 </div>
+                
 
+                {/*<div className="relative basis-64">
+                  <div>
+                    <p className="text-sm">Day</p>
+                    <Listbox value={day} onChange={setDay}>
+                      <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${day === "" ? "text-slate-400" : "text-slate-700"}`}>
+                        {day || "Day"}
+                      </Listbox.Button>
+
+                      <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                        {validDays.map((d) => (
+                          <Listbox.Option key={d} value={d}
+                            className={({ active }) =>
+                              `cursor-pointer px-4 py-2 ${
+                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                              }`
+                            }
+                          >
+                            {d}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Listbox>
+                  </div>
+                </div>
                 <div className="relative basis-64">
-                  <Listbox value={day} onChange={setDay}>
-                    <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${day === "" ? "text-slate-400" : "text-slate-700"}`}>
-                      {day || "Day"}
-                    </Listbox.Button>
+                  <div>
+                    <p className="text-sm">Year</p>
+                    <Listbox value={year} onChange={setYear}>
+                      <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${year === "" ? "text-slate-400" : "text-slate-700"}`}>
+                        {year || "Year"}
+                      </Listbox.Button>
 
-                    <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                      {validDays.map((d) => (
-                        <Listbox.Option key={d} value={d}
-                          className={({ active }) =>
-                            `cursor-pointer px-4 py-2 ${
-                              active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                            }`
-                          }
-                        >
-                          {d}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Listbox>
+                      <Listbox.Options className="absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                        {YEARS.map((y) => (
+                          <Listbox.Option key={y} value={y}
+                            className={({ active }) =>
+                              `cursor-pointer px-4 py-2 ${
+                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                              }`
+                            }
+                          >
+                            {y}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Listbox>
+                  </div>
                 </div>
+              </div>*/}
 
-                <div className="relative basis-64">
-                  <Listbox value={year} onChange={setYear}>
-                    <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${year === "" ? "text-slate-400" : "text-slate-700"}`}>
-                      {year || "Year"}
-                    </Listbox.Button>
-
-                    <Listbox.Options className="absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                      {YEARS.map((y) => (
-                        <Listbox.Option key={y} value={y}
-                          className={({ active }) =>
-                            `cursor-pointer px-4 py-2 ${
-                              active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                            }`
-                          }
-                        >
-                          {y}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Listbox>
-                </div>
-              </div>
-
-              {/* Time row*/}
-              <div className="flex gap-2 mt-2">
+              {/* Time row
+              <div className="flex gap-2 mt-2">*/}
                 {/*<select value={hour} onChange={(e) => setHour(e.target.value)}
                   className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
                   <option value="" disabled>HH</option>
@@ -287,76 +304,79 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
                   <option value="PM">PM</option>
                 </select> */}
 
-                <div className="relative">
-                  <Listbox value={hour} onChange={setHour}>
-                    <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
-                      {hour || "Hour"}
-                    </Listbox.Button>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-slate-900">
+                    Time:
+                  </p>
+                  <div className="relative">
+                    <Listbox value={hour} onChange={setHour}>
+                      <Listbox.Button className={`min-w-[4rem] w-full px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
+                        {hour || "Hour"}
+                      </Listbox.Button>
 
-                    <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                      {HOURS.map((h) => (
-                        <Listbox.Option key={h} value={h}
-                          className={({ active }) =>
-                            `cursor-pointer px-4 py-2 ${
-                              active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                            }`
-                          }
-                        >
-                          {h}
+                      <Listbox.Options className="absolute min-w-[4rem] w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                        {HOURS.map((h) => (
+                          <Listbox.Option key={h} value={h}
+                            className={({ active }) =>
+                              `cursor-pointer px-4 py-2 ${
+                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                              }`
+                            }
+                          >
+                            {h}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Listbox>
+                  </div>
+
+                  <div className="relative">
+                    <Listbox value={minute} onChange={setMinute}>
+                      <Listbox.Button className={`min-w-[4rem] w-full0 px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
+                        {minute || "Minute"}
+                      </Listbox.Button>
+
+                      <Listbox.Options className="absolute min-w-[4rem] w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                        {MINUTES.map((m) => (
+                          <Listbox.Option key={m} value={m}
+                            className={({ active }) =>
+                              `cursor-pointer px-4 py-2 ${
+                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                              }`
+                            }
+                          >
+                            {m}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Listbox>
+                  </div>
+
+                  <div className="relative">
+                    <Listbox value={period} onChange={setPeriod}>
+                      <Listbox.Button className={`min-w-[4rem] w-full px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
+                        {period || "Period"}
+                      </Listbox.Button>
+
+                      <Listbox.Options className="absolute min-w-[4rem] w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                        <Listbox.Option value="AM" className={({ active }) =>
+                              `cursor-pointer px-4 py-2 ${
+                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                              }`
+                            }>
+                              AM
                         </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Listbox>
-                </div>
-
-                <div className="relative">
-                  <Listbox value={minute} onChange={setMinute}>
-                    <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
-                      {minute || "Minute"}
-                    </Listbox.Button>
-
-                    <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                      {MINUTES.map((m) => (
-                        <Listbox.Option key={m} value={m}
-                          className={({ active }) =>
-                            `cursor-pointer px-4 py-2 ${
-                              active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                            }`
-                          }
-                        >
-                          {m}
+                        <Listbox.Option value="PM" className={({ active }) =>
+                              `cursor-pointer px-4 py-2 ${
+                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
+                              }`
+                            }>
+                              PM
                         </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Listbox>
+                      </Listbox.Options>
+                    </Listbox>
+                  </div>
                 </div>
-
-                <div className="relative">
-                  <Listbox value={period} onChange={setPeriod}>
-                    <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
-                      {period || "Period"}
-                    </Listbox.Button>
-
-                    <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                      <Listbox.Option value="AM" className={({ active }) =>
-                            `cursor-pointer px-4 py-2 ${
-                              active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                            }`
-                          }>
-                            AM
-                      </Listbox.Option>
-                      <Listbox.Option value="PM" className={({ active }) =>
-                            `cursor-pointer px-4 py-2 ${
-                              active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                            }`
-                          }>
-                            PM
-                      </Listbox.Option>
-                    </Listbox.Options>
-                  </Listbox>
-                </div>
-
-                <span className="flex items-center text-xs text-slate-400">(optional)</span>
               </div>
             </div>
             {/* Description */}
@@ -366,7 +386,7 @@ export function AddTaskModal({ isOpen, onClose, onSuccess }: AddTaskModalProps) 
                 placeholder="Enter Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full h-32 resize-none rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
+                className="w-full h-32 resize-none rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
               />
             </div>
 
