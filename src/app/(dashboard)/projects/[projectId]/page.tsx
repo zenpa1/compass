@@ -1,5 +1,5 @@
 import { db } from "@/lib/prisma";
-import { getRemainingDays, getProjectMissingWorks, getProjectWorks, isCompleteProject } 
+import { getRemainingDays, getProjectMissingWorks, getProjectWorks, isCompleteProjectTone } 
   from "@/app/(dashboard)/projects/projectDataOps";
 import { getEnrichedWorks } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import ManageWorksPage from "@/app/(dashboard)/projects/[projectId]/manageWorks";
@@ -25,7 +25,7 @@ export default async function ProjectDetailPage({
   const missingWorks = await getProjectMissingWorks(projectId);
 
   const enrichedWorks = await getEnrichedWorks(project!.project_id);
-  const isComplete = await isCompleteProject(project!.project_id);
+  const isComplete = await isCompleteProjectTone(project!.project_id);
 
   return (
     <ManageWorksPage project={project!} enrichedWorks={enrichedWorks}
