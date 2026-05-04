@@ -11,7 +11,7 @@ import { UndoMarkCompleteButton } from "@/components/features/UndoMarkCompleteBu
 import { CancelRequestButton } from "@/components/features/CancelRequestButton";
 import { Project, 
   refreshProjectHeader, 
-  isCompleteProject } 
+  isCompleteProjectTone } 
   from "@/app/(dashboard)/projects/projectDataOps";
 import {
   Work,
@@ -180,17 +180,17 @@ export default function ManageWorksPage({
     const newWorks = await getEnrichedWorks(project.project_id);
     const newRemainingDays = await getRemainingDays(project.project_id);
     const newMissingWorks = await getProjectMissingWorks(project.project_id);
-    const newIsComplete = await isCompleteProject(project.project_id);
+    const newIsComplete = await isCompleteProjectTone(project.project_id);
     
     const timeStatusMarkStart = newRemainingDays == 1 ? " " : "S ";
     const timeStatusStart =
       remainingDays >= 1
         ? newRemainingDays + " DAY" + timeStatusMarkStart + "LEFT"
-        : newRemainingDays == 0
-          ? "ONGOING"
-          : newIsComplete
-            ? "OVERDUE"
-            : "COMPLETED";
+        : (newIsComplete == 0)
+          ? "COMPLETED"
+          : (newRemainingDays == 0)
+            ? "ONGOING"
+            : "OVERDUE";
 
     setWorks(() => newWorks);
     setRemainingDays(newRemainingDays);
@@ -216,13 +216,13 @@ export default function ManageWorksPage({
 
   const timeStatusMarkStart = remainingDays == 1 ? " " : "S ";
   const timeStatusStart =
-    remainingDays >= 1
-      ? remainingDays + " DAY" + timeStatusMarkStart + "LEFT"
-      : remainingDays == 0
-        ? "ONGOING"
-        : isComplete
-          ? "OVERDUE"
-          : "COMPLETED";
+      remainingDays >= 1
+        ? remainingDays + " DAY" + timeStatusMarkStart + "LEFT"
+        : (isComplete == 0)
+          ? "COMPLETED"
+          : (remainingDays == 0)
+            ? "ONGOING"
+            : "OVERDUE";
 
   /*const timeStatusToneStart = 
     isComplete
