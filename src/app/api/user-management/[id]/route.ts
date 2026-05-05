@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 export async function PATCH(
   req: Request,
@@ -85,8 +94,24 @@ export async function DELETE(
 
     await db.user.update({
       where: { user_id: targetId },
-      data: {inactive: true },
+      data: { inactive: true },
     });
+
+    // Send deactivation email, non-blocking, won't fail the request
+    try {
+      await transporter.sendMail({
+        from: `"COMPASS" <${process.env.EMAIL_USER}>`,
+        to: targetUser.email,
+        subject: "Your COMPASS account has been deactivated",
+        html: `
+          <p>Hi${targetUser.full_name ? ` ${targetUser.full_name}` : ""},</p>
+          <p>Your <strong>COMPASS</strong> account has been deactivated.</p>
+          <p>You will no longer be able to log in. If you believe this is a mistake, please contact the owner.</p>
+        `,
+      });
+    } catch (emailError) {
+      console.error("Failed to send deactivation email:", emailError);
+    }
 
     return new NextResponse(null, { status: 204 });
   } catch (err) {

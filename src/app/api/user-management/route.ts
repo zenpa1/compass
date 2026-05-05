@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { user_user_type } from "@/generated/client";
+import { randomBytes } from "crypto";
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 export async function GET(req: Request) {
   const session = await getSession();
@@ -16,14 +26,14 @@ export async function GET(req: Request) {
 
   const userTypeFilter =
     permission === "Admin" ? "ADMIN" :
-    permission === "Employee" ? "EMPLOYEE" :
-    permission === "Owner" ? "OWNER" :
-    undefined;
+      permission === "Employee" ? "EMPLOYEE" :
+        permission === "Owner" ? "OWNER" :
+          undefined;
 
   const inactiveFilter =
     status === "inactive" ? true :
-    status === "active" ? false :
-    undefined;
+      status === "active" ? false :
+        undefined;
 
   const users = await db.user.findMany({
     where: {
@@ -71,11 +81,43 @@ export async function POST(req: Request) {
   }
 
   const user_type = permission === "Admin" ? "ADMIN" : "EMPLOYEE";
+  const invite_token = randomBytes(32).toString("hex"); // unique 64-char token
+  const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite?token=${invite_token}`;
 
+  // Create user
   const newUser = await db.user.create({
-    data: { full_name: full_name ?? null, email, user_type: user_type as user_user_type },
+    data: {
+      full_name: full_name ?? null,
+      email,
+      user_type: user_type as user_user_type,
+      inactive: false,
+      invite_token,
+    },
     select: { user_id: true, full_name: true, email: true, user_type: true },
   });
+
+  // Send invite email
+  try {
+    await transporter.sendMail({
+      from: `"COMPASS" <${process.env.MAIL_USER}>`,
+      to: email,
+      subject: "You have been invited to COMPASS",
+      html: `
+        <p>Hi${full_name ? ` ${full_name}` : ""},</p>
+        <p>You have been invited to join <strong>COMPASS</strong>.</p>
+        <p>Click the link below to access the website:</p>
+        <a href="${inviteUrl}">Accept Invite</a>
+      `,
+    });
+  } catch (emailError) {
+    // Rollback: delete the user if email fails
+    await db.user.delete({ where: { email } });
+    console.error("Failed to send invite email:", emailError);
+    return NextResponse.json(
+      { error: "Failed to send invite email. User was not created." },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json(newUser, { status: 201 });
 }

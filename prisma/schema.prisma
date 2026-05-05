@@ -78,6 +78,7 @@ model user {
   task            task[]
   userprofile     userprofile?
   workapplication workapplication[]
+  invite_token    String?   @unique @db.VarChar(64)
 }
 
 model userprofile {
