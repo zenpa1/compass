@@ -69,19 +69,19 @@ export function AddTaskButton() {
                     value={deadlineMonth}
                     onChange={(event) => setDeadlineMonth(event.target.value)}
                     placeholder="Month"
-                    className="h-9 border-slate-200 bg-slate-100 px-3 text-sm"
+                    className="h-9 border-slate-200 bg-white px-3 text-sm text-slate-800"
                   />
                   <Input
                     value={deadlineDay}
                     onChange={(event) => setDeadlineDay(event.target.value)}
                     placeholder="Day"
-                    className="h-9 border-slate-200 bg-slate-100 px-3 text-sm"
+                    className="h-9 border-slate-200 bg-white px-3 text-sm text-slate-800"
                   />
                   <Input
                     value={deadlineYear}
                     onChange={(event) => setDeadlineYear(event.target.value)}
                     placeholder="Year"
-                    className="h-9 border-slate-200 bg-slate-100 px-3 text-sm"
+                    className="h-9 border-slate-200 bg-white-100 px-3 text-sm text-slate-800"
                   />
                 </div>
               </div>

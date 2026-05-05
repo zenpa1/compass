@@ -93,6 +93,15 @@ export async function getAssignment(work_id: number) {
 export async function getAvailableAssignees(work: Work) {
   const available = await db.userprofile.findMany({
     where: {
+      NOT: {
+        user: {
+          assignment: {
+            some: {
+              work_id: work.work_id
+            }
+          }
+        }
+      },
       user: {
         assignment: {
           none: { 
@@ -103,7 +112,8 @@ export async function getAvailableAssignees(work: Work) {
               ]
             }
           }
-        }
+        },
+        inactive: false
       }
     },
     include: { user: true },
@@ -141,7 +151,8 @@ export async function getRecommendedAssignees(work: Work, role: string) {
   const recommended = await db.userprofile.findMany({
     where: {
       user: {
-        assignment: {none: {OR: conflictConditions}}
+        assignment: {none: {OR: conflictConditions}},
+        inactive: false
       },
       OR: [
         { primary_role: { in: label } },
@@ -214,7 +225,7 @@ export async function assignPerson(assignmentId: number, user: User) {
     (assignerType === "OWNER" && assigneeType === "OWNER");
 
   const applicationStatus = isAutoAccept ? "APPROVED" : "PENDING";
-  const workStatus = isAutoAccept ? "ASSIGNED" : "PENDING";
+  const workStatus = isAutoAccept ? "REVIEW" : "PENDING";
   const assignmentStatus = isAutoAccept ? "CONFIRMED" : "PENDING";
 
   await db.workapplication.deleteMany({

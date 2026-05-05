@@ -35,21 +35,31 @@ export async function GET(req: Request) {
     }
     const events = filteredWorks
       .filter((work) => work.work_start_date)
-      .map((work) => ({
-        title: work.project?.project_name ?? "Work",
-        start: work.work_start_time
-          ? toLocalISOString(work.work_start_time)
-          : toLocalISOString(work.work_start_date!),
-        end: work.work_end_time ? toLocalISOString(work.work_end_time) : undefined,
-        extendedProps: {
-          role_category: work.role_category,
-          description: work.work_description,
-          location: work.project?.project_location,
-          client_name: work.project?.client_name,
-          expected_salary: work.expected_salary,
-          status: work.work_status,
-        },
-      }));
+      .map((work) => {
+        const hasStartTime = work.work_start_time !== null;
+        const hasEndTime = work.work_end_time !== null;
+
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const dateOnly = (dt: Date) =>
+          `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+
+        return {
+          title: work.project?.project_name ?? "Work",
+          start: hasStartTime
+            ? toLocalISOString(work.work_start_time!)
+            : dateOnly(work.work_start_date!),
+          end: hasEndTime ? toLocalISOString(work.work_end_time!) : undefined,
+          allDay: !hasStartTime,
+          extendedProps: {
+            role_category: work.role_category,
+            description: work.work_description,
+            location: work.project?.project_location,
+            client_name: work.project?.client_name,
+            expected_salary: work.expected_salary,
+            status: work.work_status,
+          },
+        };
+      });
 
     return NextResponse.json(events);
   }
@@ -61,14 +71,29 @@ export async function GET(req: Request) {
 
   const tasksUTC8 = tasks
     .filter((task) => task.due_date)
-    .map((task) => ({
-      title: task.task_title,
-      start: toLocalISOString(task.due_date!),
-      extendedProps: {
-        description: task.task_desc ?? undefined,
-        status: task.is_completed ? "COMPLETED" : "PENDING",
-      },
-    }));
+    .map((task) => {
+      const dt = task.due_date!;
+      
+      // Check UTC midnight — if stored as 00:00:00 UTC, it was a date-only input
+      const hasTime = dt.getUTCHours() !== 0 || dt.getUTCMinutes() !== 0;
+      
+      const pad = (n: number) => String(n).padStart(2, "0");
+      // Use UTC date parts to avoid local-offset shifting the date
+      const datePart = `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+
+      return {
+        title: task.task_title,
+        start: hasTime
+          ? `${datePart}T${pad(dt.getUTCHours())}:${pad(dt.getUTCMinutes())}:00`
+          : datePart,
+        allDay: !hasTime,
+        classNames: task.is_completed ? ["event-completed"] : [],
+        extendedProps: {
+          description: task.task_desc ?? undefined,
+          status: task.is_completed ? "COMPLETED" : "PENDING",
+        },
+      };
+    });
 
   return NextResponse.json(tasksUTC8);
 }

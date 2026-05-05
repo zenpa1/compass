@@ -3,12 +3,12 @@
   import { getSession } from "@/lib/session";
 
   const formatTaskDate = (date: Date) => {
-      const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0;
-      const datePart = date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-      if (!hasTime) return datePart;
-      const timePart = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
-      return `${datePart} at ${timePart}`;
-    };
+    const hasTime = date.getUTCHours() !== 0 || date.getUTCMinutes() !== 0;
+    const datePart = date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    if (!hasTime) return datePart;
+    const timePart = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+    return `${datePart} at ${timePart}`;
+  };
 
 export async function GET(request: Request) {
   try {

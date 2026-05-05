@@ -6,14 +6,9 @@ import { type Task } from "@/app/(dashboard)/tasks/page";
 import { Button } from "@/components/ui/button";
 import { ProjectInvalidDeadlineWindow } from "./ProjectAlerts";
 import ProjectNullValuesWindow from "./ProjectAlerts";
-import { Listbox } from '@headlessui/react'
-
-// Match your real Prisma shape
-interface Tag {
-    tag_id: number;
-    tag_name: string;
-    color_hex: string;
-}
+import { Listbox } from '@headlessui/react';
+import toISODate from "@/app/(dashboard)/projects/projectMiscOps";
+import { Input } from "@/components/ui/input";
 
 interface EditTaskModalProps {
     task: Task | null;
@@ -32,17 +27,16 @@ const AVAILABLE_TAGS = [
 ];
 
 const PASTEL_COLORS = [
-    "bg-[#fcd5ce] text-[#2a3f54]", // Pastel Pink
-    "bg-[#cddafd] text-[#2a3f54]", // Pastel Blue
-    "bg-[#ffecd1] text-[#2a3f54]", // Pastel Orange
-    "bg-[#d8e2dc] text-[#2a3f54]", // Pastel Green
-    "bg-[#e9edc9] text-[#2a3f54]", // Pastel Yellow-Green
-    "bg-[#f8edeb] text-[#2a3f54]", // Pastel Rose
-    "bg-[#e8e8e4] text-[#2a3f54]", // Pastel Gray
-    "bg-[#ffcad4] text-[#2a3f54]", // Pastel Red/Pink
+    "bg-[#fcd5ce] text-[#2a3f54] border-2", // Pastel Pink
+    "bg-[#cddafd] text-[#2a3f54] border-2", // Pastel Blue
+    "bg-[#ffecd1] text-[#2a3f54] border-2", // Pastel Orange
+    "bg-[#d8e2dc] text-[#2a3f54] border-2", // Pastel Green
+    "bg-[#e9edc9] text-[#2a3f54] border-2", // Pastel Yellow-Green
+    "bg-[#f8edeb] text-[#2a3f54] border-2", // Pastel Rose
+    "bg-[#e8e8e4] text-[#2a3f54] border-2", // Pastel Gray
+    "bg-[#ffcad4] text-[#2a3f54] border-2", // Pastel Red/Pink
 ];
 
-// Generate years from the current year up to 2100
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 2100 - CURRENT_YEAR + 1 }, (_, i) => CURRENT_YEAR + i);
 
@@ -52,32 +46,29 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
     const [month, setMonth] = useState("");
     const [day, setDay] = useState("");
     const [year, setYear] = useState("");
-    const [allTags, setAllTags] = useState<Tag[]>([]);
-    const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [hour, setHour] = useState("");
     const [minute, setMinute] = useState("");
     const [period, setPeriod] = useState("");
 
-    // State for teammate's modals
+    const [date, setDate] = useState(new Date);
+
     const [isInvalidDateModalOpen, setIsInvalidDateModalOpen] = useState(false);
     const [isNullModalOpen, setIsNullModalOpen] = useState(false);
 
     // --- Dynamic Days Logic ---
     const monthIndex = MONTHS.indexOf(month);
-    // Fallback to current year if year isn't selected so leap year math doesn't break
     const selectedYear = year ? parseInt(year) : CURRENT_YEAR;
-
-    // JavaScript date trick: getting the 0th day of the NEXT month gives the last day of the CURRENT month
     const daysInMonth = monthIndex !== -1
         ? new Date(selectedYear, monthIndex + 1, 0).getDate()
         : 31;
-
     const validDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
     const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
     const MINUTES = ["00", "15", "30", "45"];
 
+    // Reset when task is null
     useEffect(() => {
         if (!task) {
             setTitle("");
@@ -88,69 +79,71 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
             setHour("");
             setMinute("");
             setPeriod("");
-            setSelectedTagIds([]);
+            setDate(new Date);
+            setSelectedTags([]);
         }
-        }, [task]);
-    // If the user switches to a month with fewer days (e.g., Jan 31 -> Feb), clear the day
+    }, [task]);
+
+    // Clear day if month changes and day is now invalid
     useEffect(() => {
         if (day && parseInt(day) > daysInMonth) {
             setDay("");
         }
     }, [month, year, daysInMonth, day]);
-    // --------------------------
 
-    // Fetch all available tags and populate existing task data on mount
+    // Populate fields when task loads
     useEffect(() => {
         if (!task) return;
 
         setTitle(task.name);
         setDesc(task.description ?? "");
+        setSelectedTags(task.tags ?? []);
 
-        if (task.dueDate && task.dueDate !== "No Due Date") {
-            const d = new Date(task.dueDate);
-
-            if (!isNaN(d.getTime())) {
-            setMonth(MONTHS[d.getMonth()]);
-            setDay(String(d.getDate()));
-            setYear(String(d.getFullYear()));
-
-            const h = d.getHours();
-            const m = d.getMinutes();
-
-            if (h !== 0 || m !== 0) {
-                const displayHour = h % 12 || 12;
-                setHour(String(displayHour));
-                setMinute(String(m).padStart(2, "0"));
-                setPeriod(h >= 12 ? "PM" : "AM");
-            } else {
-                setHour("");
-                setMinute("");
-                setPeriod("");
-            }
-            }
+        // Use dueDateBadge (MM/DD/YYYY) for reliable date parsing
+        if (task.dueDateBadge && task.dueDateBadge !== "N/A") {
+            const [m, d, y] = task.dueDateBadge.split("/");
+            setMonth(MONTHS[parseInt(m) - 1]);
+            setDay(String(parseInt(d)));
+            setYear(y);
         }
 
-        // fetch tags same as before
-        }, [task]);
+        // Parse time from dueDate string e.g. "May 3, 2026 at 2:00 PM"
+        if (task.dueDate && task.dueDate.includes(" at ")) {
+            const timePart = task.dueDate.split(" at ")[1]; // "2:00 PM"
+            const [rawTime, p] = timePart.split(" ");        // "2:00", "PM"
+            const [h, min] = rawTime.split(":");
+            setHour(h);
+            setMinute(min);
+            setPeriod(p);
+        } else {
+            setHour("");
+            setMinute("");
+            setPeriod("");
+        }
+    }, [task]);
 
     if (!task) return null;
 
-    const toggleTag = (id: number) => {
-        setSelectedTagIds((prev) =>
-            prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    const toggleTag = (tag: string) => {
+        setSelectedTags((prev) =>
+            prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
         );
     };
 
+    const handleDateChange = (event: any) => {
+        const dateString = event.target.value;
+        if (dateString) {
+        setDate(new Date(dateString));
+        }
+    };
+
     const handleConfirm = async () => {
-        // Check for empty fields and trigger the null values window
-        if (!title.trim() || !month || !day || !year) {
+        if (!title.trim() || !date) {
             setIsNullModalOpen(true);
             return;
         }
 
         const mIndex = MONTHS.indexOf(month);
-
-        // Check if the selected date is in the past
         const selectedDate = new Date(Number(year), mIndex, Number(day));
         const midnightToday = new Date();
         midnightToday.setHours(0, 0, 0, 0);
@@ -162,11 +155,11 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
 
         setIsSaving(true);
         try {
-            const isoDate = `${year}-${String(mIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}${
+            const isoDate = toISODate(date) + `${
                 hour && minute && period
                     ? `T${String(period === "PM" ? (parseInt(hour) === 12 ? 12 : parseInt(hour) + 12) : (parseInt(hour) === 12 ? 0 : parseInt(hour))).padStart(2, "0")}:${minute}:00`
                     : ""
-                }`;
+            }`;
 
             const res = await fetch(`/api/tasks/${task.id}`, {
                 method: "PATCH",
@@ -175,13 +168,12 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                     task_title: title,
                     task_desc: desc,
                     due_date: isoDate,
-                    tagIds: selectedTagIds,
+                    tags: selectedTags,
                 }),
             });
 
             if (!res.ok) throw new Error("Failed to save task");
 
-            // Map the API response back to your page's Task shape
             const data = await res.json();
             const updatedTask: Task = {
                 ...task,
@@ -193,7 +185,7 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                 dueDateBadge: new Date(data.due_date).toLocaleDateString("en-US", {
                     month: "long", day: "numeric", year: "numeric"
                 }),
-                tags: data.tasktag.map((tt: any) => tt.tag.tag_name),
+                tags: selectedTags,
             };
 
             onSave(updatedTask);
@@ -223,181 +215,125 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                         <div>
                             <input
                                 type="text"
-                                placeholder="Enter Project Name ..."
+                                placeholder="Enter Task Name ..."
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="w-full rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
+                                className="w-full rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
                             />
                         </div>
 
                         {/* Deadline */}
                         <div>
-                            
-                            <label className="block text-sm font-medium text-slate-800 mb-2">Deadline</label>
-                            <div className="flex gap-2">
+                            <label className="block text-sm font-semibold text-slate-800 mb-2">Deadline</label>
+                            <div className="flex gap-2 flex-row flex-wrap sm:flex-nowrap">
                                 {/*
-                                <select
-                                    value={month}
-                                    onChange={(e) => setMonth(e.target.value)}
-                                    className={`flex-1 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${
-                                        month === "" ? "text-slate-400" : "text-slate-700"
-                                    }`}
-                                >
-                                    <option value="" disabled>Month</option>
-                                    {MONTHS.map((m) => (
-                                        <option key={m} value={m}>{m}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    value={day}
-                                    onChange={(e) => setDay(e.target.value)}
-                                    className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${
-                                        day === "" ? "text-slate-400" : "text-slate-700"
-                                    }`}
-                                >
-                                    <option value="" disabled>Day</option>
-                                    {validDays.map((d) => (
-                                        <option key={d} value={d}>{d}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    value={year}
-                                    onChange={(e) => setYear(e.target.value)}
-                                    className={`w-24 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${
-                                        year === "" ? "text-slate-400" : "text-slate-700"
-                                    }`}
-                                >
-                                    <option value="" disabled>Year</option>
-                                    {YEARS.map((y) => (
-                                        <option key={y} value={y}>{y}</option>
-                                    ))}
-                                </select>*/}
-
                                 <div className="relative basis-128">
                                     <Listbox value={month} onChange={setMonth}>
-                                    <Listbox.Button className={`flex-1 w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${month === "" ? "text-slate-400" : "text-slate-700"}`}>
-                                        {month || "Month"}
-                                    </Listbox.Button>
-                
-                                    <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                                        {MONTHS.map((m) => (
-                                        <Listbox.Option key={m} value={m}
-                                            className={({ active }) =>
-                                            `cursor-pointer px-4 py-2 ${
-                                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                                            }`
-                                            }
-                                        >
-                                            {m}
-                                        </Listbox.Option>
-                                        ))}
-                                    </Listbox.Options>
-                                    </Listbox>
-                                </div>
-                
-                                <div className="relative basis-64">
-                                    <Listbox value={day} onChange={setDay}>
-                                    <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${day === "" ? "text-slate-400" : "text-slate-700"}`}>
-                                        {day || "Day"}
-                                    </Listbox.Button>
-                
-                                    <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                                        {validDays.map((d) => (
-                                        <Listbox.Option key={d} value={d}
-                                            className={({ active }) =>
-                                            `cursor-pointer px-4 py-2 ${
-                                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                                            }`
-                                            }
-                                        >
-                                            {d}
-                                        </Listbox.Option>
-                                        ))}
-                                    </Listbox.Options>
-                                    </Listbox>
-                                </div>
-                
-                                <div className="relative basis-64">
-                                    <Listbox value={year} onChange={setYear}>
-                                    <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${year === "" ? "text-slate-400" : "text-slate-700"}`}>
-                                        {year || "Year"}
-                                    </Listbox.Button>
-                
-                                    <Listbox.Options className="absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                                        {YEARS.map((y) => (
-                                        <Listbox.Option key={y} value={y}
-                                            className={({ active }) =>
-                                            `cursor-pointer px-4 py-2 ${
-                                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                                            }`
-                                            }
-                                        >
-                                            {y}
-                                        </Listbox.Option>
-                                        ))}
-                                    </Listbox.Options>
-                                    </Listbox>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 mt-2">
-                                {/*<select value={hour} onChange={(e) => setHour(e.target.value)}
-                                    className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
-                                    <option value="" disabled>HH</option>
-                                    {HOURS.map((h) => <option key={h} value={h}>{String(h).padStart(2, "0")}</option>)}
-                                </select>
-
-                                <select value={minute} onChange={(e) => setMinute(e.target.value)}
-                                    className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${minute === "" ? "text-slate-400" : "text-slate-700"}`}>
-                                    <option value="" disabled>MM</option>
-                                    {MINUTES.map((m) => <option key={m} value={m}>{m}</option>)}
-                                </select>
-
-                                <select value={period} onChange={(e) => setPeriod(e.target.value)}
-                                    className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
-                                    <option value="" disabled>AM/PM</option>
-                                    <option value="AM">AM</option>
-                                    <option value="PM">PM</option>
-                                </select>*/}
-
-                                <div className="relative">
-                                    <Listbox value={hour} onChange={setHour}>
-                                        <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
-                                        {hour || "Hour"}
+                                        <Listbox.Button className={`flex-1 w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all ${month === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                            {month || "Month"}
                                         </Listbox.Button>
-
-                                        <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                                        {HOURS.map((h) => (
-                                            <Listbox.Option key={h} value={h}
-                                            className={({ active }) =>
-                                                `cursor-pointer px-4 py-2 ${
-                                                active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                                                }`
-                                            }
-                                            >
-                                            {h}
-                                            </Listbox.Option>
-                                        ))}
+                                        <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                            {MONTHS.map((m) => (
+                                                <Listbox.Option key={m} value={m}
+                                                    className={({ active }) =>
+                                                        `cursor-pointer px-4 py-2 ${active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'}`
+                                                    }
+                                                >
+                                                    {m}
+                                                </Listbox.Option>
+                                            ))}
                                         </Listbox.Options>
                                     </Listbox>
-                                    </div>
+                                </div>
+
+                                <div className="relative basis-64">
+                                    <Listbox value={day} onChange={setDay}>
+                                        <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${day === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                            {day || "Day"}
+                                        </Listbox.Button>
+                                        <Listbox.Options className="z-1 absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                            {validDays.map((d) => (
+                                                <Listbox.Option key={d} value={d}
+                                                    className={({ active }) =>
+                                                        `cursor-pointer px-4 py-2 ${active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'}`
+                                                    }
+                                                >
+                                                    {d}
+                                                </Listbox.Option>
+                                            ))}
+                                        </Listbox.Options>
+                                    </Listbox>
+                                </div>
+
+                                <div className="relative basis-64">
+                                    <Listbox value={year} onChange={setYear}>
+                                        <Listbox.Button className={`w-full px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${year === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                            {year || "Year"}
+                                        </Listbox.Button>
+                                        <Listbox.Options className="absolute w-full max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                            {YEARS.map((y) => (
+                                                <Listbox.Option key={y} value={y}
+                                                    className={({ active }) =>
+                                                        `cursor-pointer px-4 py-2 ${active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'}`
+                                                    }
+                                                >
+                                                    {y}
+                                                </Listbox.Option>
+                                            ))}
+                                        </Listbox.Options>
+                                    </Listbox>
+                                </div>
+                            </div>*/}
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-semibold text-slate-900">
+                                        Date:
+                                    </p>
+                                    <Input
+                                        type="date"
+                                        value={toISODate(date)}
+                                        onChange={handleDateChange}
+                                        placeholder="dd/mm/yy"
+                                        className="h-8 border-slate-300 px-2 text-xs"
+                                    />
+                                </div>
+
+                            {/* Time row*/}
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-slate-900">
+                                    Time:
+                                </p>
+                                <div className="relative">
+                                    <Listbox value={hour} onChange={setHour}>
+                                        <Listbox.Button className={`min-w-[4rem] px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                            {hour || "Hour"}
+                                        </Listbox.Button>
+                                        <Listbox.Options className="absolute min-w-[4rem] max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                            {HOURS.map((h) => (
+                                                <Listbox.Option key={h} value={h}
+                                                    className={({ active }) =>
+                                                        `cursor-pointer px-4 py-2 ${active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'}`
+                                                    }
+                                                >
+                                                    {h}
+                                                </Listbox.Option>
+                                            ))}
+                                        </Listbox.Options>
+                                    </Listbox>
+                                </div>
 
                                 <div className="relative">
                                     <Listbox value={minute} onChange={setMinute}>
-                                        <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${hour === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                        <Listbox.Button className={`min-w-[4rem] px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${minute === "" ? "text-slate-400" : "text-slate-700"}`}>
                                             {minute || "Minute"}
                                         </Listbox.Button>
-
-                                        <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                        <Listbox.Options className="absolute min-w-[4rem] max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
                                             {MINUTES.map((m) => (
                                                 <Listbox.Option key={m} value={m}
-                                                className={({ active }) =>
-                                                    `cursor-pointer px-4 py-2 ${
-                                                    active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                                                    }`
-                                                }
+                                                    className={({ active }) =>
+                                                        `cursor-pointer px-4 py-2 ${active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'}`
+                                                    }
                                                 >
-                                                {m}
+                                                    {m}
                                                 </Listbox.Option>
                                             ))}
                                         </Listbox.Options>
@@ -406,30 +342,28 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
 
                                 <div className="relative">
                                     <Listbox value={period} onChange={setPeriod}>
-                                        <Listbox.Button className={`w-20 px-3 py-2 rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
-                                        {period || "Period"}
+                                        <Listbox.Button className={`min-w-[4rem] px-3 py-2 rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 text-sm outline-none transition-all text-center ${period === "" ? "text-slate-400" : "text-slate-700"}`}>
+                                            {period || "Period"}
                                         </Listbox.Button>
-
-                                        <Listbox.Options className="absolute w-20 max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
-                                            <Listbox.Option value="AM" className={({ active }) =>
-                                                    `cursor-pointer px-4 py-2 ${
-                                                    active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                                                    }`
-                                                }>
-                                                    AM
+                                        <Listbox.Options className="absolute min-w-[4rem] max-h-100 overflow-y-auto mt-1 bg-white border rounded-md shadow-lg">
+                                            <Listbox.Option value="AM"
+                                                className={({ active }) =>
+                                                    `cursor-pointer px-4 py-2 ${active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'}`
+                                                }
+                                            >
+                                                AM
                                             </Listbox.Option>
-                                            <Listbox.Option value="PM" className={({ active }) =>
-                                                    `cursor-pointer px-4 py-2 ${
-                                                    active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'
-                                                    }`
-                                                }>
-                                                    PM
+                                            <Listbox.Option value="PM"
+                                                className={({ active }) =>
+                                                    `cursor-pointer px-4 py-2 ${active ? 'bg-[#2a3f54] text-white' : 'text-slate-700'}`
+                                                }
+                                            >
+                                                PM
                                             </Listbox.Option>
                                         </Listbox.Options>
                                     </Listbox>
                                 </div>
-
-                                <span className="flex items-center text-xs text-slate-400">(optional)</span>
+                            </div>
                             </div>
                         </div>
 
@@ -440,7 +374,7 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                                 placeholder="Enter Description"
                                 value={desc}
                                 onChange={(e) => setDesc(e.target.value)}
-                                className="w-full h-32 resize-none rounded-md bg-slate-100 border-transparent focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
+                                className="w-full h-32 resize-none rounded-md bg-white-100 border text-slate-100 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-500/20 px-4 py-3 text-sm text-slate-700 outline-none transition-all"
                             />
                         </div>
 
@@ -448,26 +382,20 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                         <div>
                             <label className="block text-sm font-medium text-slate-800 mb-2">Tags</label>
                             <div className="flex flex-wrap gap-2">
-                                {allTags.map((tag) => {
-                                    const isSelected = selectedTagIds.includes(tag.tag_id);
-                                    const tagIndex = AVAILABLE_TAGS.indexOf(tag.tag_name);
-
-                                    // Map to the correct pastel color, or use a fallback for unknown tags
-                                    const activeColorClass = tagIndex !== -1
-                                        ? PASTEL_COLORS[tagIndex % PASTEL_COLORS.length]
-                                        : "bg-slate-700 text-white";
-
+                                {AVAILABLE_TAGS.map((tag, index) => {
+                                    const isSelected = selectedTags.includes(tag);
+                                    const activeColorClass = PASTEL_COLORS[index % PASTEL_COLORS.length];
                                     return (
                                         <button
-                                            key={tag.tag_id}
-                                            onClick={() => toggleTag(tag.tag_id)}
+                                            key={tag}
+                                            onClick={() => toggleTag(tag)}
                                             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                                                 isSelected
                                                     ? activeColorClass
-                                                    : "bg-slate-300 text-white hover:bg-slate-400"
+                                                    : "bg-white text-black border-2 hover:bg-slate-400"
                                             }`}
                                         >
-                                            {tag.tag_name}
+                                            {tag}
                                         </button>
                                     );
                                 })}
@@ -497,7 +425,6 @@ export function EditTaskModal({ task, onClose, onSave }: EditTaskModalProps) {
                 </div>
             </div>
 
-            {/* Teammate's Windows */}
             <ProjectInvalidDeadlineWindow
                 open={isInvalidDateModalOpen}
                 onClose={() => setIsInvalidDateModalOpen(false)}

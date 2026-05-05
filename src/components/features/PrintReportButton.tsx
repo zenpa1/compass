@@ -86,6 +86,7 @@ export default function PrintReportButton({
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+        resetValues();
       }
     }
   }, [instance.blob]);
@@ -121,7 +122,6 @@ export default function PrintReportButton({
             }
             else {
               handleDownload();
-              resetValues();
               setShowModal(false);
             }
         }

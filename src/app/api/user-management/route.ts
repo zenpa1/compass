@@ -47,7 +47,13 @@ export async function GET(req: Request) {
         ],
       }),
     },
-    select: { user_id: true, full_name: true, email: true, user_type: true },
+    select: { 
+      user_id: true, 
+      full_name: true, 
+      email: true, 
+      user_type: true,
+      inactive: true,  // ← add this
+    },
     orderBy: { [sortBy]: "asc" },
   });
 

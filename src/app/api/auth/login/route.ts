@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
         if (user.inactive) {
             return NextResponse.json(
-                { message: "Your account has been deactivated.", errorType: "DEACTIVATED" },
+                { message: "Account inactive. Please contact an administrator.", errorType: "INACTIVE_ACCOUNT" },
                 { status: 403, headers: corsHeaders() }
             );
         }
