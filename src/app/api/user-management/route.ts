@@ -99,12 +99,12 @@ export async function POST(req: Request) {
   // Send invite email
   try {
     await transporter.sendMail({
-      from: `"Compass" <${process.env.MAIL_USER}>`,
+      from: `"COMPASS" <${process.env.MAIL_USER}>`,
       to: email,
-      subject: "You have been invited to Compass",
+      subject: "You have been invited to COMPASS",
       html: `
         <p>Hi${full_name ? ` ${full_name}` : ""},</p>
-        <p>You have been invited to join <strong>Compass</strong>.</p>
+        <p>You have been invited to join <strong>COMPASS</strong>.</p>
         <p>Click the link below to access the website:</p>
         <a href="${inviteUrl}">Accept Invite</a>
       `,
