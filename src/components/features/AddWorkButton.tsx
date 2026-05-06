@@ -59,7 +59,7 @@ export function AddWorkButton({
   const [salary, setSalary] = useState(0.0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
-  const [setToTba, setSetToTba] = useState(false);
+  const [setToTba, setSetToTba] = useState(true);
   const [publishToOpenPool, setPublishToOpenPool] = useState(false);
 
   const validTimes = ["TBA", 
@@ -83,8 +83,8 @@ export function AddWorkButton({
     setDescription("");
     setDate(project.project_start_date);
     setSalary(0.0);
-    setStartTime(new Date());
-    setEndTime(new Date());
+    setStartTime(null);
+    setEndTime(null);
     setPublishToOpenPool(false);
     setSetToTba(false);
     setStartTimeForm(0);
@@ -108,6 +108,9 @@ export function AddWorkButton({
           openRoleWindow();
         }
         else {
+          const finalStartTime = ((startTime == null) || (endTime == null)) ? null : startTime;
+          const finalEndTime = ((startTime == null) || (endTime == null)) ? null : endTime;
+
           createWork(
             project.project_id,
             role,
@@ -116,8 +119,8 @@ export function AddWorkButton({
             publishToOpenPool,
             description,
             date,
-            startTime,
-            endTime,
+            finalStartTime,
+            finalEndTime,
             publishToOpenPool ? "OPEN" : "PENDING",
           );
 

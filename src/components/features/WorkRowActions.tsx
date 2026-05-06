@@ -145,6 +145,9 @@ export function WorkRowActions({
           openRoleWindow();
         }
         else {
+          const finalStartTime = ((startTime == null) || (endTime == null)) ? null : startTime;
+          const finalEndTime = ((startTime == null) || (endTime == null)) ? null : endTime;
+
           editWork(
             workId,
             projectId,

@@ -119,26 +119,39 @@ export async function getProjects(filterOptions: String[]) {
   const deadline = filterOptions.find((value) => value == "deadline");
   const completed = filterOptions.find((value) => value == "completed");
   const notCompleted = filterOptions.find((value) => value == "not-completed");
+  const archived = filterOptions.find((value) => value == "archived");
+  const order = filterOptions.find((value) => value == "asc");
+
+  const orderFinal = (!order) ? "desc" : "asc";
 
   //Initializes the 'order by' part of the sql command (if filters were inputted)
   let orderBy = {}
-  if(alphabetical && deadline) { orderBy = [{project_name: "asc"}, {project_end_date: "asc"}] }
-  else if(alphabetical && !deadline) {orderBy = {project_name: "asc"}}
+  if(alphabetical) { orderBy = {project_name: orderFinal} }
+  else if(deadline) {orderBy = {project_end_date: orderFinal}}
   else {orderBy = {project_end_date: "asc"}}
 
   //Initializes the 'where' part of the sql command (if filters were inputted)
-  let where: Prisma.projectWhereInput = {}
-  if(completed && !notCompleted) {
-    
+  let where: Prisma.projectWhereInput = { 
+     project_status: "ACTIVE",
+     NOT: {  
+      work: { 
+        every: { work_status: "COMPLETED" },
+        some: {} 
+      }
+    } 
+  }
+
+  if(completed) {
+    where = {}
     where.OR = [
       { work: { 
         every: { work_status: "COMPLETED" },
         some: {} 
       } },
-      { project_status: "ARCHIVED" },
     ]
   }
-  else if(!completed && notCompleted) {
+  else if(notCompleted) {
+    where = {}
     where.AND = [
       { project_status: "ACTIVE" },
       { NOT: {  
@@ -148,6 +161,14 @@ export async function getProjects(filterOptions: String[]) {
         }
       } }
     ]
+  }
+  else if(archived) {
+    where = {}
+    where = { project_status: "ARCHIVED" }
+  }
+  else if(alphabetical) {
+    where = {}
+    where = { project_status: "ACTIVE" }
   }
 
   const archiveRange = new Date();
@@ -162,13 +183,23 @@ export async function getProjects(filterOptions: String[]) {
   })
 
   //Uses the initialized conditions to find the projects
-  //If there were no filters, it just returns all projects without any organization
+  //If there were no filters, it returns the projects in ascending deadline order (closest dl first)
   const projects = await db.project.findMany({
       where: where,
       orderBy: orderBy,
   });
 
-  return projects;
+  const complete = (!completed && !notCompleted && !archived && !alphabetical) ? 
+    await db.project.findMany({
+      where: { 
+        work: { 
+          every: { work_status: "COMPLETED" },
+          some: {} 
+        } },
+      orderBy: orderBy,
+    }) : null;
+
+  return [...projects, ...complete ?? []];
 }
 
 //Edits a project based on its projectId
