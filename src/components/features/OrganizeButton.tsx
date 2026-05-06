@@ -12,6 +12,7 @@ const sortOptions = [
 const progressOptions = [
   { id: "completed", label: "Completed" },
   { id: "not-completed", label: "Not completed" },
+  { id: "archived", label: "Archived" }
 ];
 
 export function OrganizeButton(
@@ -20,8 +21,9 @@ export function OrganizeButton(
     returnToPageOne: () => void;
   }) {
   const [showModal, setShowModal] = useState(false);
-  const [selectedSort, setSelectedSort] = useState<string | null>(null);
+  const [selectedSort, setSelectedSort] = useState<string | null>("deadline");
   const [selectedProgress, setSelectedProgress] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState("asc");
   const { refresh, returnToPageOne } = props;
 
   const toggleItem = (
@@ -32,12 +34,17 @@ export function OrganizeButton(
     setFn(currentValue === id ? null : id)
   )
 
+  const handleOrder = () => {
+    if(selectedOrder == "desc") setSelectedOrder("asc");
+    else setSelectedOrder("desc");
+  }
+
   const handleFilter = () => {
     /*Buffer to make sure variables are up to date
     setSelectedSort((prev) => prev);
     setSelectedProgress((prev) => prev);*/
 
-    const filters = [selectedSort, selectedProgress].filter(Boolean) as string[];
+    const filters = [selectedSort, selectedProgress, selectedOrder].filter(Boolean) as string[];
 
     //Uses the refresh method passed down from the parent
     //(with the optional filters parameter)
@@ -73,31 +80,42 @@ export function OrganizeButton(
           <div className="w-full max-w-xs rounded-xl bg-white p-4 shadow-lg">
             <div className="space-y-3 text-sm">
               <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  Sort Projects
-                </p>
+                <div className="flex flex-row">
+                  <p className="text-sm font-semibold text-slate-900">
+                    Sort Projects
+                  </p>
+                  <button onClick={handleOrder}>
+                      {(selectedOrder == "desc") ?
+                        (<span className="text-sm text-slate-500 m-1 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                          &#8595;
+                        </span>) :
+                        (<span className="text-sm text-slate-500 m-1 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                          &#8593;
+                        </span>)
+                      }
+                  </button>
+                </div>
                 <div className="mt-2 space-y-2">
                   {sortOptions.map((option) => {
                     const isActive = selectedSort === option.id;
 
                     return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        className="flex w-full items-center gap-2 text-left text-slate-700"
-                        onClick={() => toggleItem(option.id, selectedSort, setSelectedSort)}
-                      >
-                        <span
-                          className={cn(
-                            "h-4 w-4 rounded-sm border",
-                            isActive
-                              ? "border-amber-500 bg-amber-500"
-                              : "border-slate-300 bg-slate-200",
-                          )}
-                        />
-                        {option.label}
-                        <span className="text-xs text-slate-500">&#8595;</span>
-                      </button>
+                        <button
+                          key={option.id}
+                          type="button"
+                          className="flex w-full items-center gap-2 text-left text-slate-700"
+                          onClick={() => toggleItem(option.id, selectedSort, setSelectedSort)}
+                        >
+                          <span
+                            className={cn(
+                              "h-4 w-4 rounded-sm border",
+                              isActive
+                                ? "border-amber-500 bg-amber-500"
+                                : "border-slate-300 bg-slate-200",
+                            )}
+                          />
+                          {option.label}
+                        </button>
                     );
                   })}
                 </div>
