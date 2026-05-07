@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserProfile, User, Assignment, acceptApplication } 
   from "@/app/(dashboard)/projects/[projectId]/assignmentDataOps";
-import { workapplication_application_status } from "@/generated/client";
 import { AssignPersonButton } from "@/components/features/AssignPersonButton";
 import { Work } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 
@@ -18,15 +17,15 @@ interface ViewApplicationsButtonProps {
   refresh: () => void;
   applications: Assignee[];
   tone: "amber" | "blue" | "red" | "green";
-  availableAssignees: Assignee[],
-  recommendedAssignees: Assignee[],
-  assignment: Assignment,
-  withdrawn: boolean
+  availableAssignees: Assignee[];
+  recommendedAssignees: Assignee[];
+  assignment: Assignment;
+  withdrawn: boolean;
   work: Work;
   openNullWindow: () => void;
 }
 
-function getInitials(name: string) {
+function initialsOf(name: string) {
   return name
     .split(" ")
     .filter(Boolean)
@@ -49,7 +48,7 @@ export function ViewApplicationsButton({
 }: ViewApplicationsButtonProps) {
   const [showModal, setShowModal] = useState(false);
 
-  const buttonText = `View Application [${applications.length}]`;
+  const buttonText = `View Applications [${applications.length}]`;
 
   async function handleAccept(user: User) {
     acceptApplication(workId, user.user_id);
@@ -62,14 +61,14 @@ export function ViewApplicationsButton({
       <button
         type="button"
         className="h-7 rounded bg-red-500 px-2 text-xs font-semibold text-white hover:bg-red-600"
-        onClick={() => { setShowModal(true); }}
+        onClick={() => setShowModal(true)}
         aria-haspopup="dialog"
         aria-expanded={showModal}
       >
         {buttonText}
       </button>
 
-      {showModal ? (
+      {showModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
           role="dialog"
@@ -77,28 +76,25 @@ export function ViewApplicationsButton({
           aria-label="Select employee from applications"
         >
           <div className="w-full max-w-xl rounded-xl border border-slate-300 bg-white p-4 shadow-lg">
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-900 hover:bg-slate-100"
-                aria-label="Close applications modal"
-                onClick={() => {setShowModal(false); console.log(applications)}}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+
+            {/* ── Header ── */}
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-900 hover:bg-slate-100"
+                  aria-label="Close applications modal"
+                  onClick={() => setShowModal(false)}
                 >
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
-              </button>
-              <h3 className="text-xl font-semibold tracking-tight text-slate-900">
-                Select Employee
-              </h3>
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                </button>
+                <h3 className="text-xl font-semibold tracking-tight text-slate-900">
+                  Select Employee
+                </h3>
+              </div>
+
               <AssignPersonButton
                 label="Manually Assign"
                 tone={tone}
@@ -108,12 +104,14 @@ export function ViewApplicationsButton({
                 refresh={refresh}
                 withdrawn={false}
                 work={work}
-                openNullWindow={() => openNullWindow()}
+                openNullWindow={openNullWindow}
                 closeApplications={() => setShowModal(false)}
+                className="h-9 min-w-20 rounded-md border-[#2b4665] bg-[#2b4665] text-white px-3 text-xs font-semibold cursor-pointer"
               />
             </div>
 
-            <div className="mt-4 max-h-[280px] overflow-y-auto pr-1">
+            {/* ── Applicant list ── */}
+            <div className="mt-3 max-h-[280px] overflow-y-auto pr-1">
               <div className="space-y-2.5">
                 {applications.map((applicant) => (
                   <div
@@ -121,7 +119,7 @@ export function ViewApplicationsButton({
                     className="grid grid-cols-[auto_1fr_auto] items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 p-2.5"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-300 text-xs font-bold text-slate-800">
-                      {getInitials(applicant.user.full_name!)}
+                      {initialsOf(applicant.user.full_name!)}
                     </div>
 
                     <div>
@@ -129,47 +127,37 @@ export function ViewApplicationsButton({
                         {applicant.user.full_name}
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        <span
-                          key={applicant.userProfile.primary_role}
-                          className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-white"
-                        >
+                        <span className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-white">
                           {applicant.userProfile.primary_role}
                         </span>
-                        {(applicant.userProfile.secondary_role) ?
-                          (
-                            <span
-                              key={applicant.userProfile.secondary_role}
-                              className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-white"
-                            >
-                              {applicant.userProfile.secondary_role}
-                            </span>
-                          )
-                        : null}
+                        {applicant.userProfile.secondary_role && (
+                          <span className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-medium text-white">
+                            {applicant.userProfile.secondary_role}
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    <Button
+                    <button
                       type="button"
-                      className="h-8 min-w-24 rounded-md bg-slate-800 px-4 text-xs font-semibold uppercase tracking-wide text-white hover:bg-slate-700"
+                      className="h-8 min-w-24 rounded-md bg-[#2b4665] px-4 text-xs font-semibold uppercase tracking-wide text-white hover:bg-[#243a54]"
                       onClick={() => handleAccept(applicant.user)}
                     >
                       Select
-                    </Button>
+                    </button>
                   </div>
                 ))}
               </div>
-            </div>
 
-            {(applications.length == 0) ? (
-              <div className="mb-3">
-                <p className="text-base leading-none text-slate-900 text-center">
-                  No applicants yet
+              {applications.length === 0 && (
+                <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-center text-xs text-slate-500">
+                  No applicants yet.
                 </p>
-              </div>
-            ) : null}
+              )}
+            </div>
           </div>
         </div>
-      ) : null}
+      )}
     </>
   );
 }
