@@ -93,21 +93,28 @@ export function WorkRowActions({
     const timeString = newTime;
 
     const time = validTimes.indexOf(timeString);
-    if(time != 0) setSetToTba(false);
-
-    setStartTimeForm(time);
-    if(time == 0) setStartTime(null);
-    else setStartTime(new Date(0, 0, 0, time-1, 0));
+    if(time == 0 || setToTba == true) {
+      setStartTime(null);
+      setStartTimeForm(0);
+    }
+    else {
+      setStartTime(new Date(0, 0, 0, time-1, 0));
+      setStartTimeForm(time);
+    }
   }
 
   const handleEndTimeChange = (newTime: string) => {
     const timeString = newTime;
 
     const time = validTimes.indexOf(timeString);
-    if(time != 0) setSetToTba(false);
-
-    setEndTimeForm(time);
-    setEndTime(new Date(0, 0, 0, time-1, 0));
+    if(time == 0 || setToTba == true) {
+      setEndTime(null);
+      setEndTimeForm(0);
+    }
+    else {
+      setEndTime(new Date(0, 0, 0, time-1, 0));
+      setEndTimeForm(time);
+    }
   }
 
   const handleSetToTbaChange = () => {
@@ -145,10 +152,7 @@ export function WorkRowActions({
           openRoleWindow();
         }
         else {
-          const finalStartTime = ((startTime == null) || (endTime == null)) ? null : startTime;
-          const finalEndTime = ((startTime == null) || (endTime == null)) ? null : endTime;
-
-          editWork(
+          await editWork(
             workId,
             projectId,
             salary,
@@ -157,10 +161,10 @@ export function WorkRowActions({
             date,
             startTime,
             endTime,
-            );
+          );
 
           refresh();
-          closeEditModal();
+          setShowEditModal(false);
         }
       }
     }
@@ -173,7 +177,7 @@ export function WorkRowActions({
     setStartTime(oldStartTime);
     setEndTime(oldEndTime);
     setPublishToOpenPool(oldPublishToOpenPool);
-    setSetToTba(oldSetToTba);
+    setSetToTba((startTime == null && endTime == null));
     setStartTimeForm(
       (oldStartTime) ? oldStartTime.getHours() + 1 :
       0
@@ -343,7 +347,7 @@ export function WorkRowActions({
         >
           {!(workStatus == "COMPLETED") ? (
             <div>
-              {(workStatus == "ASSIGNED" || workStatus == "REVIEW") ? (
+              {(workStatus == "ASSIGNED") ? (
                 <button
                   type="button"
                   className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100"

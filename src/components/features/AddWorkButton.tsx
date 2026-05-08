@@ -146,21 +146,28 @@ export function AddWorkButton({
     const timeString = newTime;
 
     const time = validTimes.indexOf(timeString);
-    if(time != 0) setSetToTba(false);
-
-    setStartTimeForm(time);
-    if(time == 0) setStartTime(null);
-    else setStartTime(new Date(0, 0, 0, time-1, 0));
+    if(time == 0 || setToTba == true) {
+      setStartTime(null);
+      setStartTimeForm(0);
+    }
+    else {
+      setStartTime(new Date(0, 0, 0, time-1, 0));
+      setStartTimeForm(time);
+    }
   }
 
   const handleEndTimeChange = (newTime: string) => {
     const timeString = newTime;
 
     const time = validTimes.indexOf(timeString);
-    if(time != 0) setSetToTba(false);
-
-    setEndTimeForm(time);
-    setEndTime(new Date(0, 0, 0, time-1, 0));
+    if(time == 0 || setToTba == true) {
+      setEndTime(null);
+      setEndTimeForm(0);
+    }
+    else {
+      setEndTime(new Date(0, 0, 0, time-1, 0));
+      setEndTimeForm(time);
+    }
   }
 
   const handleSetToTbaChange = () => {

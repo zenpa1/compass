@@ -5,7 +5,7 @@ import { Work } from "@/app/(dashboard)/projects/[projectId]/workDataOps";
 import { sendEmail } from "@/lib/email";
 import { getSession } from "@/lib/session";
 import { release } from "os";
-import { assignment_assignment_status, workapplication_application_status } from "@/generated/client";
+import { assignment_assignment_status, work_work_status, workapplication_application_status } from "@/generated/client";
 
 export interface UserProfile {
   profile_id: number;
@@ -42,16 +42,21 @@ function getRole(description: string) {
 
   const cleanDesc = description.trim().toLowerCase();
 
-  if (cleanDesc.includes("2nd photographer") || cleanDesc.includes("2nd videographer")) {
+  if (cleanDesc.includes("booth") || cleanDesc.includes("assist")) {
     roles.push("ASSISTANT");
   }
-  else if (cleanDesc.includes("photo")) {
+  else if ((cleanDesc.includes("photo") || 
+      cleanDesc.includes("shoot onsite")) && 
+      !cleanDesc.includes("assist")) {
     roles.push("PHOTO");
   }
-  else if (cleanDesc.includes("video") && !cleanDesc.includes("editor")) {
+  else if ((cleanDesc.includes("video") || 
+      cleanDesc.includes("drone op")) && 
+      !cleanDesc.includes("editor") &&
+      !cleanDesc.includes("assist")) {
     roles.push("VIDEO");
   }
-  else if (cleanDesc.includes("editor")) {
+  else if (cleanDesc.includes("edit")) {
     roles.push("EDITOR");
   }
 
@@ -97,8 +102,8 @@ export async function getAvailableAssignees(work: Work) {
         user: {
           assignment: {
             some: {
-              work_id: work.work_id
-            }
+              work_id: work.work_id,
+            },
           }
         }
       },
@@ -108,7 +113,8 @@ export async function getAvailableAssignees(work: Work) {
             work: { 
               AND: [
                 {work_start_date: work!.work_start_date! },
-                {work_id: { notIn: [work.work_id] }}
+                {work_id: { notIn: [work.work_id] }},
+                {work_status: { notIn: ["COMPLETED"] }}
               ]
             }
           }
@@ -139,12 +145,20 @@ export async function getRecommendedAssignees(work: Work, role: string) {
 
   //scheduling conflict checks
   const conflictConditions: any[] = [
-    { work_id: work.work_id }
+    {
+      AND: [
+        { work_id: work.work_id },
+        { work: { work_status: { notIn: ["COMPLETED"] } } }
+      ]
+    }
   ];
 
   if (work.work_start_date) {
     conflictConditions.push({
-      work: { work_start_date: work.work_start_date }
+      AND: [
+        { work: { work_start_date: work.work_start_date } },
+        { work: { work_status: { notIn: ["COMPLETED"] } } }
+      ]
     });
   }
 

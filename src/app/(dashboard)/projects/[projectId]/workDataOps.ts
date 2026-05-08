@@ -121,6 +121,11 @@ export async function editWork(work_id: number, new_project_id: number,
   await db.workapplication.deleteMany({
     where: { work_id: work_id },
   })
+
+  await db.assignment.updateMany({
+    where: { work_id: work_id },
+    data: { user_id: null }
+  })
   
 //--------EMAIL SENDING LOGIC DISABLE IF IT MESSES EVERYTHING UP
   if (work!.work_status === "ASSIGNED" || work!.work_status === "REVIEW") {
