@@ -373,9 +373,11 @@ export async function getReportProjects(printStartDate: Date, printEndDate: Date
 
   const reportProjects = await Promise.all(projects.map(async (project) => {
     const enrichedWorks = await getEnrichedWorks(project.project_id);
+    const completeCheck = await isCompleteProjectTone(project.project_id);
 
     return {
       project: project,
+      isComplete: (completeCheck == 1) ? false : true,
       works: enrichedWorks
     }
   }))
