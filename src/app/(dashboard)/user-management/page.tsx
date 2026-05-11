@@ -645,6 +645,8 @@ export default function UserManagementPage() {
         </svg>
         Copied to clipboard
       </div>
+
+      <LoadingOverlay isLoading={loading} message="Fetching users..." />
     </div>
   );
 }
@@ -741,7 +743,6 @@ function ActionMenu({
         document.body
       )}
 
-      <LoadingOverlay isLoading={loading} message="Fetching users..." />
     </>
   );
 }
