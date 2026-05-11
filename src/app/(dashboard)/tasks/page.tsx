@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { Edit, Filter, MoreVertical, Plus, Trash2 } from "lucide-react";
 import { TaskModal } from "@/components/features/TaskModal";
 import { AddTaskModal } from "@/components/features/AddTaskModal";
@@ -33,24 +34,16 @@ export default function TasksPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [displayedTasks, setDisplayedTasks] = useState<Task[]>([]);
 
-  // Keep displayedTasks in sync when tasks load
   useEffect(() => {
     setDisplayedTasks(tasks);
   }, [tasks]);
 
-  //delete function
   const handleDeleteConfirm = async () => {
     if (!taskToDelete) return;
-
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/tasks/${taskToDelete}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/tasks/${taskToDelete}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete task");
-
-      // Close the modal and refresh the list!
       setTaskToDelete(null);
       fetchTasks();
     } catch (error) {
@@ -61,18 +54,12 @@ export default function TasksPage() {
     }
   };
 
-  // 3. The fully functional fetchTasks routine!
   const fetchTasks = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/tasks");
       if (!res.ok) throw new Error("Failed to fetch tasks");
-
-      const data = await res.json();
-
-      // The backend API is already doing all the hard work of formatting the dates
-      // and extracting the tags, so we can just set the data directly!
-      setTasks(data);
+      setTasks(await res.json());
     } catch (err) {
       console.error(err);
     } finally {
@@ -80,22 +67,13 @@ export default function TasksPage() {
     }
   };
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  useEffect(() => { fetchTasks(); }, []);
 
-  // Handle checkbox toggle (Optimistic update)
   const toggleTask = async (id: number) => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
-
     const newValue = !task.isCompleted;
-
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, isCompleted: newValue } : t)),
-    );
-
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, isCompleted: newValue } : t)));
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: "PATCH",
@@ -105,36 +83,49 @@ export default function TasksPage() {
       if (!res.ok) throw new Error("Failed to update task");
     } catch (error) {
       console.error(error);
-      // Roll back on failure
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === id ? { ...t, isCompleted: task.isCompleted } : t,
-        ),
-      );
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, isCompleted: task.isCompleted } : t)));
     }
   };
 
-  // Functions for opening and saving tasks from the modal
-  const openTaskModal = (task: Task) => {
-    setEditingTask(task);
-  };
+  const openTaskModal = (task: Task) => setEditingTask(task);
 
   const saveTaskFromModal = (updatedTask: Task) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
-    );
+    setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
   };
 
-  const getMenuKey = (layout: "table" | "card", taskId: number) =>
-    `${layout}-${taskId}`;
+  // Returns { label, color } or null if overdue/no date
+  const daysLeftBadge = (deadLine: string): { label: string; className: string } | null => {
+    const cleaned = deadLine.replace(/\s+at\s+[\d:]+\s*(AM|PM)/i, "").trim();
+    const dueDate = new Date(cleaned);
+    const today = new Date();
+
+    if (isNaN(dueDate.getTime())) return null;
+
+    dueDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) return null;
+
+    const label = `${diffDays} day${diffDays > 1 ? "s" : ""} left`;
+
+    if (diffDays >= 5) {
+      return { label, className: "bg-green-500 text-white" };
+    } else if (diffDays >= 2) {
+      return { label, className: "bg-yellow-400 text-yellow-900" };
+    } else {
+      return { label, className: "bg-red-500 text-white" };
+    }
+  };
+
+  const getMenuKey = (layout: "table" | "card", taskId: number) => `${layout}-${taskId}`;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto p-4 sm:p-6">
       {/* HEADER */}
       <div className="flex items-center gap-4">
-        <h2 className="text-2xl font-normal text-slate-900 tracking-tight">
-          Personal Tasks
-        </h2>
+        <h2 className="text-2xl font-normal text-slate-900 tracking-tight">Personal Tasks</h2>
         <div className="h-px flex-1 bg-slate-300 mt-1"></div>
       </div>
 
@@ -150,7 +141,7 @@ export default function TasksPage() {
 
         {/* Desktop Table */}
         <div className="hidden md:block">
-          <div className="grid grid-cols-[80px_1fr_200px_40px] items-center px-4 py-3 border-b border-slate-200 text-sm font-medium text-slate-700">
+          <div className="grid grid-cols-[80px_1fr_240px_40px] items-center px-4 py-3 border-b border-slate-200 text-sm font-medium text-slate-700">
             <div className="text-center">Status</div>
             <div className="flex items-center gap-2">
               Task name
@@ -165,26 +156,20 @@ export default function TasksPage() {
 
           <div className="flex flex-col max-h-[500px] overflow-y-auto">
             {loading ? (
-              <div className="p-8 text-center text-slate-500">
-                Loading tasks...
-              </div>
+              <div className="p-8 text-center text-slate-500">Loading tasks...</div>
             ) : displayedTasks.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">
-                No personal tasks found.
-              </div>
+              <div className="p-8 text-center text-slate-500">No personal tasks found.</div>
             ) : (
               displayedTasks.map((task) => {
                 const menuKey = getMenuKey("table", task.id);
+                const badge = daysLeftBadge(task.dueDate);
                 return (
                   <div
                     key={task.id}
-                    className="grid grid-cols-[80px_1fr_200px_40px] items-center px-4 py-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors group cursor-pointer"
+                    className="grid grid-cols-[80px_1fr_240px_40px] items-center px-4 py-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors group cursor-pointer"
                     onClick={() => openTaskModal(task)}
                   >
-                    <div
-                      className="flex justify-center"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                       <label className="flex items-center justify-center p-2 rounded-md transition-colors cursor-pointer">
                         <input
                           type="checkbox"
@@ -195,43 +180,36 @@ export default function TasksPage() {
                       </label>
                     </div>
 
-                    <div
-                      className={`text-sm ${task.isCompleted ? "text-slate-400 line-through" : "text-slate-800"}`}
-                    >
+                    <div className={`text-sm ${task.isCompleted ? "text-slate-400 line-through" : "text-slate-800"}`}>
                       {task.name}
                     </div>
 
-                    <div className="text-sm text-slate-600">{task.dueDate}</div>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <span>{task.dueDate}</span>
+                      {badge && (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badge.className}`}>
+                          {badge.label}
+                        </span>
+                      )}
+                    </div>
 
-                    <div
-                      className="flex justify-center"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                       <button
                         id={`trigger-${menuKey}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setOpenMenuKey(
-                            openMenuKey === menuKey ? null : menuKey,
-                          );
+                          setOpenMenuKey(openMenuKey === menuKey ? null : menuKey);
                         }}
                         className={`p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors ${openMenuKey === menuKey ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                       >
                         <MoreVertical className="size-4" />
                       </button>
-
                       {openMenuKey === menuKey && (
                         <TaskActionDropdown
                           anchorId={`trigger-${menuKey}`}
                           onClose={() => setOpenMenuKey(null)}
-                          onEdit={() => {
-                            setTaskToEdit(task);
-                            setOpenMenuKey(null);
-                          }}
-                          onDelete={() => {
-                            setTaskToDelete(task.id);
-                            setOpenMenuKey(null);
-                          }}
+                          onEdit={() => { setTaskToEdit(task); setOpenMenuKey(null); }}
+                          onDelete={() => { setTaskToDelete(task.id); setOpenMenuKey(null); }}
                         />
                       )}
                     </div>
@@ -246,16 +224,13 @@ export default function TasksPage() {
         <div className="md:hidden">
           <div className="max-h-[500px] overflow-y-auto p-3 space-y-3">
             {loading ? (
-              <div className="p-5 text-center text-slate-500">
-                Loading tasks...
-              </div>
+              <div className="p-5 text-center text-slate-500">Loading tasks...</div>
             ) : displayedTasks.length === 0 ? (
-              <div className="p-5 text-center text-slate-500">
-                No personal tasks found.
-              </div>
+              <div className="p-5 text-center text-slate-500">No personal tasks found.</div>
             ) : (
               displayedTasks.map((task) => {
                 const menuKey = getMenuKey("card", task.id);
+                const badge = daysLeftBadge(task.dueDate);
                 return (
                   <article
                     key={task.id}
@@ -264,20 +239,20 @@ export default function TasksPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p
-                          className={`text-sm font-medium break-words ${task.isCompleted ? "text-slate-400 line-through" : "text-slate-900"}`}
-                        >
+                        <p className={`text-sm font-medium break-words ${task.isCompleted ? "text-slate-400 line-through" : "text-slate-900"}`}>
                           {task.name}
                         </p>
-                        <p className="mt-1 text-xs text-slate-600">
-                          Due {task.dueDate}
-                        </p>
+                        <div className="mt-1 flex items-center gap-2 flex-wrap">
+                          <span className="text-xs text-slate-600">Due {task.dueDate}</span>
+                          {badge && (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${badge.className}`}>
+                              {badge.label}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <div
-                        className="flex items-center gap-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <label className="flex items-center justify-center p-1 rounded-md transition-colors cursor-pointer">
                           <input
                             type="checkbox"
@@ -286,32 +261,22 @@ export default function TasksPage() {
                             className="size-5 rounded border-slate-300 text-slate-800 focus:ring-slate-800 cursor-pointer"
                           />
                         </label>
-
                         <button
                           id={`trigger-${menuKey}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setOpenMenuKey(
-                              openMenuKey === menuKey ? null : menuKey,
-                            );
+                            setOpenMenuKey(openMenuKey === menuKey ? null : menuKey);
                           }}
                           className="p-1 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                         >
                           <MoreVertical className="size-4" />
                         </button>
-
                         {openMenuKey === menuKey && (
                           <TaskActionDropdown
                             anchorId={`trigger-${menuKey}`}
                             onClose={() => setOpenMenuKey(null)}
-                            onEdit={() => {
-                              setTaskToEdit(task);
-                              setOpenMenuKey(null);
-                            }}
-                            onDelete={() => {
-                              setTaskToDelete(task.id);
-                              setOpenMenuKey(null);
-                            }}
+                            onEdit={() => { setTaskToEdit(task); setOpenMenuKey(null); }}
+                            onDelete={() => { setTaskToDelete(task.id); setOpenMenuKey(null); }}
                           />
                         )}
                       </div>
@@ -332,29 +297,20 @@ export default function TasksPage() {
         </button>
       </div>
 
-      <TaskModal
-        task={editingTask}
-        onClose={() => setEditingTask(null)}
-        onSave={saveTaskFromModal}
-      />
+      <TaskModal task={editingTask} onClose={() => setEditingTask(null)} onSave={saveTaskFromModal} />
 
       <EditTaskModal
         task={taskToEdit}
         onClose={() => setTaskToEdit(null)}
         onSave={(updatedTask) => {
-          setTasks((prev) =>
-            prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
-          );
+          setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
         }}
       />
 
       <AddTaskModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => {
-          setIsAddModalOpen(false); // Close modal
-          fetchTasks(); // Refresh the list from the database!
-        }}
+        onSuccess={() => { setIsAddModalOpen(false); fetchTasks(); }}
       />
 
       <FilterModal
@@ -370,6 +326,8 @@ export default function TasksPage() {
         onConfirm={handleDeleteConfirm}
         isDeleting={isDeleting}
       />
+
+      <LoadingOverlay isLoading={loading} message="Fetching tasks..." />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ProjectCard } from "@/components/features/ProjectCard"; // Your restored component
 import { OrganizeButton } from "@/components/features/OrganizeButton";
 import { AddProjectButton } from "@/components/features/AddProjectButton";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import {
   Project,
   getProjects,
@@ -39,6 +40,7 @@ export default function ProjectDashboard({
   initialProjects,
 }: ProjectListProps) {
   const [projects, setProjects] = useState<enrichedProjects[]>(initialProjects);
+  const [loading, setLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const projectsPerPage = 8;
@@ -58,24 +60,29 @@ export default function ProjectDashboard({
   //dashboard. The method is passed down to most child components so they can "refresh"
   //the dashboard at will after performing CRUD
   async function refresh(filters: string[] = []) {
-    const newProjects = await getProjects(filters);
+    setLoading(true);
+    try {
+      const newProjects = await getProjects(filters);
 
-    const enrichedProjects = await Promise.all(newProjects.map(async (project) => {
-          const projectData = project;
-          const activeWorks = await getProjectMissingWorks(project.project_id);
-          const allWorks = await getProjectWorks(project.project_name)!;
-          const allWorksLength = allWorks?.length || 0;
-          const isComplete = await isCompleteProjectTone(project.project_id);
-      
-          return {
-            project: projectData,
-            activeWorks: allWorksLength - activeWorks,
-            allWorks: allWorksLength,
-            isComplete: isComplete
-          };
-        }));
+      const enrichedProjects = await Promise.all(newProjects.map(async (project) => {
+            const projectData = project;
+            const activeWorks = await getProjectMissingWorks(project.project_id);
+            const allWorks = await getProjectWorks(project.project_name)!;
+            const allWorksLength = allWorks?.length || 0;
+            const isComplete = await isCompleteProjectTone(project.project_id);
+        
+            return {
+              project: projectData,
+              activeWorks: allWorksLength - activeWorks,
+              allWorks: allWorksLength,
+              isComplete: isComplete
+            };
+          }));
 
-    setProjects(() => enrichedProjects);
+      setProjects(() => enrichedProjects);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const returnToPageOne = () => { setCurrentPage(1); }
@@ -204,6 +211,8 @@ export default function ProjectDashboard({
         open={lengthWindow}
         onClose={() => setLengthWindow(false)}
       />
+
+      <LoadingOverlay isLoading={loading} message="Fetching projects..." />
     </div>
   );
 }

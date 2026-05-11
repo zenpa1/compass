@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import WorkTabs, { WorkStatus } from "@/components/features/WorkTabs";
 import { WorkCard } from "@/components/features/WorkCard";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import type { Work } from "@/type/work";
 
 //console.log("params.id:", params.id)
@@ -100,6 +101,8 @@ export default function WorksPage() {
           ))
         )}
       </div>
+
+      <LoadingOverlay isLoading={loading} message="Fetching works..." />
     </div>
   );
 }

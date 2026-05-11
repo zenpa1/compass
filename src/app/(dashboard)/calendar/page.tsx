@@ -5,6 +5,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import CalendarTabs, { CalendarTab } from "@/components/features/CalendarTabs";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import timeGridPlugin from "@fullcalendar/timegrid";
 
 interface EventPopover {
@@ -142,16 +143,22 @@ export default function CalendarPage() {
   const [calendarView, setCalendarView] = useState<"dayGridMonth" | "timeGridWeek">("dayGridMonth");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const popoverRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<FullCalendar>(null);
 
   useEffect(() => {
     async function fetchEvents() {
-      const tabParam = selectedTab === "North Studio works" ? "works" : "tasks";
-      const res = await fetch(`/api/calendar?tab=${tabParam}`);
-      const data = await res.json();
-      setEvents(data);
+      setLoading(true);
+      try {
+        const tabParam = selectedTab === "North Studio works" ? "works" : "tasks";
+        const res = await fetch(`/api/calendar?tab=${tabParam}`);
+        const data = await res.json();
+        setEvents(data);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchEvents();
   }, [selectedTab]);
@@ -411,6 +418,8 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
+
+      <LoadingOverlay isLoading={loading} message="Fetching events..." />
     </div>
   );
 }
