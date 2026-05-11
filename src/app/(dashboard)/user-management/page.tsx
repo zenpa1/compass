@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 type Permission = "Admin" | "Employee";
 type FilterPermission = "All" | "Owner" | "Admin" | "Employee";
@@ -739,6 +740,8 @@ function ActionMenu({
         </div>,
         document.body
       )}
+
+      <LoadingOverlay isLoading={loading} message="Fetching users..." />
     </>
   );
 }

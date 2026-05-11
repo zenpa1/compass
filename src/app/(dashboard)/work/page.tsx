@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import WorkTabs, { WorkStatus } from "@/components/features/WorkTabs";
 import { WorkCard } from "@/components/features/WorkCard";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import type { Work } from "@/type/work";
 import { 
   employeeMarkDone,
@@ -460,6 +461,8 @@ export default function WorksPage() {
             </div>
           </div>
         ) : null}
+
+        <LoadingOverlay isLoading={loading} message="Fetching works..." />
     </div>
   );
 }

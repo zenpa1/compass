@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { Edit, Filter, MoreVertical, Plus, Trash2 } from "lucide-react";
 import { TaskModal } from "@/components/features/TaskModal";
 import { AddTaskModal } from "@/components/features/AddTaskModal";
@@ -325,6 +326,8 @@ export default function TasksPage() {
         onConfirm={handleDeleteConfirm}
         isDeleting={isDeleting}
       />
+
+      <LoadingOverlay isLoading={loading} message="Fetching tasks..." />
     </div>
   );
 }
