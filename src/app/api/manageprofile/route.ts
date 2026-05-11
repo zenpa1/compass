@@ -21,11 +21,14 @@ export async function GET(request: NextRequest) {
                 where: { user_id: numericUserId },
             }),
             prisma.assignment.count({
-                where: { user_id: numericUserId }
+                where: { 
+                    user_id: numericUserId,
+                    work: { work_status: { notIn: ["COMPLETED"] } }
+                }
             })
         ]);
 
-        const hasAcceptedWork = assignmentCount > 0;
+        const hasAcceptedWork = assignmentCount != 0;
 
         if (!profile) {
             return NextResponse.json({ primaryRole: "", secondaryRole: "NONE", hasAcceptedWork });

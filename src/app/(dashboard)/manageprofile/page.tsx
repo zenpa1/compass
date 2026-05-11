@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { SimpleDialogProps } from "@/app/(dashboard)/projects/projectDataOps";
 import { Dialog, DialogTitle, DialogContent } from "@mui/material";
 
-const ROLES = ["PHOTO", "VIDEO", "EDITOR", "ASSISTANT", "ANY"];
+const ROLES1 = ["PHOTO", "VIDEO", "EDITOR", "ASSISTANT"];
+const ROLES2 = ["PHOTO", "VIDEO", "EDITOR", "ASSISTANT", "ANY"];
 
 export default function ManageProfilePage() {
   const [userId, setUserId] = useState<number | null>(null); 
@@ -52,7 +53,7 @@ export default function ManageProfilePage() {
            setSavedSecondaryRole(profileData.secondaryRole || "None");
            
            // Check if they have active work assignments
-           setHasAcceptedWork(profileData.hasAcceptedWork || false);
+           setHasAcceptedWork(profileData.hasAcceptedWork);
         }
       } catch (error) {
         console.error("Failed to load user data:", error);
@@ -163,7 +164,7 @@ export default function ManageProfilePage() {
                   className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                 >
                   <option value="" disabled>Select a role</option>
-                  {ROLES.map((role) => (
+                  {ROLES1.map((role) => (
                     <option key={role} value={role}>{role}</option>
                   ))}
                 </select>
@@ -180,7 +181,7 @@ export default function ManageProfilePage() {
                   className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                 >
                   <option value="NONE">None</option>
-                  {ROLES.map((role) => (
+                  {ROLES2.map((role) => (
                     <option key={role} value={role}>{role}</option>
                   ))}
                 </select>

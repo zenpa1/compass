@@ -110,7 +110,7 @@ export function WorkCard({
             </h2>
             <div className="flex items-center gap-3">
               {/*activeMarkerIcon(work.work_status)*/}
-              {(work.work_status != "COMPLETED") ? (
+              {(work.work_status == "ASSIGNED") ? (
                 <button
                   type="button"
                   onClick={() => onWithdraw?.(work.work_id)}

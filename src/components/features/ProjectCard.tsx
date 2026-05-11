@@ -402,7 +402,9 @@ export function ProjectCard({
       <CardContent className="px-4 pb-4" onClick={handleViewProject}>
         <CardTitle className="text-base font-normal text-slate-900">
           <div className="flex justify-between">
-            <p className={status == "ACTIVE" ? "text-black" : "text-slate-600"}>{endDate.toDateString().substring(4)}</p>
+            <p className={status == "ACTIVE" ? "text-black" : "text-slate-600"}>{
+              endDate.toDateString().substring(4)
+            }</p>
             <p className={status == "ACTIVE" ? "text-black" : "text-slate-600"}>{client}</p>
           </div>
         </CardTitle>

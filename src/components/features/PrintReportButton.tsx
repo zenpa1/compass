@@ -39,6 +39,7 @@ type Assignee = {
 
 type pdfWorks = {
     project: Project,
+    isComplete: boolean,
     works: enrichedWorks[]
 }
 

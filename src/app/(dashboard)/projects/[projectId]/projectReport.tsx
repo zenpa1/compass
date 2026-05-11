@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: '#0f172a' },
   sectionTitle: { fontSize: 11, fontWeight: 'bold', marginTop: 20, marginBottom: 8, color: '#475569', textTransform: 'uppercase' },
-  projectWrapper: { marginBottom: 30 },
+  projectWrapper: { marginBottom: 45 },
   
   // Table General
   table: { width: '100%',
@@ -75,6 +75,7 @@ type Assignee = {
 
 type pdfWorks = {
     project: Project,
+    isComplete: boolean,
     works: enrichedWorks[]
 }
 
@@ -90,6 +91,24 @@ const formatWorkSchedule = (work: Work) => {
     );
 };
 
+const getHeaderTone = (isComplete: boolean, endDate: Date, isKey: boolean) => {
+    const currentDate = new Date();
+
+    if(isComplete) return isKey ? "#76CC79" : "#A1F4A5";
+
+    if(currentDate > endDate) {
+      return isKey ? "#CC787F" : "#CCABB0";
+    }
+
+    if(currentDate.getFullYear() == endDate.getFullYear() && 
+      currentDate.getMonth() == endDate.getMonth() && 
+      currentDate.getDay() == (endDate.getDay() - 1)) {
+      return isKey ? "#B5B190" : "#E0DDA1";
+    }
+
+    return isKey ? "#00ACFF" : "#91C2FF";
+  }
+
 export const ProjectPdfTemplate = ({ 
   projects, 
   printStartDate, 
@@ -103,11 +122,21 @@ export const ProjectPdfTemplate = ({
             </Text>
         </View>
         {projects.map((project) => (
-            <View key={project.project.project_id} style={styles.projectWrapper}>
-                <View style={styles.table}>
+            <View key={project.project.project_id} style={styles.projectWrapper} wrap={true} minPresenceAhead={100}>
+                <View style={styles.table} wrap={true}>
                     <View style={styles.tableRow} wrap={false}>
-                        <Text style={styles.infoKey}>Project Name</Text>
-                        <Text style={styles.infoValue}>{project.project.project_name}</Text>
+                        <Text style={[styles.infoKey, { fontSize: 12, color: '#1e293b', 
+                            backgroundColor: getHeaderTone(
+                                project.isComplete, 
+                                project.project.project_end_date, 
+                                true) }]}>
+                                    Project Name</Text>
+                        <Text style={[styles.infoValue, { fontSize: 12, fontWeight: 'bold',
+                            backgroundColor: getHeaderTone(
+                                project.isComplete, 
+                                project.project.project_end_date, 
+                                false)}]}>
+                                    {project.project.project_name}</Text>
                     </View>
                     <View style={styles.tableRow} wrap={false}>
                         <Text style={styles.infoKey}>Client Name</Text>
@@ -132,7 +161,7 @@ export const ProjectPdfTemplate = ({
                     {
                         (project.works.length != 0) ? (
                             //Works Header
-                            <View>
+                            <>
                                 <View style={styles.fullWidthHeader} wrap={false}>
                                     <Text>Project Works</Text>
                                 </View>
@@ -154,7 +183,7 @@ export const ProjectPdfTemplate = ({
                                     <View style={[styles.dataCell, styles.colStatus]}><Text>{work.printedStatus.substring(2)}</Text></View>
                                 </View>
                                 ))}
-                            </View>
+                            </>
                         ) : null
                     }
                 </View>
