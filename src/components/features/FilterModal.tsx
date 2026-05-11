@@ -159,7 +159,7 @@ export function FilterModal({ isOpen, onClose, onConfirm, allTasks }: FilterModa
                         >
                             <div
                                 className="w-5 h-5 rounded border border-slate-300 transition-colors"
-                                style={{ backgroundColor: selectedTags.includes(tag) ? "#c8a84b" : "#9e9e9e" }}
+                                style={{ backgroundColor: selectedTags.includes(tag) ? "#c8a84b" : "#f1f5f9" }}
                             />
                             {tag}
                         </button>
